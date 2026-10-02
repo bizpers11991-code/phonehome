@@ -1,0 +1,13 @@
+# Dreame robot vacuums (Dreamehome app). Source: the Home Assistant
+# integration's cloud client, which builds https://<region>.iot.dreame.tech:13267
+# for sign-in (/dreame-auth/oauth/token), device lists and commands. The host
+# string sits in an encoded table (DREAME_STRINGS, entry 0) in protocol.py.
+company: dreame
+rules:
+  - pattern: iot.dreame.tech
+    category: essential
+    purpose: "Dreame's regional cloud (<region>.iot.dreame.tech) for Dreamehome app sign-in, device lists and remote commands."
+    confidence: low
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/Tasshack/dreame-vacuum/blob/9857362d37fa6a1788a0ce2eb6e1290b3ec7d6fb/custom_components/dreame_vacuum/dreame/protocol.py
