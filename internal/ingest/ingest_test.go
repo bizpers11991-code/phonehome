@@ -3,6 +3,7 @@ package ingest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/netip"
@@ -109,7 +110,10 @@ func (f *fakeDNS) FetchDNS(_ context.Context, cursor string, limit int) ([]model
 	}
 	off := 0
 	if cursor != "" {
-		off, _ = strconv.Atoi(cursor)
+		var err error
+		if off, err = strconv.Atoi(cursor); err != nil {
+			return nil, cursor, fmt.Errorf("fake: %w", source.ErrBadCursor)
+		}
 	}
 	end := min(off+limit, f.total)
 	var qs []model.DNSQuery
@@ -357,6 +361,37 @@ func TestRunPrunesAndStops(t *testing.T) {
 	defer st.mu.Unlock()
 	if len(st.pruned) != 1 || !st.pruned[0].Equal(now.Add(-48*time.Hour)) {
 		t.Errorf("pruned = %v, want exactly once at now-48h", st.pruned)
+	}
+}
+
+func TestRunOncePrunes(t *testing.T) {
+	st := newStore()
+	now := time.Date(2026, 1, 10, 12, 0, 0, 0, time.UTC)
+	r := &Runner{Store: st, Retention: 72 * time.Hour, Logger: quiet, Now: func() time.Time { return now }}
+	if err := r.RunOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.pruned) != 1 || !st.pruned[0].Equal(now.Add(-72*time.Hour)) {
+		t.Errorf("pruned = %v, want once at now-72h", st.pruned)
+	}
+	r.Retention = 0
+	if err := r.RunOnce(context.Background()); err != nil || len(st.pruned) != 1 {
+		t.Errorf("Retention 0 pruned: %v, %v", st.pruned, err)
+	}
+}
+
+// TestBadCursorStartsOver checks that a cursor the source cannot read (for
+// example one left by another kind of source under the same name) is
+// dropped instead of failing every run.
+func TestBadCursorStartsOver(t *testing.T) {
+	st := newStore()
+	st.cursors["dns"] = "inode:12:offset"
+	r := &Runner{Store: st, DNS: []source.DNSSource{&fakeDNS{name: "dns", total: 3}}, Logger: quiet}
+	if err := r.RunOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.dns) != 3 || st.cursors["dns"] != "3" {
+		t.Fatalf("ingested %d, cursor %q", len(st.dns), st.cursors["dns"])
 	}
 }
 

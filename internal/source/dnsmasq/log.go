@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
+	"github.com/bizpers11991-code/phonehome/internal/source"
 )
 
 // lookahead is how many lines after a query its answer may appear. Queries
@@ -89,7 +90,7 @@ func parseCursor(c string) (position, error) {
 	ino, err := strconv.ParseUint(inos, 10, 64)
 	off, err2 := strconv.ParseInt(offs, 10, 64)
 	if !ok || err != nil || err2 != nil || off < 0 {
-		return position{}, fmt.Errorf("dnsmasq: bad cursor %q", c)
+		return position{}, fmt.Errorf("dnsmasq: bad cursor %q: %w", c, source.ErrBadCursor)
 	}
 	return position{ino, off}, nil
 }

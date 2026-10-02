@@ -57,9 +57,10 @@ type task struct {
 	run  func(ctx context.Context, key string) (int64, error)
 }
 
-// RunOnce ingests from every source once. Sources are independent: a failing
-// source is recorded and skipped, and the errors of all failing sources are
-// returned joined.
+// RunOnce ingests from every source once, then prunes data older than
+// Retention (when set), so that `ingest --once` from cron keeps the store
+// bounded too. Sources are independent: a failing source is recorded and
+// skipped, and the errors of all failing sources are returned joined.
 func (r *Runner) RunOnce(ctx context.Context) error {
 	var errs []error
 	for _, t := range r.tasks() {
@@ -67,6 +68,11 @@ func (r *Runner) RunOnce(ctx context.Context) error {
 			return errors.Join(append(errs, err)...)
 		}
 		if _, err := r.runTask(ctx, t); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if r.Retention > 0 {
+		if err := r.prune(ctx); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -85,7 +91,9 @@ func (r *Runner) Run(ctx context.Context, interval time.Duration) {
 		r.cycle(ctx, interval, backoffs)
 		if r.Retention > 0 && r.now().Sub(lastPrune) >= pruneEvery {
 			lastPrune = r.now()
-			r.prune(ctx)
+			if err := r.prune(ctx); err != nil {
+				r.log().Warn("prune failed", "err", err)
+			}
 		}
 		select {
 		case <-ctx.Done():
@@ -126,15 +134,16 @@ func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map
 	}
 }
 
-func (r *Runner) prune(ctx context.Context) {
+// prune deletes data older than Retention.
+func (r *Runner) prune(ctx context.Context) error {
 	n, err := r.Store.Prune(ctx, r.now().Add(-r.Retention))
 	if err != nil {
-		r.log().Warn("prune failed", "err", err)
-		return
+		return fmt.Errorf("pruning: %w", err)
 	}
 	if n > 0 {
 		r.log().Info("pruned old records", "records", n, "retention", r.Retention)
 	}
+	return nil
 }
 
 // runTask executes t and records its status. It returns the number of
@@ -179,12 +188,12 @@ func (r *Runner) tasks() []task {
 	var ts []task
 	for _, s := range r.DNS {
 		ts = append(ts, task{key(s.Name(), "dns"), "dns", func(ctx context.Context, k string) (int64, error) {
-			return drain(ctx, r.Store, k, r.batch(), s.FetchDNS, r.Store.InsertDNS)
+			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchDNS, r.Store.InsertDNS)
 		}})
 	}
 	for _, s := range r.Flows {
 		ts = append(ts, task{key(s.Name(), "flow"), "flow", func(ctx context.Context, k string) (int64, error) {
-			return drain(ctx, r.Store, k, r.batch(), s.FetchFlows, r.Store.InsertFlows)
+			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchFlows, r.Store.InsertFlows)
 		}})
 	}
 	for _, s := range r.Devices {
@@ -207,9 +216,11 @@ func (r *Runner) tasks() []task {
 
 // drain fetches and inserts batches until the source has nothing new, the
 // per-run cap is reached, or something fails. The cursor is advanced only
-// after the batch it covers has been inserted.
+// after the batch it covers has been inserted. A saved cursor the source
+// cannot read (source.ErrBadCursor) is dropped and reading starts over,
+// rather than failing on every run until someone edits the database.
 func drain[T any](
-	ctx context.Context, st Store, key string, limit int,
+	ctx context.Context, st Store, log *slog.Logger, key string, limit int,
 	fetch func(context.Context, string, int) ([]T, string, error),
 	insert func(context.Context, []T) error,
 ) (int64, error) {
@@ -223,6 +234,14 @@ func drain[T any](
 			return total, err
 		}
 		recs, next, err := fetch(ctx, cur, limit)
+		if errors.Is(err, source.ErrBadCursor) && cur != "" {
+			log.Warn("discarding unreadable cursor; reading the source from the start", "source", key, "err", err)
+			if err := st.SetCursor(ctx, key, ""); err != nil {
+				return total, fmt.Errorf("resetting cursor: %w", err)
+			}
+			cur = ""
+			recs, next, err = fetch(ctx, cur, limit)
+		}
 		if err != nil {
 			return total, fmt.Errorf("fetching: %w", err)
 		}
