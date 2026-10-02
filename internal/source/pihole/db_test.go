@@ -61,7 +61,12 @@ func fixture(t *testing.T, schema string) (string, *sql.DB) {
 	if err := os.Mkdir(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(dir, "pihole-FTL.db")
+	return fixtureAt(t, filepath.Join(dir, "pihole-FTL.db"), schema)
+}
+
+// fixtureAt is fixture with a given path.
+func fixtureAt(t *testing.T, path, schema string) (string, *sql.DB) {
+	t.Helper()
 	w, err := sql.Open("sqlite", path)
 	if err != nil {
 		t.Fatal(err)

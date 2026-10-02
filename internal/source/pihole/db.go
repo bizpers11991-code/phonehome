@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
+	"github.com/bizpers11991-code/phonehome/internal/source"
 
 	_ "modernc.org/sqlite" // registers the "sqlite" driver
 )
@@ -45,6 +46,11 @@ func NewDB(path string, opts ...Option) (*DB, error) {
 		return nil, fmt.Errorf("pihole: open %s: %w", path, err)
 	}
 	db.SetMaxOpenConns(1)
+	// Reopen the file for every query instead of keeping an idle
+	// connection: a connection kept open across a replacement of the
+	// database (FTL recreates it if it is deleted) would read the old,
+	// unlinked file forever. Opening costs well under a millisecond.
+	db.SetMaxIdleConns(0)
 	return &DB{db: db, name: o.name}, nil
 }
 
@@ -57,23 +63,52 @@ func (d *DB) Close() error { return d.db.Close() }
 // FetchDNS implements source.DNSSource. Rows FTL could not attribute to a
 // client IP or domain are skipped but still advance the cursor, so a call
 // may return fewer than limit records even when more are waiting.
+//
+// If the newest id in the database is below the cursor, the database was
+// replaced (deleted to recover from corruption, or restored from an older
+// backup) and its ids started again; reading then restarts from the first
+// row.
 func (d *DB) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DNSQuery, string, error) {
 	var last int64
 	if cursor != "" {
 		var err error
-		if last, err = strconv.ParseInt(cursor, 10, 64); err != nil {
-			return nil, cursor, fmt.Errorf("pihole: bad cursor %q", cursor)
+		if last, err = strconv.ParseInt(cursor, 10, 64); err != nil || last < 0 {
+			return nil, cursor, fmt.Errorf("pihole: bad cursor %q: %w", cursor, source.ErrBadCursor)
 		}
 	}
 	if limit <= 0 {
 		return nil, cursor, nil
 	}
+	out, next, err := d.fetch(ctx, last, limit)
+	if err != nil {
+		return nil, cursor, err
+	}
+	if next == last && last > 0 {
+		var newest sql.NullInt64
+		if err := d.db.QueryRowContext(ctx, `SELECT id FROM queries ORDER BY id DESC LIMIT 1`).Scan(&newest); err != nil && err != sql.ErrNoRows {
+			return nil, cursor, fmt.Errorf("pihole: read queries: %w", err)
+		}
+		if newest.Valid && newest.Int64 < last {
+			out, next, err = d.fetch(ctx, 0, limit)
+			if err != nil {
+				return nil, cursor, err
+			}
+		}
+	}
+	if next == last {
+		return nil, cursor, nil
+	}
+	return out, strconv.FormatInt(next, 10), nil
+}
 
+// fetch reads up to limit rows with ids above last and returns the
+// lookups among them and the id of the last row read (last if none).
+func (d *DB) fetch(ctx context.Context, last int64, limit int) ([]model.DNSQuery, int64, error) {
 	rows, err := d.db.QueryContext(ctx,
 		`SELECT id, timestamp, type, status, domain, client
 		   FROM queries WHERE id > ? ORDER BY id LIMIT ?`, last, limit)
 	if err != nil {
-		return nil, cursor, fmt.Errorf("pihole: read queries: %w", err)
+		return nil, last, fmt.Errorf("pihole: read queries: %w", err)
 	}
 	defer rows.Close()
 
@@ -89,7 +124,7 @@ func (d *DB) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DN
 			domain, client sql.NullString
 		)
 		if err := rows.Scan(&id, &ts, &typ, &status, &domain, &client); err != nil {
-			return nil, cursor, fmt.Errorf("pihole: read queries: %w", err)
+			return nil, last, fmt.Errorf("pihole: read queries: %w", err)
 		}
 		next = id
 		ip, ok := parseAddr(client.String)
@@ -107,12 +142,9 @@ func (d *DB) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DN
 		})
 	}
 	if err := rows.Err(); err != nil {
-		return nil, cursor, fmt.Errorf("pihole: read queries: %w", err)
+		return nil, last, fmt.Errorf("pihole: read queries: %w", err)
 	}
-	if next == last {
-		return nil, cursor, nil
-	}
-	return out, strconv.FormatInt(next, 10), nil
+	return out, next, nil
 }
 
 // Devices implements source.DeviceSource using FTL's network table, which

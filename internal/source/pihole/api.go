@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
+	"github.com/bizpers11991-code/phonehome/internal/source"
 )
 
 // maxPage is FTL's cap on rows per /api/queries response
@@ -165,7 +166,7 @@ func parseAPICursor(c string) (id int64, t float64, err error) {
 		t, err = strconv.ParseFloat(ts, 64)
 	}
 	if !ok || err != nil {
-		return 0, 0, fmt.Errorf("pihole: bad API cursor %q", c)
+		return 0, 0, fmt.Errorf("pihole: bad API cursor %q: %w", c, source.ErrBadCursor)
 	}
 	return id, t, nil
 }
