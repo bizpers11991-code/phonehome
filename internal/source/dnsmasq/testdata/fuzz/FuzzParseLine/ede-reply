@@ -1,0 +1,2 @@
+go test fuzz v1
+string("Oct  2 14:20:01 router dnsmasq[812]: reply stale.example.com is 93.184.216.34 (EDE: stale answer)")

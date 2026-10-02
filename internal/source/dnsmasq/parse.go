@@ -88,7 +88,13 @@ func parseTime(header string, loc *time.Location, now time.Time) (time.Time, boo
 //
 // With log-queries=extra each line starts with a serial number and usually
 // the requestor's address and port: "45 192.168.1.20/53210 query[A] ...".
+// dnsmasq 2.86 and later append any extended DNS error to an answer, as in
+// "reply example.com is 93.184.216.34 (EDE: stale answer)"; that part is
+// dropped.
 func parseMessage(msg string) (event, bool) {
+	if i := strings.Index(msg, " (EDE:"); i >= 0 {
+		msg = msg[:i]
+	}
 	var e event
 	f := strings.Fields(msg)
 	if len(f) > 1 && isDigits(f[0]) {

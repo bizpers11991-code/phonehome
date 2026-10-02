@@ -87,6 +87,11 @@ func TestFormats(t *testing.T) {
 			"13:59:03 mask.icloud.com HTTPS 192.168.1.51 true",
 			"13:59:04 metrics.roku.com A 192.168.1.52 true",
 		},
+		"ede.log": { // answers carrying extended DNS errors
+			"14:20:00 ads.example.com A 192.168.1.20 true",
+			"14:20:01 stale.example.com A 192.168.1.21 false",
+			"14:20:02 early.example.com AAAA 192.168.1.22 false",
+		},
 		"mixed.log": {
 			"12:01:00.123456 connectivitycheck.gstatic.com A 192.168.1.60 false",
 			"14:02:00 device-metrics-us.amazon.com A 192.168.1.61 true",
