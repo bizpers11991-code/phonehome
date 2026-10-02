@@ -23,7 +23,7 @@ body:
     id: domains
     attributes:
       label: Domain(s)
-      description: One per line.
+      description: One per line. `phonehome unknown` lists the ones the knowledge base doesn't cover yet; `*` stands for an ID-like part phonehome left out.
       render: text
     validations:
       required: true

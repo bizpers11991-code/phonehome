@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -451,5 +452,75 @@ func TestLabelRoundTrip(t *testing.T) {
 	}
 	if !strings.Contains(get(t, h, "/api/report").Body.String(), `"name":"Den speaker"`) {
 		t.Error("new label not reflected in report")
+	}
+}
+
+// TestUnknownAndSuggestLink checks the "help us classify" data: every device
+// lists its unknown domains, and the GitHub link carries none of the device's
+// private details. Demo data gets no link.
+func TestUnknownAndSuggestLink(t *testing.T) {
+	type device struct {
+		Name, Hostname, Label, MAC string
+		IPs                        []string
+		Unknown                    []struct {
+			Domain, Group, FirstSeen string
+			Count                    int
+		}
+		SuggestURL *string `json:"suggestUrl"`
+	}
+	decode := func(b *fixture.Backend) []device {
+		var rep struct{ Devices []device }
+		if err := json.Unmarshal(get(t, newServer(b, web.Options{}), "/api/report?days=7").Body.Bytes(), &rep); err != nil {
+			t.Fatal(err)
+		}
+		return rep.Devices
+	}
+
+	b := fixture.New(now)
+	links := 0
+	for _, d := range decode(b) {
+		if d.Unknown == nil {
+			t.Errorf("%s: unknown is null, want []", d.Name)
+		}
+		if len(d.Unknown) == 0 {
+			if d.SuggestURL != nil {
+				t.Errorf("%s: suggest link without unknown domains", d.Name)
+			}
+			continue
+		}
+		if u := d.Unknown[0]; u.Domain == "" || u.Group == "" || u.Count == 0 || u.FirstSeen == "" {
+			t.Errorf("%s: unknown[0] = %+v", d.Name, u)
+		}
+		if d.SuggestURL == nil {
+			t.Errorf("%s: no suggest link", d.Name)
+			continue
+		}
+		links++
+		link, err := url.QueryUnescape(strings.ToLower(*d.SuggestURL))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.HasPrefix(link, "https://github.com/bizpers11991-code/phonehome/issues/new?") {
+			t.Errorf("%s: link %s", d.Name, link)
+		}
+		private := append([]string{d.Name, d.Hostname, d.Label, d.MAC, strings.ReplaceAll(d.MAC, ":", "")}, d.IPs...)
+		for _, p := range private {
+			if p != "" && strings.Contains(link, strings.ToLower(p)) {
+				t.Errorf("%s: link contains private %q: %s", d.Name, p, link)
+			}
+		}
+		if !strings.Contains(link, "cdn.example-unknown.io") {
+			t.Errorf("%s: link lacks its unknown domains: %s", d.Name, link)
+		}
+	}
+	if links == 0 {
+		t.Error("no device got a suggest link")
+	}
+
+	b.Demo = true
+	for _, d := range decode(b) {
+		if d.SuggestURL != nil {
+			t.Errorf("demo device %s has a suggest link", d.Name)
+		}
 	}
 }

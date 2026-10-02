@@ -194,6 +194,16 @@ type DomainStat struct {
 	Purpose     string
 }
 
+// UnknownDomain is a domain a device looked up that the knowledge base does
+// not cover yet: the raw material for a new rule.
+type UnknownDomain struct {
+	Domain string
+	Group  string // registrable domain, best effort (no public-suffix list)
+	Count  int
+	First  time.Time
+	Last   time.Time
+}
+
 // CompanyStat is how often a device talked to one company.
 type CompanyStat struct {
 	ID      string
@@ -240,6 +250,10 @@ type DeviceReport struct {
 	Fixes      []Fix
 	Grade      string // "A".."F", see docs/grading.md
 	Flows      int    // connections observed (0 in DNS-only mode)
+	// Unknown lists unclassified domains, desc by Count, at most 50. Local
+	// names and reverse lookups are left out: no rule can describe them and
+	// they can identify the household.
+	Unknown []UnknownDomain
 }
 
 // HomeReport is the whole-network view.
