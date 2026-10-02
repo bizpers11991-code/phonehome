@@ -5,6 +5,7 @@
 //	phonehome ingest --once    pull new records from every source and exit
 //	phonehome report           print a plain-text report
 //	phonehome receipt          write a Privacy Receipt (PNG or SVG)
+//	phonehome unknown          list domains the knowledge base can't explain yet
 //	phonehome kb lint|stats    check the knowledge base
 //	phonehome version
 package main
@@ -29,6 +30,8 @@ Usage:
   phonehome ingest  [--config FILE] [--once]  pull records from your sources
   phonehome report  [--config FILE] [--days N]
   phonehome receipt [--config FILE] [--days N] [--device ID] [-o FILE]
+  phonehome unknown [--config FILE] [--days N] [--device ID] [--limit N]
+                                              unclassified domains, to report
   phonehome kb lint | stats
   phonehome version
 
@@ -68,6 +71,8 @@ func run(ctx context.Context, args []string) error {
 		return cmdReport(ctx, rest)
 	case "receipt":
 		return cmdReceipt(ctx, rest)
+	case "unknown":
+		return cmdUnknown(ctx, rest)
 	case "kb":
 		return cmdKB(rest)
 	case "version", "--version", "-v":

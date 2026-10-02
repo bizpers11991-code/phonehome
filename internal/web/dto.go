@@ -64,6 +64,10 @@ type deviceDTO struct {
 	Heartbeats  []heartbeatDTO   `json:"heartbeats"`
 	Bypasses    []bypassDTO      `json:"bypasses"`
 	Fixes       []fixDTO         `json:"fixes"`
+	Unknown     []unknownDTO     `json:"unknown"`
+	// SuggestURL opens a prefilled GitHub issue for the unknown domains;
+	// empty for demo data or when nothing can be shared. See suggestURL.
+	SuggestURL string `json:"suggestUrl,omitempty"`
 }
 
 // quietDTO is the quiet-hours window; StartHour/EndHour are local hours
@@ -85,6 +89,15 @@ type domainDTO struct {
 	CompanyID     string         `json:"companyId"`
 	CompanyName   string         `json:"companyName"`
 	Purpose       string         `json:"purpose"`
+}
+
+// unknownDTO is a domain the knowledge base does not cover yet.
+type unknownDTO struct {
+	Domain    string `json:"domain"`
+	Group     string `json:"group"` // registrable domain, best effort
+	Count     int    `json:"count"`
+	FirstSeen string `json:"firstSeen,omitempty"`
+	LastSeen  string `json:"lastSeen,omitempty"`
 }
 
 type companyDTO struct {
@@ -178,7 +191,11 @@ func newReportDTO(r model.HomeReport) reportDTO {
 		out.Categories = append(out.Categories, newCategory(c, r.ByCategory[c]))
 	}
 	for _, d := range r.Devices {
-		out.Devices = append(out.Devices, newDeviceDTO(d))
+		dd := newDeviceDTO(d)
+		if !r.Demo { // synthetic domains must not become real issues
+			dd.SuggestURL = suggestURL(d)
+		}
+		out.Devices = append(out.Devices, dd)
 	}
 	return out
 }
@@ -215,6 +232,7 @@ func newDeviceDTO(r model.DeviceReport) deviceDTO {
 		Heartbeats:  make([]heartbeatDTO, 0, len(r.Heartbeats)),
 		Bypasses:    make([]bypassDTO, 0, len(r.Bypasses)),
 		Fixes:       make([]fixDTO, 0, len(r.Fixes)),
+		Unknown:     make([]unknownDTO, 0, len(r.Unknown)),
 	}
 	if out.Kind == "" {
 		out.Kind = model.KindUnknown
@@ -232,6 +250,11 @@ func newDeviceDTO(r model.DeviceReport) deviceDTO {
 			Domain: s.Domain, Count: s.Count, Blocked: s.Blocked,
 			Category: s.Category, CategoryLabel: s.Category.Label(), Snooping: s.Category.Snooping(),
 			CompanyID: s.CompanyID, CompanyName: s.CompanyName, Purpose: s.Purpose,
+		})
+	}
+	for _, u := range r.Unknown {
+		out.Unknown = append(out.Unknown, unknownDTO{
+			Domain: u.Domain, Group: u.Group, Count: u.Count, FirstSeen: stamp(u.First), LastSeen: stamp(u.Last),
 		})
 	}
 	for _, c := range r.Companies {

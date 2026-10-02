@@ -161,6 +161,11 @@ device we don't cover yet:
 3. Open a pull request, or [report a device](../../issues/new?template=new-device.yml)
    if you'd rather not write YAML.
 
+`phonehome unknown` lists the domains your devices use that the knowledge base
+can't explain yet. In the dashboard, a device's details have a **Suggest a
+rule** link that opens that issue form prefilled with those domain names and
+the device's make and type, never its addresses or names.
+
 Code contributions are welcome too. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 is the map. Tests: `go test -race ./...`.
 

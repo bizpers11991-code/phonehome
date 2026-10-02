@@ -406,6 +406,9 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 			}
 		}
 		domains = append(domains, ds)
+		if cls.Category == model.CatUnknown && reportable(info.name) {
+			r.Unknown = append(r.Unknown, unknownDomain(info.name, da))
+		}
 		if info.resolver {
 			d.addBypass(BypassDoHLookup, info.name, da.count)
 		}
@@ -429,6 +432,7 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 	})
 	r.TopDomains = domains[:min(len(domains), maxTopDomains)]
 	sortHeartbeats(r.Heartbeats)
+	r.Unknown = topUnknown(r.Unknown)
 
 	for _, cs := range companies {
 		r.Companies = append(r.Companies, *cs)

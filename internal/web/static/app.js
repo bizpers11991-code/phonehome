@@ -364,6 +364,8 @@ function details(d) {
           f.evidence.length > 1 ? `Source ${i + 1}` : 'Source', icon('external')))) : null)))
       : h('p', { class: 'empty-note', text: 'No specific fixes known for this device yet. Blocking the snooping domains above in your DNS filter is a good start.' })));
 
+  if (d.unknown.length) sections.push(unclassified(d));
+
   sections.push(h('p', { class: 'footnote' }, icon('lock'),
     h('span', { text: 'phonehome sees who and when, never what — traffic is encrypted. ' +
       'Purposes come from public research and vendor documentation; links are next to each fix.' })));
@@ -379,6 +381,29 @@ function details(d) {
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', onclick: () => dlg.close() }, icon('close'))),
     h('div', { class: 'drawer-body' }, sections));
   return dlg;
+}
+
+// unclassified lists domains the knowledge base can't explain yet and offers a
+// prefilled GitHub issue. The link is built server-side (internal/web/suggest.go)
+// from domain names and the device's make and type only; phonehome never
+// fetches it, the person clicks it.
+function unclassified(d) {
+  const top = d.unknown.slice(0, 8);
+  const more = d.unknown.length - top.length;
+  return h('section', { class: 'unclassified' },
+    h('h3', { text: 'Unclassified' }),
+    h('p', { class: 'lead-note', text: "phonehome doesn't know what these are for yet. If you do, a rule makes everyone's report better." }),
+    h('ul', { class: 'unknown' }, top.map((u) => h('li', {},
+      h('span', { class: 'domain', text: u.domain }),
+      h('span', { class: 'meta', text: `${fmt(u.count)} lookups · last ${ago(u.lastSeen)}` })))),
+    more > 0 ? h('p', { class: 'more' }, `+${more} more. Run `, h('code', { text: 'phonehome unknown' }), ' to see them all.') : null,
+    d.suggestUrl ? h('div', { class: 'suggest' },
+      h('a', { class: 'btn', href: d.suggestUrl, target: '_blank', rel: 'noopener noreferrer' }, 'Suggest a rule', icon('external')),
+      h('p', { class: 'share-note', text: 'Opens a public issue form on GitHub. Your browser sends GitHub these domain names ' +
+        "(ID-like parts replaced with *) and the device's make and type — no addresses, MACs or device names. " +
+        'Check it, add what you know, then submit.' }))
+      : state.report.demo ? h('p', { class: 'share-note', text: 'With your own data, a “Suggest a rule” link here opens a prefilled GitHub issue. It is off for demo data.' })
+        : null);
 }
 
 function stat(label, value, extra) {

@@ -164,6 +164,7 @@ func Analyze(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQu
 func InferKind(d model.Device, hints map[model.DeviceKind]int) model.DeviceKind
 func Grade(r model.DeviceReport) string
 func HomeGrade(devs []model.DeviceReport) string   // worst device grade; "" with no devices
+func Registrable(domain string) string      // best-effort eTLD+1, for grouping only
 ```
 Lookups are attributed to devices by `ClientIP ∈ Device.IPs`; unattributed
 client IPs become synthetic devices `ip:<addr>`. Heartbeats, quiet-hours
@@ -191,6 +192,18 @@ type Backend interface {
 }
 func New(b Backend, o Options) http.Handler
 ```
+`DeviceReport.Unknown` lists each device's unclassified domains (count, first
+and last seen), leaving out local names (`.lan`, `.local`, `.home.arpa`, ...)
+and reverse lookups. They feed the "help us classify" loop: `phonehome
+unknown` prints them grouped by registrable domain, and the dashboard's device
+view lists them with a **Suggest a rule** link (`suggestUrl` in the report
+JSON, built in `internal/web/suggest.go`). The link opens GitHub's
+`new-device.yml` issue form prefilled with domain names and the device's
+vendor and kind only; ID-like labels become `*`, and names containing the
+device's hostname, label, MAC or address are dropped. phonehome never fetches
+it; the person clicks it, and the UI says GitHub will see the names. Demo
+reports get no link.
+
 Routes: `GET /` (embedded SPA), `GET /api/report?days=7`, `GET /api/status`,
 `POST /api/devices/{id}/label`, `GET /receipt/home.svg|png?days=7`,
 `GET /receipt/{deviceID}.svg|png?days=7`, `GET /healthz`. Assets embedded with
@@ -209,4 +222,4 @@ Routes: `GET /` (embedded SPA), `GET /api/report?days=7`, `GET /api/status`,
   deletes in 5000-row transactions so ingestion is never blocked for long.
   Measured sizes and timings are in `docs/performance.md`.
 - `demo`: deterministic synthetic household (seeded), clearly labelled.
-- CLI: `phonehome serve | ingest --once | report | receipt | demo | kb lint | version`.
+- CLI: `phonehome serve | ingest --once | report | receipt | unknown | demo | kb lint | version`.

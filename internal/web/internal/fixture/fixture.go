@@ -254,6 +254,10 @@ func household() []dev {
 				{"github.com", 520, 0, model.CatContent, "", ""},
 				{"a1234.dscb.akamai.net", 410, 0, model.CatContent, "akamai", "Content delivery."},
 				{"cdn.example-unknown.io", 40, 0, model.CatUnknown, "", ""},
+				{"api.example-unknown.io", 12, 0, model.CatUnknown, "", ""},
+				{"a1b2c3d4e5f6a7b8.iot.example-unknown.io", 6, 0, model.CatUnknown, "", ""},
+				{"105.1.168.192.dnsbl.example-unknown.io", 3, 0, model.CatUnknown, "", ""},
+				{"dans-macbook-air.home.example-unknown.io", 2, 0, model.CatUnknown, "", ""},
 			},
 		},
 	}
@@ -304,6 +308,10 @@ func build(d dev, p model.Period, days float64) model.DeviceReport {
 			Category: dm.cat, CompanyID: c.ID, CompanyName: c.Name, Purpose: dm.purpose})
 		if c.ID != "" {
 			byCompany[c.ID] += n
+		}
+		if dm.cat == model.CatUnknown {
+			r.Unknown = append(r.Unknown, model.UnknownDomain{Domain: dm.name, Group: "example-unknown.io",
+				Count: n, First: p.From.Add(time.Hour), Last: p.To.Add(-time.Hour)})
 		}
 	}
 	slices.SortStableFunc(r.TopDomains, func(a, b model.DomainStat) int { return cmp.Compare(b.Count, a.Count) })
