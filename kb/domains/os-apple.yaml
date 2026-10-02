@@ -1,0 +1,158 @@
+# Apple hosts not covered by platform-apple.yaml, almost all from Apple's own
+# "Use Apple products on enterprise networks" list.
+company: apple
+rules:
+  # --- Essential: setup, sign-in, updates -----------------------------------
+  - pattern: static.ips.apple.com
+    category: essential
+    purpose: Apple device setup support service.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: tbsc.apple.com
+    category: essential
+    purpose: Apple device setup support service.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: sq-device.apple.com
+    category: essential
+    purpose: eSIM activation on iPhone and iPad.
+    confidence: high
+    kind_hint: phone
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: account.apple.com
+    category: essential
+    purpose: Apple Account sign-in in Settings and System Settings.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: appleid.cdn-apple.com
+    category: essential
+    purpose: Apple Account sign-in content.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: ig.apple.com
+    category: essential
+    purpose: macOS software updates.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: skl.apple.com
+    category: essential
+    purpose: macOS software updates.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: swdownload.apple.com
+    category: essential
+    purpose: macOS software update downloads.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: oscdn.apple.com
+    category: essential
+    purpose: macOS Recovery downloads.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: osrecovery.apple.com
+    category: essential
+    purpose: macOS Recovery service.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: configuration.apple.com
+    category: essential
+    purpose: Rosetta 2 updates on Macs with Apple silicon.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: gdmf-ados.apple.com
+    category: essential
+    purpose: Software update catalog for additional operating-system components.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: gsra.apple.com
+    category: essential
+    purpose: Operating-system updates for additional components.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: bpapi.apple.com
+    category: essential
+    purpose: Enrolment in Apple beta software updates.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: ppq.apple.com
+    category: essential
+    purpose: Validates enterprise-distributed apps before they run.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: serverstatus.apple.com
+    category: essential
+    purpose: Lets devices find their public IP address so they can locate a local Apple content cache.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: apple-dns.net
+    category: essential
+    purpose: Apple's DNS infrastructure for iCloud services.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: app-site-association.cdn-apple.com
+    category: essential
+    purpose: Associated-domains data that lets links open in the matching app (universal links).
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: app-site-association.networking.apple
+    category: essential
+    purpose: Associated-domains data that lets links open in the matching app (universal links).
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+
+  # --- Content --------------------------------------------------------------
+  - pattern: apple-livephotoskit.com
+    category: content
+    purpose: iCloud Live Photos service.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: apple-relay.apple.com
+    category: content
+    purpose: Apple Intelligence extensions.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: apple-relay.cloudflare.com
+    category: content
+    purpose: Relay for Apple Intelligence Private Cloud Compute requests.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: apple-relay.fastly-edge.com
+    category: content
+    purpose: Relay for Apple Intelligence Private Cloud Compute requests.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: weatherkit.apple.com
+    category: content
+    purpose: Apple WeatherKit service that supplies weather forecasts to apps.
+    confidence: high
+    evidence:
+      - https://developer.apple.com/documentation/weatherkitrestapi/request-authentication-for-weatherkit-rest-api

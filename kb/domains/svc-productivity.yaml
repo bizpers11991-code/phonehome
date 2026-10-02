@@ -1,0 +1,163 @@
+# Productivity and collaboration apps: Google Workspace, Slack, Zoom, Dropbox,
+# Notion and GitHub. Sources: each vendor's own firewall or domain list.
+# Microsoft 365 lives in os-windows.yaml.
+rules:
+  # --- Google Workspace -----------------------------------------------------
+  - pattern: drive.google.com
+    company: google
+    category: content
+    purpose: Google Drive file storage and sync.
+    confidence: high
+    evidence:
+      - https://knowledge.workspace.google.com/admin/drive/drive-and-sites-firewall-and-proxy-settings
+  - pattern: docs.google.com
+    company: google
+    category: content
+    purpose: Google Docs, Sheets and Slides editors.
+    confidence: high
+    evidence:
+      - https://knowledge.workspace.google.com/admin/drive/drive-and-sites-firewall-and-proxy-settings
+  - pattern: googledrive.com
+    company: google
+    category: content
+    purpose: Google Drive content.
+    confidence: high
+    evidence:
+      - https://knowledge.workspace.google.com/admin/drive/drive-and-sites-firewall-and-proxy-settings
+
+  # --- Slack ----------------------------------------------------------------
+  - pattern: slack.com
+    company: slack
+    category: content
+    purpose: Slack workspaces, messaging and real-time connections.
+    confidence: high
+    evidence:
+      - https://slack.com/help/articles/360001603387-Manage-Slack-connection-issues
+      - https://www.netify.ai/resources/applications/slack
+  - pattern: slack-edge.com
+    company: slack
+    category: content
+    purpose: Slack-owned domain used by the Slack apps.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/slack
+  - pattern: slack-imgs.com
+    company: slack
+    category: content
+    purpose: Slack-owned domain used by the Slack apps to load images.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/slack
+
+  # --- Zoom -----------------------------------------------------------------
+  - pattern: zoom.us
+    company: zoom
+    category: content
+    purpose: Zoom meetings, chat and the Zoom app's services.
+    confidence: high
+    evidence:
+      - https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060548
+  - pattern: zoom.com
+    company: zoom
+    category: content
+    purpose: Zoom meetings, chat and the Zoom app's services.
+    confidence: high
+    evidence:
+      - https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060548
+
+  # --- Dropbox --------------------------------------------------------------
+  - pattern: dropbox.com
+    company: dropbox
+    category: content
+    purpose: Dropbox file sync, sharing and sign-in.
+    confidence: high
+    evidence:
+      - https://help.dropbox.com/security/official-domains
+  - pattern: dropboxapi.com
+    company: dropbox
+    category: content
+    purpose: Dropbox API used by the Dropbox apps and third-party apps that connect to Dropbox.
+    confidence: high
+    evidence:
+      - https://help.dropbox.com/security/official-domains
+  - pattern: dropboxstatic.com
+    company: dropbox
+    category: content
+    purpose: Static files for the Dropbox website and apps.
+    confidence: high
+    evidence:
+      - https://help.dropbox.com/security/official-domains
+  - pattern: dropboxusercontent.com
+    company: dropbox
+    category: content
+    purpose: Serves files from shared Dropbox links and folders.
+    confidence: high
+    evidence:
+      - https://help.dropbox.com/security/official-domains
+
+  # --- Notion ---------------------------------------------------------------
+  - pattern: notion.com
+    company: notion
+    category: content
+    purpose: Notion workspace app and API.
+    confidence: high
+    evidence:
+      - https://www.notion.com/help/allowlist-ip
+  - pattern: notion.site
+    company: notion
+    category: content
+    purpose: Public Notion pages.
+    confidence: high
+    evidence:
+      - https://www.notion.com/help/allowlist-ip
+  - pattern: notionusercontent.com
+    company: notion
+    category: content
+    purpose: Images and files uploaded to Notion.
+    confidence: high
+    evidence:
+      - https://www.notion.com/help/allowlist-ip
+  - pattern: notion-static.com
+    company: notion
+    category: content
+    purpose: Notion file storage and static content.
+    confidence: high
+    evidence:
+      - https://www.notion.com/help/allowlist-ip
+
+  # --- GitHub ---------------------------------------------------------------
+  - pattern: github.com
+    company: github
+    category: content
+    purpose: GitHub website, Git hosting and API.
+    confidence: high
+    evidence:
+      - https://api.github.com/meta
+  - pattern: githubassets.com
+    company: github
+    category: content
+    purpose: Static files for the GitHub website.
+    confidence: high
+    evidence:
+      - https://api.github.com/meta
+  - pattern: githubusercontent.com
+    company: github
+    category: content
+    purpose: Raw files, avatars, release downloads and other user content on GitHub.
+    confidence: high
+    evidence:
+      - https://api.github.com/meta
+  - pattern: github.io
+    company: github
+    category: content
+    purpose: Websites hosted on GitHub Pages.
+    confidence: high
+    evidence:
+      - https://api.github.com/meta
+  - pattern: githubcopilot.com
+    company: github
+    category: content
+    purpose: GitHub Copilot AI coding assistant.
+    confidence: high
+    evidence:
+      - https://api.github.com/meta

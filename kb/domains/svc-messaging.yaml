@@ -1,0 +1,41 @@
+# Messaging apps not covered elsewhere (WhatsApp is in platform-meta.yaml).
+# Signal and Telegram publish no hostname list of their own, so these rest on
+# Netify's application database and are medium confidence.
+rules:
+  - pattern: signal.org
+    company: signal
+    category: content
+    purpose: Signal messaging servers for chats, attachments and calls.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/domains/signal.org
+      - https://github.com/signalapp/Signal-Desktop/issues/7711
+  - pattern: telegram.org
+    company: telegram
+    category: content
+    purpose: Telegram messaging service and website.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/telegram
+      - https://core.telegram.org/api/datacenter
+  - pattern: =t.me
+    company: telegram
+    category: content
+    purpose: Telegram link shortener for profiles, groups and channels.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/telegram
+  - pattern: telesco.pe
+    company: telegram
+    category: content
+    purpose: Telegram media delivery.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/telegram
+  - pattern: cdn-telegram.org
+    company: telegram
+    category: content
+    purpose: Telegram content delivery network.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/telegram

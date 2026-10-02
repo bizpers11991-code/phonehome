@@ -1,0 +1,95 @@
+# Everyday devices: operating systems, browsers, productivity and messaging
+# apps, game consoles, and the web/app trackers they load.
+companies:
+  - id: canonical
+    name: Canonical (Ubuntu)
+    country: GB
+    url: https://canonical.com
+  - id: gnome
+    name: GNOME Foundation
+    country: US
+    url: https://foundation.gnome.org
+  - id: identrust
+    name: IdenTrust
+    country: US
+    url: https://www.identrust.com
+  - id: nintendo
+    name: Nintendo
+    country: JP
+    url: https://www.nintendo.com
+  - id: valve
+    name: Valve (Steam)
+    country: US
+    url: https://store.steampowered.com
+  - id: slack
+    name: Slack Technologies (Salesforce)
+    country: US
+    url: https://slack.com
+  - id: zoom
+    name: Zoom Communications
+    country: US
+    url: https://zoom.us
+  - id: dropbox
+    name: Dropbox
+    country: US
+    url: https://www.dropbox.com
+  - id: notion
+    name: Notion Labs
+    country: US
+    url: https://www.notion.com
+  - id: github
+    name: GitHub (Microsoft)
+    country: US
+    url: https://github.com
+  - id: signal
+    name: Signal Technology Foundation
+    country: US
+    url: https://signal.org
+  - id: telegram
+    name: Telegram
+    country: AE
+    url: https://telegram.org
+  - id: linkedin
+    name: LinkedIn (Microsoft)
+    country: US
+    url: https://www.linkedin.com
+  - id: snap
+    name: Snap Inc.
+    country: US
+    url: https://www.snap.com
+  - id: bytedance
+    name: ByteDance (TikTok)
+    country: CN
+    url: https://www.bytedance.com
+  - id: x-corp
+    name: X Corp. (Twitter)
+    country: US
+    url: https://x.com
+  - id: hotjar
+    name: Hotjar (Contentsquare)
+    country: MT
+    url: https://www.hotjar.com
+  - id: outbrain
+    name: Outbrain (Teads)
+    country: US
+    url: https://www.outbrain.com
+  - id: taboola
+    name: Taboola
+    country: US
+    url: https://www.taboola.com
+  - id: quantcast
+    name: Quantcast
+    country: US
+    url: https://www.quantcast.com
+  - id: unity
+    name: Unity Technologies
+    country: US
+    url: https://unity.com
+  - id: liftoff
+    name: Liftoff (Vungle)
+    country: US
+    url: https://liftoff.ai
+  - id: smaato
+    name: Smaato (Verve Group)
+    country: US
+    url: https://www.smaato.com
