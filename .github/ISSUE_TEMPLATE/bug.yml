@@ -23,13 +23,13 @@ body:
     id: install
     attributes:
       label: How do you run it?
-      options: [Docker, Binary + systemd, Built from source, Other]
+      options: [Docker / Compose, Binary + systemd (install.sh), OpenWrt, Unraid, Synology, Proxmox LXC, Homebrew, AUR, Built from source, Other]
   - type: dropdown
     id: sources
     attributes:
       label: Data source
       multiple: true
-      options: [Pi-hole v5, Pi-hole v6, AdGuard Home, dnsmasq log, DHCP leases, conntrack, Demo mode]
+      options: [Pi-hole v5, Pi-hole v6, Pi-hole v6 API, AdGuard Home, dnsmasq log, DHCP leases, conntrack, Demo mode]
   - type: textarea
     id: logs
     attributes:

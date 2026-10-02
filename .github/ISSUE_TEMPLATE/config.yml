@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/bizpers11991-code/phonehome/security/advisories/new
+    about: Please report security problems privately, not as an issue.
+  - name: Setup guides and FAQ
+    url: https://github.com/bizpers11991-code/phonehome/tree/main/docs/setup
+    about: Step-by-step setup for Pi-hole, AdGuard Home, OpenWrt, Unraid, Synology and Proxmox.
