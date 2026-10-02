@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
+	"github.com/bizpers11991-code/phonehome/internal/source"
 )
 
 // seekSlack is how far before the cursor's time reading starts. AdGuard
@@ -131,7 +132,7 @@ func parseCursor(c string) (position, error) {
 	t, err := time.Parse(time.RFC3339Nano, ts)
 	n, err2 := strconv.Atoi(ns)
 	if !ok || err != nil || err2 != nil || n < 1 {
-		return position{}, fmt.Errorf("adguard: bad cursor %q", c)
+		return position{}, fmt.Errorf("adguard: bad cursor %q: %w", c, source.ErrBadCursor)
 	}
 	return position{t, n}, nil
 }
@@ -162,23 +163,51 @@ func (l *QueryLog) FetchDNS(ctx context.Context, cursor string, limit int) ([]mo
 		}
 	}()
 
-	s := scan{cur: cur, found: cursor == "", limit: limit, name: l.name, counts: map[int64]int{}}
-	for _, f := range files {
-		if err := s.file(ctx, f); err != nil {
-			return nil, cursor, err
-		}
-		if s.full() {
-			break
-		}
+	s, err := l.scan(ctx, files, cur, cursor == "", limit, true)
+	if err == nil && !s.found && s.seeked {
+		// The binary search assumes entries are roughly in time order. A
+		// clock that jumped breaks that, so look through whole files once
+		// before deciding the cursor's entry is gone.
+		s, err = l.scan(ctx, files, cur, false, limit, false)
 	}
-	if !s.found && s.orphansLast != (position{}) {
-		// The cursor's entry has vanished; fall back to time order.
-		s.out, s.last, s.consumed = s.orphans, s.orphansLast, true
+	if err != nil {
+		return nil, cursor, err
+	}
+	if !s.found {
+		switch {
+		case s.orphansLast != (position{}):
+			// The cursor's entry has vanished; fall back to time order.
+			s.out, s.last, s.consumed = s.orphans, s.orphansLast, true
+		case s.entries > 0:
+			// It has vanished and every entry left is stamped before it:
+			// the clock was set back, then the log rotated. Entries only
+			// leave the log from the front, so all of these were written
+			// after the cursor's entry; read them from the start rather
+			// than wait for the clock to catch up.
+			if s, err = l.scan(ctx, files, position{}, true, limit, false); err != nil {
+				return nil, cursor, err
+			}
+		}
 	}
 	if !s.consumed {
 		return nil, cursor, nil
 	}
 	return s.out, s.last.String(), nil
+}
+
+// scan reads files in order from the cursor, binary-searching each file
+// for a starting point when seek is set.
+func (l *QueryLog) scan(ctx context.Context, files []*os.File, cur position, found bool, limit int, seek bool) (*scan, error) {
+	s := &scan{cur: cur, found: found, limit: limit, name: l.name, counts: map[int64]int{}, seek: seek}
+	for _, f := range files {
+		if err := s.file(ctx, f); err != nil {
+			return nil, err
+		}
+		if s.full() {
+			break
+		}
+	}
+	return s, nil
 }
 
 // open opens querylog.json.1 (if any) and querylog.json, retrying if
@@ -231,9 +260,16 @@ type scan struct {
 	found bool
 	limit int
 	name  string
+	seek  bool // start each file near the cursor's time
+
+	seeked  bool // some file was read from past its start
+	entries int  // parsable entries seen
 
 	// counts numbers the entries stamped with each instant, from where
-	// the scan started, exactly as the next scan will number them.
+	// the scan started, exactly as the next scan will number them. Every
+	// entry is counted, so that an entry stamped with the same instant as
+	// one before the cursor (after the clock went back) gets a number of
+	// its own instead of the earlier entry's.
 	counts map[int64]int
 
 	out      []model.DNSQuery
@@ -254,8 +290,9 @@ func (s *scan) file(ctx context.Context, f *os.File) error {
 		return fmt.Errorf("adguard: %w", err)
 	}
 	var start int64
-	if !s.cur.t.IsZero() {
+	if s.seek && !s.cur.t.IsZero() {
 		start = seek(f, fi.Size(), s.cur.t.Add(-seekSlack))
+		s.seeked = s.seeked || start > 0
 	}
 	r := bufio.NewReaderSize(io.NewSectionReader(f, start, fi.Size()-start), 1<<16)
 	for i := 0; ; i++ {
@@ -291,17 +328,17 @@ func (s *scan) file(ctx context.Context, f *os.File) error {
 
 func (s *scan) add(e *entry) {
 	k := e.T.UnixNano()
+	s.counts[k]++
+	s.entries++
 	if !s.found {
 		switch {
 		case e.T.Equal(s.cur.t):
-			s.counts[k]++
 			s.found = s.counts[k] == s.cur.n
 		case e.T.After(s.cur.t) && !s.orphansDone:
 			if len(s.orphans) >= s.limit {
 				s.orphansDone = true
 				return
 			}
-			s.counts[k]++
 			s.orphansLast = position{e.T, s.counts[k]}
 			if q, ok := s.query(e); ok {
 				s.orphans = append(s.orphans, q)
@@ -309,7 +346,6 @@ func (s *scan) add(e *entry) {
 		}
 		return
 	}
-	s.counts[k]++
 	s.last, s.consumed = position{e.T, s.counts[k]}, true
 	if q, ok := s.query(e); ok {
 		s.out = append(s.out, q)

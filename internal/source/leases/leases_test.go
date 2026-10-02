@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/netip"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
@@ -100,6 +101,19 @@ func TestParseDhcpdMalformed(t *testing.T) {
 	for name, in := range tests {
 		if _, err := parse([]byte(in)); err == nil {
 			t.Errorf("%s: no error", name)
+		}
+	}
+}
+
+// TestDhcpdHostnamePunctuation checks that a client-chosen host name made
+// of dhcpd punctuation cannot break the parse of the whole file.
+func TestDhcpdHostnamePunctuation(t *testing.T) {
+	for _, name := range []string{"}", "{", ";", `"`, "#"} {
+		in := "lease 10.0.0.7 {\n  hardware ethernet 00:11:22:33:44:55;\n  client-hostname " +
+			strconv.Quote(name) + ";\n}\nlease 10.0.0.8 {\n  hardware ethernet 00:11:22:33:44:66;\n}\n"
+		ls, err := parse([]byte(in))
+		if err != nil || len(ls) != 2 || ls[0].Hostname != name {
+			t.Errorf("host name %q: got %+v, %v", name, ls, err)
 		}
 	}
 }

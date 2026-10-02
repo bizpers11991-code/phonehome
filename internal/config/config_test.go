@@ -105,6 +105,7 @@ func TestValidateMessages(t *testing.T) {
 		{"bad listen", `listen: "8099"`, "not host:port"},
 		{"empty db", `db: ""`, "db is empty"},
 		{"negative retention", `retention_days: -1`, "retention_days"},
+		{"huge retention", `retention_days: 106752`, "up to 36500"},
 		{"short interval", `interval: 10ms`, "interval"},
 		{"quiet range", `quiet_hours: {start: 1, end: 24}`, "0–23"},
 		{"quiet empty", `quiet_hours: {start: 3, end: 3}`, "empty"},

@@ -158,6 +158,64 @@ func TestCursorEntryGone(t *testing.T) {
 	}
 }
 
+// TestClockJump covers a host clock that was far ahead and then corrected:
+// entries after the jump reuse instants seen before it, and once the
+// future-stamped cursor entry rotates away nothing left is stamped after it.
+func TestClockJump(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "querylog.json")
+	line := func(ts, host string) string {
+		return `{"IP":"192.168.1.20","T":"` + ts + `","QH":"` + host + `","QT":"A","Result":{}}` + "\n"
+	}
+	appendFile(t, path, line("2026-10-02T10:00:00Z", "a.example")+
+		line("2068-10-02T10:00:00Z", "future.example")+
+		line("2026-10-02T10:00:00Z", "b.example"))
+	l := NewQueryLog(path)
+	got, cur := drain(t, l, "", 1)
+	equal(t, got, []string{
+		"a.example A 192.168.1.20 false",
+		"future.example A 192.168.1.20 false",
+		"b.example A 192.168.1.20 false",
+	})
+	if cur != "2026-10-02T10:00:00Z|2" {
+		t.Fatalf("cursor = %q", cur)
+	}
+
+	// Two rotations later only entries stamped before the cursor are left.
+	if err := os.WriteFile(path, []byte(line("2026-10-03T09:00:00Z", "c.example")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, _ = drain(t, l, "2068-10-02T10:00:00Z|1", 10)
+	equal(t, got, []string{"c.example A 192.168.1.20 false"})
+}
+
+// TestClockJumpLargeLog checks that a backward clock jump in a log big
+// enough for the binary search does not lose the cursor's entry.
+func TestClockJumpLargeLog(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "querylog.json")
+	var b strings.Builder
+	base := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	const n = 4000
+	for i := range n {
+		ts := base.Add(time.Duration(i) * time.Second)
+		if i >= n/2 {
+			ts = ts.Add(-24 * time.Hour) // NTP set the clock back a day
+		}
+		fmt.Fprintf(&b, `{"IP":"10.0.0.1","T":%q,"QH":"host%d.example","QT":"A","Result":{}}`+"\n", ts.Format(time.RFC3339Nano), i)
+	}
+	if err := os.WriteFile(path, []byte(b.String()), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, _ := drain(t, NewQueryLog(path), "", 333)
+	if len(got) != n {
+		t.Fatalf("read %d entries, want %d", len(got), n)
+	}
+	for i, s := range got {
+		if !strings.HasPrefix(s, fmt.Sprintf("host%d.example ", i)) {
+			t.Fatalf("entry %d = %q", i, s)
+		}
+	}
+}
+
 // TestLargeLog exercises the binary search that skips already-read parts
 // of a long log.
 func TestLargeLog(t *testing.T) {

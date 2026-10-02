@@ -116,7 +116,7 @@ func dhcpdLease(ip netip.Addr, body []string) (lease, bool) {
 		case len(st) == 3 && st[0] == "hardware" && st[1] == "ethernet":
 			l.MAC, _ = oui.Normalize(st[2])
 		case len(st) == 2 && st[0] == "client-hostname":
-			l.Hostname = st[1]
+			l.Hostname = strings.TrimPrefix(st[1], `"`)
 		case st[0] == "starts":
 			starts = dhcpdTime(st[1:])
 		case st[0] == "cltt":
@@ -150,6 +150,9 @@ func dhcpdTime(f []string) time.Time {
 
 // tokenize splits a dhcpd.leases file into words, decoded quoted strings,
 // and the punctuation ";", "{" and "}". Comments run from "#" to end of line.
+// A quoted string keeps its opening '"' so that one which decodes to ";",
+// "{" or "}" (a client may send "}" as its host name) is never taken for
+// punctuation; words cannot start with '"'.
 func tokenize(s string) ([]string, error) {
 	var toks []string
 	for i := 0; i < len(s); {
@@ -169,7 +172,7 @@ func tokenize(s string) ([]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			toks = append(toks, str)
+			toks = append(toks, `"`+str)
 			i += n
 		default:
 			j := i
