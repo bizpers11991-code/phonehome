@@ -1,0 +1,6 @@
+Fri Oct  2 14:20:00 2026 daemon.info dnsmasq[812]: query[A] ads.example.com from 192.168.1.20
+Fri Oct  2 14:20:00 2026 daemon.info dnsmasq[812]: config ads.example.com is NXDOMAIN (EDE: blocked)
+Fri Oct  2 14:20:01 2026 daemon.info dnsmasq[812]: query[A] stale.example.com from 192.168.1.21
+Fri Oct  2 14:20:01 2026 daemon.info dnsmasq[812]: reply stale.example.com is 93.184.216.34 (EDE: stale answer)
+Fri Oct  2 14:20:02 2026 daemon.info dnsmasq[812]: query[AAAA] early.example.com from 192.168.1.22
+Fri Oct  2 14:20:02 2026 daemon.info dnsmasq[812]: config early.example.com is REFUSED (EDE: not ready)
