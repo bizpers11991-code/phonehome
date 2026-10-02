@@ -7,7 +7,10 @@ listen: ":8099"
 # SQLite database file. Overridden by $PHONEHOME_DB.
 db: /var/lib/phonehome/phonehome.db
 
-# Delete lookups older than this many days. 0 keeps everything.
+# Delete lookups and connections older than this many days (at most 36500).
+# Old data is pruned once a day while phonehome runs, and after every
+# `phonehome ingest --once`. 0 keeps everything. A busy home with 25 devices
+# stores about 35 bytes per lookup: roughly 50 MB per month, 150 MB for 90 days.
 retention_days: 90
 
 # How often to read new data from the sources.
