@@ -34,6 +34,10 @@ companies:
     name: Roborock
     country: CN
     url: https://www.roborock.com
+  - id: dreame
+    name: Dreame Technology
+    country: CN
+    url: https://www.dreametech.com
   - id: ecovacs
     name: Ecovacs Robotics
     country: CN

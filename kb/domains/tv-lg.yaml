@@ -137,3 +137,12 @@ rules:
     kind_hint: tv
     evidence:
       - https://github.com/furkan-bayrak/lg-tv-blocklist/blob/main/docs/faq.md
+
+  # --- Content --------------------------------------------------------------
+  - pattern: ngfts.lge.com
+    category: content
+    purpose: LG Content Store host; a blocklist maintainer notes that blocking it stops thumbnails loading in the store.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/ad5020ba0e0a979970486b57b883aba0925f2801/SmartTV.txt

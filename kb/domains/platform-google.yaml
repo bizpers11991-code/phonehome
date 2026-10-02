@@ -1,6 +1,7 @@
 # Google / Alphabet: Android, Google TV, Chromecast, Firebase, ads, YouTube.
 # Much of this is essential plumbing (connectivity checks, time, push, updates).
 # Sources: Google's own allowlists (Android Enterprise, ChromeOS, FCM), AOSP,
+# the open-source Chromecast (Cast shell) and Firebase SDK code on GitHub,
 # Leith "Mobile Handset Privacy" (SecureComm 2021), Moghaddam et al. CCS 2019,
 # Varmarken et al. PETS 2020.
 company: google
@@ -13,6 +14,7 @@ rules:
     evidence:
       - https://android.googlesource.com/platform/packages/modules/NetworkStack/+/refs/heads/main/res/values/config.xml
       - https://support.google.com/work/android/answer/10513641?hl=en
+      - https://github.com/chromium/chromium/blob/a503bcd2433058f2aa728d4676f22f655ce56768/chromecast/net/connectivity_checker_impl.h
   - pattern: connectivitycheck.android.com
     category: essential
     purpose: Android connectivity check used to tell whether the network has working internet access.
@@ -22,10 +24,19 @@ rules:
       - https://support.google.com/chrome/a/answer/6334001?hl=en
   - pattern: clients3.google.com
     category: essential
-    purpose: Google endpoint used by ChromeOS and Google devices for clock sync and connectivity probing.
+    purpose: Google endpoint used by ChromeOS, Chromecast and other Google devices for clock sync and connectivity probing.
     confidence: high
     evidence:
       - https://support.google.com/chrome/a/answer/6334001?hl=en
+      - https://github.com/chromium/chromium/blob/a503bcd2433058f2aa728d4676f22f655ce56768/chromecast/net/net_switches.cc
+  - pattern: clients2.google.com
+    category: essential
+    purpose: Serves Chrome extension updates and receives Chromecast crash reports; blocking it stops extension updates.
+    confidence: high
+    evidence:
+      - https://github.com/chromium/chromium/blob/a503bcd2433058f2aa728d4676f22f655ce56768/extensions/common/extension_urls.cc
+      - https://github.com/chromium/chromium/blob/a503bcd2433058f2aa728d4676f22f655ce56768/chromecast/crash/linux/minidump_uploader.cc
+      - https://github.com/chromium/chromium/blob/a503bcd2433058f2aa728d4676f22f655ce56768/chromecast/browser/android/apk/src/org/chromium/chromecast/shell/CastCrashUploader.java
 
   # --- Essential: time ------------------------------------------------------
   - pattern: time.google.com
@@ -181,6 +192,13 @@ rules:
     confidence: medium
     evidence:
       - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: googlehomefoyer-pa.googleapis.com
+    category: essential
+    purpose: Google Home back end ("Foyer") that returns your home's device list and local-control tokens to the Google Home app.
+    confidence: low
+    evidence:
+      - https://github.com/leikoilja/glocaltokens/blob/198157bf5f31ef35153bd624fe9dcfd3fb858a11/glocaltokens/const.py
+      - https://github.com/leikoilja/glocaltokens/blob/198157bf5f31ef35153bd624fe9dcfd3fb858a11/glocaltokens/client.py
   - pattern: accounts.google.com
     category: essential
     purpose: Google account sign-in and authentication.
@@ -281,6 +299,12 @@ rules:
     confidence: high
     evidence:
       - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: firebaselogging-pa.googleapis.com
+    category: telemetry
+    purpose: Batch-log upload endpoint built into Firebase's Android data-transport library, which sends SDK logs and metrics to Google.
+    confidence: high
+    evidence:
+      - https://github.com/firebase/firebase-android-sdk/blob/e51192421f7e05225acd3a568bd30f1e06b8e69d/transport/transport-backend-cct/src/main/java/com/google/android/datatransport/cct/CCTDestination.java
   - pattern: crashlytics.com
     category: telemetry
     purpose: Firebase Crashlytics crash reporting and its settings, built into many TV and phone apps.

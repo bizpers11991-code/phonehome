@@ -20,3 +20,25 @@ rules:
     confidence: medium
     evidence:
       - https://github.com/tobiaswaelde/roborock-mqtt-bridge/issues/25
+  - pattern: usiot.roborock.com
+    category: essential
+    purpose: "Roborock account region lookup and sign-in (US) used by the Roborock app."
+    confidence: medium
+    evidence:
+      - https://github.com/Python-roborock/python-roborock/blob/a8260c5211e60647fc352d6b496b827865938b21/roborock/web_api.py
+  - pattern: api-us.roborock.com
+    category: essential
+    purpose: "Roborock cloud API (US) that serves the app its list of homes, rooms and devices."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/Python-roborock/python-roborock/blob/a8260c5211e60647fc352d6b496b827865938b21/roborock/web_api.py
+      - https://github.com/Python-roborock/python-roborock/blob/a8260c5211e60647fc352d6b496b827865938b21/roborock/testing/cloud.py
+  - pattern: mqtt-us.roborock.com
+    category: essential
+    purpose: "Roborock cloud MQTT broker (US) relaying commands and status between the app and the robot."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/Python-roborock/python-roborock/blob/a8260c5211e60647fc352d6b496b827865938b21/roborock/testing/cloud.py
+      - https://github.com/Python-roborock/python-roborock/blob/a8260c5211e60647fc352d6b496b827865938b21/roborock/devices/transport/mqtt_channel.py

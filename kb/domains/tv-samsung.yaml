@@ -210,6 +210,34 @@ rules:
     evidence:
       - https://wiki.samygo.tv/index.php?title=How_To_Disable_Firmware_Updates
       - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
+  - pattern: otnprd8.samsungcloudsolution.net
+    category: essential
+    purpose: Samsung TV software-update host; a blocklist maintainer lists it as required for updates and leaves it unblocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/ad5020ba0e0a979970486b57b883aba0925f2801/SmartTV.txt
+  - pattern: otnprd9.samsungcloudsolution.net
+    category: essential
+    purpose: Samsung TV software-update host; a blocklist maintainer lists it as required for updates and leaves it unblocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/ad5020ba0e0a979970486b57b883aba0925f2801/SmartTV.txt
+  - pattern: otnprd10.samsungcloudsolution.net
+    category: essential
+    purpose: Samsung TV software-update host; a blocklist maintainer lists it as required for updates and leaves it unblocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/ad5020ba0e0a979970486b57b883aba0925f2801/SmartTV.txt
+  - pattern: otnprd11.samsungcloudsolution.net
+    category: essential
+    purpose: Samsung TV software-update host; a blocklist maintainer lists it as required for updates and leaves it unblocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/ad5020ba0e0a979970486b57b883aba0925f2801/SmartTV.txt
   - pattern: oempprd.samsungcloudsolution.com
     category: essential
     purpose: Supplies the list of installed-app updates available to Samsung TVs.
