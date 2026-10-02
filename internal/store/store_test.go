@@ -137,6 +137,40 @@ func TestDNSRoundTrip(t *testing.T) {
 	}
 }
 
+// TestDNSMultiRowInsert checks batches around the rows-per-statement size,
+// and that a period starting after a domain's earlier lookups still finds
+// its later ones.
+func TestDNSMultiRowInsert(t *testing.T) {
+	ctx := context.Background()
+	s := openMem(t)
+	var in []model.DNSQuery
+	for _, n := range []int{1, insertRows - 1, insertRows, insertRows + 1, 2*insertRows + 3} {
+		var batch []model.DNSQuery
+		for range n {
+			i := len(in) + len(batch)
+			batch = append(batch, q(time.Duration(i)*time.Second, "192.168.1.10", fmt.Sprintf("d%d.example", i%7)))
+		}
+		if err := s.InsertDNS(ctx, batch); err != nil {
+			t.Fatal(err)
+		}
+		in = append(in, batch...)
+	}
+	got, err := s.DNSBetween(ctx, period(0, time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, in) {
+		t.Fatalf("got %d lookups, want %d, or they differ", len(got), len(in))
+	}
+	got, err = s.DNSBetween(ctx, period(100*time.Second, time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, in[100:]) {
+		t.Fatalf("got %d lookups from 100s, want %d", len(got), len(in)-100)
+	}
+}
+
 func TestDNSUnknownDomainCacheAcrossBatches(t *testing.T) {
 	ctx := context.Background()
 	s := openMem(t)

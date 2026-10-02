@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
 )
@@ -180,12 +181,11 @@ func (s *Store) InsertDNS(ctx context.Context, qs []model.DNSQuery) error {
 			return err
 		}
 		seq -= int64(len(qs))
-		ins, err := tx.PrepareContext(ctx,
-			`INSERT INTO dns(ts, seq, client, domain_id, qtype, blocked, source_id) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-		if err != nil {
-			return err
-		}
-		for _, q := range qs {
+		// Rows go in insertRows at a time: each statement execution costs
+		// far more in database/sql and the driver than a row does in SQLite.
+		var full, tail *sql.Stmt
+		args := make([]any, 0, insertRows*7)
+		for i, q := range qs {
 			ts := nanos(q.Time)
 			dom, err := lk.domain(ctx, q.Domain, ts)
 			if err != nil {
@@ -196,9 +196,23 @@ func (s *Store) InsertDNS(ctx context.Context, qs []model.DNSQuery) error {
 				return err
 			}
 			seq++
-			if _, err := ins.ExecContext(ctx, ts, seq, ipBytes(q.ClientIP), dom, q.QType, q.Blocked, src); err != nil {
+			args = append(args, ts, seq, ipBytes(q.ClientIP), dom, q.QType, q.Blocked, src)
+			if len(args) < insertRows*7 && i < len(qs)-1 {
+				continue
+			}
+			stmt := &full
+			if len(args) < insertRows*7 {
+				stmt = &tail // the last, short chunk
+			}
+			if *stmt == nil {
+				if *stmt, err = tx.PrepareContext(ctx, insertDNS(len(args)/7)); err != nil {
+					return err
+				}
+			}
+			if _, err := (*stmt).ExecContext(ctx, args...); err != nil {
 				return err
 			}
+			args = args[:0]
 		}
 		return lk.flush(ctx)
 	})
@@ -209,52 +223,126 @@ func (s *Store) InsertDNS(ctx context.Context, qs []model.DNSQuery) error {
 	return nil
 }
 
+// insertRows is how many lookups one INSERT statement carries.
+const insertRows = 64
+
+// insertDNS returns an INSERT statement for n lookups.
+func insertDNS(n int) string {
+	var b strings.Builder
+	b.WriteString(`INSERT INTO dns(ts, seq, client, domain_id, qtype, blocked, source_id) VALUES `)
+	for i := range n {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(`(?, ?, ?, ?, ?, ?, ?)`)
+	}
+	return b.String()
+}
+
 // DNSBetween returns the lookups in p, oldest first.
+//
+// A month of a busy home is over a million rows, so this is the store's
+// hottest read. Rather than joining every row to domains and sources (two
+// b-tree lookups per row), it reads the ids and resolves them from maps
+// loaded up front, and it sizes the result from a count so the slice is
+// allocated once instead of grown by doubling. It runs in one read
+// transaction, so the names, the count and the rows are one snapshot even
+// while Prune deletes domains and ingestion inserts.
 func (s *Store) DNSBetween(ctx context.Context, p model.Period) ([]model.DNSQuery, error) {
-	rows, err := s.db.QueryContext(ctx, `
-		SELECT q.ts, q.client, d.name, q.qtype, q.blocked, s.name
-		FROM dns q
-		JOIN domains d ON d.id = q.domain_id
-		JOIN sources s ON s.id = q.source_id
-		WHERE q.ts >= ? AND q.ts < ?
-		ORDER BY q.ts, q.seq`, nanos(p.From), nanos(p.To))
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return nil, fmt.Errorf("store: dns between: %w", err)
+	}
+	defer tx.Rollback()
+	from, to := nanos(p.From), nanos(p.To)
+
+	var n int
+	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM dns WHERE ts >= ? AND ts < ?`, from, to).Scan(&n); err != nil {
+		return nil, fmt.Errorf("store: dns between: %w", err)
+	}
+	if n == 0 {
+		return nil, nil
+	}
+	srcNames, err := names(ctx, tx, `SELECT id, name FROM sources`)
+	if err != nil {
+		return nil, fmt.Errorf("store: dns between: %w", err)
+	}
+	// domains.last_ts is at or after every lookup of the domain, so only
+	// domains with last_ts in or after p can be referred to.
+	domNames, err := names(ctx, tx, `SELECT id, name FROM domains WHERE last_ts >= ?`, from)
+	if err != nil {
+		return nil, fmt.Errorf("store: dns between: %w", err)
+	}
+
+	rows, err := tx.QueryContext(ctx, `
+		SELECT ts, client, domain_id, qtype, blocked, source_id
+		FROM dns
+		WHERE ts >= ? AND ts < ?
+		ORDER BY ts, seq`, from, to)
 	if err != nil {
 		return nil, fmt.Errorf("store: dns between: %w", err)
 	}
 	defer rows.Close()
 
-	// Domain, qtype and source strings repeat heavily; interning them keeps
-	// a week of lookups from holding a million copies of the same names.
-	intern := make(map[string]string)
-	str := func(b sql.RawBytes) string {
-		if v, ok := intern[string(b)]; ok {
-			return v
-		}
-		v := string(b)
-		intern[v] = v
-		return v
-	}
-	var out []model.DNSQuery
+	// qtype strings repeat heavily; interning them keeps a month of
+	// lookups from holding a million copies of "A" and "AAAA".
+	qtypes := make(map[string]string)
+	out := make([]model.DNSQuery, 0, n)
 	for rows.Next() {
 		var (
-			ts                   int64
-			client, dom, qt, src sql.RawBytes
-			blocked              bool
+			ts, dom, src int64
+			client, qt   sql.RawBytes
+			blocked      bool
 		)
 		if err := rows.Scan(&ts, &client, &dom, &qt, &blocked, &src); err != nil {
 			return nil, fmt.Errorf("store: dns between: %w", err)
 		}
+		qtype, ok := qtypes[string(qt)]
+		if !ok {
+			qtype = string(qt)
+			qtypes[qtype] = qtype
+		}
+		domain, ok := domNames[dom]
+		if !ok {
+			// Not expected (InsertDNS keeps last_ts current), but never
+			// return a lookup without its domain.
+			if err := tx.QueryRowContext(ctx, `SELECT name FROM domains WHERE id = ?`, dom).Scan(&domain); err != nil {
+				return nil, fmt.Errorf("store: dns between: domain %d: %w", dom, err)
+			}
+			domNames[dom] = domain
+		}
 		out = append(out, model.DNSQuery{
 			Time:     fromNanos(ts),
 			ClientIP: ipFrom(client),
-			Domain:   str(dom),
-			QType:    str(qt),
+			Domain:   domain,
+			QType:    qtype,
 			Blocked:  blocked,
-			Source:   str(src),
+			Source:   srcNames[src],
 		})
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("store: dns between: %w", err)
 	}
 	return out, nil
+}
+
+// names runs an "id, name" query and returns the result as a map.
+func names(ctx context.Context, tx *sql.Tx, q string, args ...any) (map[int64]string, error) {
+	rows, err := tx.QueryContext(ctx, q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	m := make(map[int64]string)
+	for rows.Next() {
+		var (
+			id   int64
+			name string
+		)
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, err
+		}
+		m[id] = name
+	}
+	return m, rows.Err()
 }
