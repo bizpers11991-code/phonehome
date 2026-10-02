@@ -42,3 +42,19 @@ func Grade(r model.DeviceReport) string {
 	}
 	return "A"
 }
+
+// HomeGrade grades the whole home: it is as good as its worst device, so the
+// result is the worst grade among devs, or "" when there are no devices to
+// grade. Grades outside A–F (such as "") are ignored. See docs/grading.md.
+func HomeGrade(devs []model.DeviceReport) string {
+	worst := ""
+	for _, d := range devs {
+		switch d.Grade {
+		case "A", "B", "C", "D", "F":
+			if d.Grade > worst {
+				worst = d.Grade
+			}
+		}
+	}
+	return worst
+}

@@ -35,3 +35,31 @@ func TestGrade(t *testing.T) {
 		}
 	}
 }
+
+func TestHomeGrade(t *testing.T) {
+	devs := func(grades ...string) []model.DeviceReport {
+		out := make([]model.DeviceReport, len(grades))
+		for i, g := range grades {
+			out[i].Grade = g
+		}
+		return out
+	}
+	tests := []struct {
+		name string
+		devs []model.DeviceReport
+		want string
+	}{
+		{"no devices", nil, ""},
+		{"one device", devs("B"), "B"},
+		{"worst wins", devs("A", "D", "B"), "D"},
+		{"F beats D", devs("D", "F", "A"), "F"},
+		{"all quiet", devs("A", "A"), "A"},
+		{"ungraded devices are ignored", devs("", "C", "?"), "C"},
+		{"only ungraded devices", devs(""), ""},
+	}
+	for _, tt := range tests {
+		if got := HomeGrade(tt.devs); got != tt.want {
+			t.Errorf("%s: HomeGrade = %q, want %q", tt.name, got, tt.want)
+		}
+	}
+}

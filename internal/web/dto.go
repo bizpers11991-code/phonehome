@@ -21,6 +21,7 @@ type reportDTO struct {
 	Total       int           `json:"total"`
 	Snooping    int           `json:"snooping"`
 	SnoopShare  float64       `json:"snoopShare"`
+	Grade       string        `json:"grade"` // home grade: the worst device's; "" with no devices
 	Categories  []categoryDTO `json:"categories"`
 	Devices     []deviceDTO   `json:"devices"`
 }
@@ -170,6 +171,7 @@ func newReportDTO(r model.HomeReport) reportDTO {
 		Total:       r.Total,
 		Snooping:    r.Snooping,
 		SnoopShare:  share(r.Snooping, r.Total),
+		Grade:       r.Grade,
 		Devices:     make([]deviceDTO, 0, len(r.Devices)),
 	}
 	for _, c := range model.Categories() {

@@ -250,7 +250,8 @@ type HomeReport struct {
 	Total       int
 	Snooping    int
 	ByCategory  map[Category]int
-	Demo        bool // true when built from synthetic demo data
+	Grade       string // "A".."F", the worst device grade; "" with no devices. See docs/grading.md
+	Demo        bool   // true when built from synthetic demo data
 }
 
 // SourceStatus is the health of one ingestion source.

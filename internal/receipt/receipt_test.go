@@ -251,3 +251,28 @@ func TestCountryNotRepeated(t *testing.T) {
 		}
 	}
 }
+
+// The home stamp prints HomeReport.Grade as computed by analyze; it must not
+// re-derive a grade from the device list.
+func TestHomeStampUsesHomeGrade(t *testing.T) {
+	stamp := func(r model.HomeReport) string {
+		for _, l := range Home(r, Options{Now: printed}).Lines {
+			if l.Kind == Stamp {
+				return l.Text
+			}
+		}
+		t.Fatal("home receipt has no stamp")
+		return ""
+	}
+	r := home()
+	if got := stamp(r); got != "F" {
+		t.Errorf("stamp = %q, want F", got)
+	}
+	r.Grade = "B"
+	if got := stamp(r); got != "B" {
+		t.Errorf("stamp = %q, want the home grade B, not the worst device's", got)
+	}
+	if got := stamp(model.HomeReport{}); got != "?" {
+		t.Errorf("empty home stamp = %q, want ?", got)
+	}
+}

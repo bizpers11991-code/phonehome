@@ -383,8 +383,12 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 	if r.Total > 0 {
 		share = r.Snooping * 100 / r.Total
 	}
-	fmt.Fprintf(w, "Your devices called home %s times in the last %d days. %d%% of that was about you.\n\n",
+	fmt.Fprintf(w, "Your devices called home %s times in the last %d days. %d%% of that was about you.\n",
 		thousands(r.Total), days, share)
+	if r.Grade != "" {
+		fmt.Fprintf(w, "Home grade: %s (as good as its worst device).\n", r.Grade)
+	}
+	fmt.Fprintln(w)
 	for _, d := range r.Devices {
 		fmt.Fprintf(w, "%s  %-28s %8s lookups  %7s snooping/day  (%s)\n",
 			gradeOrDash(d.Grade), d.Device.DisplayName(), thousands(d.Total), thousands(int(d.PerDay)), d.Device.Kind)
