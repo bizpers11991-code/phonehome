@@ -1,0 +1,18 @@
+# Linux desktops: NetworkManager connectivity checks.
+rules:
+  - pattern: connectivity-check.ubuntu.com
+    company: canonical
+    category: essential
+    purpose: Ubuntu connectivity check that tells NetworkManager whether the internet is reachable or a captive portal is in the way.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://documentation.ubuntu.com/core/explanation/system-snaps/network-manager/how-to-guides/configure-the-snap/connectivity-check/
+  - pattern: nmcheck.gnome.org
+    company: gnome
+    category: essential
+    purpose: GNOME-hosted NetworkManager connectivity check that detects captive portals and lost internet access.
+    confidence: medium
+    kind_hint: computer
+    evidence:
+      - https://discourse.gnome.org/t/please-change-the-response-of-http-nmcheck-gnome-org/12900

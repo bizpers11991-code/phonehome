@@ -1,0 +1,164 @@
+# Web browsers: Firefox and Chrome/ChromeOS services not covered elsewhere.
+# Sources: Mozilla's own documentation and bug tracker; Google's Chrome and
+# ChromeOS hostname allowlist; Google developer docs.
+rules:
+  # --- Mozilla Firefox ------------------------------------------------------
+  - pattern: firefox-portal-detection.com
+    company: mozilla
+    category: essential
+    purpose: Firefox connectivity and captive-portal check (replaced detectportal.firefox.com in 2026).
+    confidence: high
+    evidence:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=2049252
+  - pattern: detectportal.firefox.com
+    company: mozilla
+    category: essential
+    purpose: Older Firefox connectivity and captive-portal check.
+    confidence: high
+    evidence:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=2049252
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1307867
+  - pattern: aus5.mozilla.org
+    company: mozilla
+    category: essential
+    purpose: Firefox update service (Balrog) that tells the browser which updates are available.
+    confidence: high
+    evidence:
+      - https://mozilla-balrog.readthedocs.io/en/latest/infrastructure.html
+  - pattern: shavar.services.mozilla.com
+    company: mozilla
+    category: essential
+    purpose: Updates Firefox's tracking-protection and other safety blocklists.
+    confidence: high
+    evidence:
+      - https://bugzilla.mozilla.org/show_bug.cgi?id=1410586
+      - https://wiki.mozilla.org/Services/Shavar
+  - pattern: firefox.settings.services.mozilla.com
+    company: mozilla
+    category: essential
+    purpose: Firefox Remote Settings, which delivers configuration and data collections to the browser.
+    confidence: medium
+    evidence:
+      - https://firefox-source-docs.mozilla.org/services/settings/index.html
+  - pattern: push.services.mozilla.com
+    company: mozilla
+    category: essential
+    purpose: Mozilla Push Service, which delivers web push notifications to Firefox.
+    confidence: high
+    evidence:
+      - https://autopush.readthedocs.io/
+  - pattern: incoming.telemetry.mozilla.org
+    company: mozilla
+    category: telemetry
+    purpose: Receives Firefox and Mozilla app telemetry pings (usage, performance and technical data).
+    confidence: high
+    evidence:
+      - https://mozilla.github.io/glean/book/reference/general/initializing.html
+      - https://github.com/mozilla-mobile/firefox-ios/issues/11142
+
+  # --- Google Chrome and ChromeOS -------------------------------------------
+  - pattern: www.google.com
+    company: google
+    category: essential
+    purpose: Google Search and sign-in; ChromeOS also uses it as its HTTPS internet connectivity check.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: www.googleapis.com
+    company: google
+    category: essential
+    purpose: Google APIs endpoint that Chrome and ChromeOS use for sign-in, device management and connectivity checks.
+    confidence: medium
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: update.googleapis.com
+    company: google
+    category: essential
+    purpose: Update checks for Chrome extensions and apps.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: safebrowsing-cache.google.com
+    company: google
+    category: essential
+    purpose: Google Safe Browsing, which warns about dangerous websites and downloads.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: sb-ssl.google.com
+    company: google
+    category: essential
+    purpose: Google Safe Browsing, which warns about dangerous websites and downloads.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: safebrowsingrealtime.googleapis.com
+    company: google
+    category: essential
+    purpose: Real-time Google Safe Browsing checks of sites you visit.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: enterprise-safebrowsing.googleapis.com
+    company: google
+    category: essential
+    purpose: Google Safe Browsing for managed Chrome browsers.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: clients1.google.com
+    company: google
+    category: essential
+    purpose: Google client services endpoint that Google lists as required for Chrome and ChromeOS.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: clients2.google.com
+    company: google
+    category: essential
+    purpose: Google client services endpoint that Google lists as required for Chrome and ChromeOS.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: clients4.google.com
+    company: google
+    category: essential
+    purpose: Google client services endpoint that Google lists as required for Chrome and ChromeOS.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: clients5.google.com
+    company: google
+    category: essential
+    purpose: Google client services endpoint that Google lists as required for Chrome and ChromeOS.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: clients6.google.com
+    company: google
+    category: essential
+    purpose: Google client services endpoint that Google lists as required for Chrome and ChromeOS.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: chromereporting-pa.googleapis.com
+    company: google
+    category: telemetry
+    purpose: Chrome and ChromeOS reporting and metrics endpoint.
+    confidence: medium
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: chrome.google.com
+    company: google
+    category: content
+    purpose: Chrome Web Store for extensions and apps.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001
+  - pattern: fonts.googleapis.com
+    company: google
+    category: content
+    purpose: Google Fonts stylesheets that websites and apps load to display web fonts.
+    confidence: high
+    evidence:
+      - https://developers.google.com/fonts/docs/getting_started

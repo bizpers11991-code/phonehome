@@ -1,0 +1,161 @@
+# Game consoles and PC gaming: Nintendo Switch, PlayStation, Xbox and Steam.
+# Nintendo publishes no host list; Switch hosts come from the long-running
+# Switchbrew reverse-engineering wiki and the NintendoClients server list, so
+# they are medium confidence at most.
+rules:
+  # --- Nintendo Switch ------------------------------------------------------
+  - pattern: ctest.cdn.nintendo.net
+    company: nintendo
+    category: essential
+    purpose: Nintendo Switch internet connection test, which also detects captive portals.
+    confidence: medium
+    kind_hint: console
+    evidence:
+      - https://switchbrew.org/wiki/Network
+      - https://github.com/kinnay/NintendoClients/wiki/Server-List
+  - pattern: conntest.nintendowifi.net
+    company: nintendo
+    category: essential
+    purpose: Older Nintendo connection test that checks for internet access and captive portals.
+    confidence: medium
+    kind_hint: console
+    evidence:
+      - https://switchbrew.org/wiki/Internet_Browser
+  - pattern: d4c.nintendo.net
+    company: nintendo
+    category: essential
+    purpose: Nintendo Switch system update checks and downloads of system and eShop titles.
+    confidence: medium
+    kind_hint: console
+    evidence:
+      - https://switchbrew.org/wiki/Network
+      - https://github.com/kinnay/NintendoClients/wiki/Server-List
+  - pattern: ndas.srv.nintendo.net
+    company: nintendo
+    category: essential
+    purpose: Nintendo Switch device and application authentication for online services.
+    confidence: medium
+    kind_hint: console
+    evidence:
+      - https://switchbrew.org/wiki/Network
+      - https://github.com/kinnay/NintendoClients/wiki/Server-List
+  - pattern: accounts.nintendo.com
+    company: nintendo
+    category: essential
+    purpose: Nintendo Account sign-in and management.
+    confidence: medium
+    evidence:
+      - https://github.com/kinnay/NintendoClients/wiki/Server-List
+  - pattern: eshop.nintendo.net
+    company: nintendo
+    category: content
+    purpose: Nintendo eShop title information and content delivery.
+    confidence: medium
+    kind_hint: console
+    evidence:
+      - https://switchbrew.org/wiki/Network
+  - pattern: dg.srv.nintendo.net
+    company: nintendo
+    category: telemetry
+    purpose: Nintendo Switch "play reports" that periodically upload which software is used, when, and system details.
+    confidence: medium
+    kind_hint: console
+    evidence:
+      - https://switchbrew.org/wiki/BCAT_services
+      - https://github.com/kinnay/NintendoClients/wiki/Server-List
+  - pattern: er.srv.nintendo.net
+    company: nintendo
+    category: telemetry
+    purpose: Nintendo Switch error reports.
+    confidence: medium
+    kind_hint: console
+    evidence:
+      - https://github.com/kinnay/NintendoClients/wiki/Server-List
+
+  # --- PlayStation ----------------------------------------------------------
+  - pattern: update.playstation.net
+    company: sony
+    category: essential
+    purpose: PlayStation system software update downloads.
+    confidence: high
+    kind_hint: console
+    evidence:
+      - https://www.playstation.com/en-us/support/hardware/ps5/system-software/
+      - https://www.playstation.com/en-us/support/hardware/ps4/system-software/
+  - pattern: telemetry-console.api.playstation.com
+    company: sony
+    category: telemetry
+    purpose: PlayStation console telemetry; community reports say it carries usage data such as games and play time.
+    confidence: low
+    kind_hint: console
+    evidence:
+      - https://github.com/badmojr/1Hosts/issues/1842
+      - https://discourse.pi-hole.net/t/only-allow-playstation-domains-while-blocking-playstation-tracking-domains-at-the-same-time/74867
+  - pattern: playstation.net
+    company: sony
+    category: content
+    purpose: PlayStation Network services used by PlayStation consoles and apps.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/playstation
+  - pattern: playstation.com
+    company: sony
+    category: content
+    purpose: PlayStation website, PlayStation Store and account services.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/playstation
+  - pattern: sonyentertainmentnetwork.com
+    company: sony
+    category: content
+    purpose: PlayStation Network account and store services.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/playstation
+
+  # --- Xbox -----------------------------------------------------------------
+  - pattern: xboxservices.com
+    company: microsoft
+    category: content
+    purpose: Xbox network services used by the Xbox app on Windows.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+
+  # --- Steam ----------------------------------------------------------------
+  - pattern: steampowered.com
+    company: valve
+    category: content
+    purpose: Steam store, sign-in and client services.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/steam
+  - pattern: steamcommunity.com
+    company: valve
+    category: content
+    purpose: Steam Community profiles, chat and workshop.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/steam
+  - pattern: steamstatic.com
+    company: valve
+    category: content
+    purpose: Valve domain used by the Steam store and client.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/steam
+  - pattern: steamcontent.com
+    company: valve
+    category: content
+    purpose: Steam content servers that deliver game downloads and updates.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/steam
+      - https://lancache.net/news/2020/01/14/steam-client-now-supports-lancache/
+  - pattern: steamserver.net
+    company: valve
+    category: content
+    purpose: Valve domain used by the Steam client's online services.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/steam

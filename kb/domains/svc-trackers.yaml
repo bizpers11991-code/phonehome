@@ -1,0 +1,137 @@
+# Web and app trackers, ad pixels and ad SDKs found on phones and laptops that
+# are not covered by svc-ad-tech / svc-analytics / svc-attribution.
+# Vendor docs where they name the host; otherwise DuckDuckGo Tracker Radar
+# (which records what each domain does) and Netify, at medium confidence.
+rules:
+  # --- Tag managers and site analytics --------------------------------------
+  - pattern: googletagmanager.com
+    company: google
+    category: tracking
+    purpose: Loads the Google tag, which sends site visits and events to Google Analytics and Google's ad products.
+    confidence: high
+    evidence:
+      - https://developers.google.com/tag-platform/gtagjs/install
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/googletagmanager.com.json
+  - pattern: clarity.ms
+    company: microsoft
+    category: telemetry
+    purpose: Microsoft Clarity site analytics, which records sessions and heatmaps of how visitors use a website.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-setup
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/clarity.ms.json
+  - pattern: hotjar.com
+    company: hotjar
+    category: telemetry
+    purpose: Hotjar site analytics and session replay, which records how visitors use a website.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/hotjar.com.json
+  - pattern: firebaselogging-pa.googleapis.com
+    company: google
+    category: telemetry
+    purpose: Firebase SDK logging endpoint that apps contact even when analytics or crash reporting is switched off.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/hostnames/firebaselogging-pa.googleapis.com
+      - https://github.com/firebase/firebase-ios-sdk/issues/5837
+      - https://github.com/nextcloud/ios/issues/1628
+
+  # --- Social and ad pixels ---------------------------------------------------
+  - pattern: ads.linkedin.com
+    company: linkedin
+    category: ads
+    purpose: LinkedIn Insight Tag pixel that reports website visits and conversions for LinkedIn ad campaigns.
+    confidence: high
+    evidence:
+      - https://www.linkedin.com/help/lms/answer/a425696
+  - pattern: snap.licdn.com
+    company: linkedin
+    category: ads
+    purpose: Hosts the LinkedIn Insight Tag script used for LinkedIn ad conversion tracking.
+    confidence: high
+    evidence:
+      - https://www.linkedin.com/help/lms/answer/a425696
+  - pattern: analytics.tiktok.com
+    company: bytedance
+    category: ads
+    purpose: TikTok Pixel, which reports website visits and events to TikTok for ad measurement.
+    confidence: medium
+    evidence:
+      - https://www.pixeldebugger.com/networks/tiktok
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/tiktok.com.json
+  - pattern: tr.snapchat.com
+    company: snap
+    category: ads
+    purpose: Snap Pixel endpoint that reports website visits and conversions for Snapchat ads.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/snapchat.com.json
+  - pattern: sc-static.net
+    company: snap
+    category: ads
+    purpose: Hosts Snap's ad pixel and tracking scripts.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/sc-static.net.json
+  - pattern: ads-twitter.com
+    company: x-corp
+    category: ads
+    purpose: X (Twitter) ad pixel that tracks website visits and conversions for X ads.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/ads-twitter.com.json
+
+  # --- Ad networks and exchanges ----------------------------------------------
+  - pattern: adnxs.com
+    company: microsoft
+    category: ads
+    purpose: Microsoft (formerly Xandr/AppNexus) ad exchange that auctions and serves ads on websites and apps.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/adnxs.com.json
+  - pattern: outbrain.com
+    company: outbrain
+    category: ads
+    purpose: Outbrain sponsored-content recommendation ads and tracking on news sites.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/outbrain.com.json
+  - pattern: taboola.com
+    company: taboola
+    category: ads
+    purpose: Taboola sponsored-content recommendation ads and tracking on news sites.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/taboola.com.json
+  - pattern: quantserve.com
+    company: quantcast
+    category: ads
+    purpose: Quantcast audience measurement and ad targeting tags.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/quantserve.com.json
+  - pattern: smaato.net
+    company: smaato
+    category: ads
+    purpose: Smaato mobile ad exchange that serves ads inside apps and websites.
+    confidence: medium
+    evidence:
+      - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/smaato.net.json
+
+  # --- Mobile game ad SDKs ----------------------------------------------------
+  - pattern: unityads.unity3d.com
+    company: unity
+    category: ads
+    purpose: Unity Ads, the ad network built into many mobile games.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/domains/unity3d.com
+      - https://docs.unity.com/en-us/grow/ads
+  - pattern: vungle.com
+    company: liftoff
+    category: ads
+    purpose: Liftoff (Vungle) in-app video ad network used by mobile games.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/vungle

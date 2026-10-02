@@ -1,0 +1,365 @@
+# Microsoft: Windows, Edge and Microsoft 365 endpoints not covered by
+# platform-microsoft.yaml. Sources: Microsoft's Windows 11 endpoint list, the
+# Microsoft 365 URL list, the Microsoft Edge allowlist, and the German BSI's
+# Office telemetry analysis.
+company: microsoft
+rules:
+  # --- Essential: time, sign-in, certificates ------------------------------
+  - pattern: time.windows.com
+    category: essential
+    purpose: Windows' default time server, used by PCs that are not in a domain to set the clock.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://learn.microsoft.com/en-us/windows-server/networking/windows-time-service/how-the-windows-time-service-works
+  - pattern: microsoftonline.com
+    category: essential
+    purpose: Microsoft Entra ID sign-in for work and school accounts in Microsoft 365, Teams and Edge.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+  - pattern: login.microsoft.com
+    category: essential
+    purpose: Microsoft account and work-account sign-in.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+  - pattern: login.windows.net
+    category: essential
+    purpose: Microsoft Entra ID sign-in endpoint used by Microsoft 365 apps and Edge profiles.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+  - pattern: account.live.com
+    category: essential
+    purpose: Personal Microsoft account sign-in and account management.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: msauth.net
+    category: essential
+    purpose: Hosts the Microsoft sign-in pages and scripts; blocking it breaks Microsoft account sign-in.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: msftauth.net
+    category: essential
+    purpose: Hosts Microsoft sign-in page content; blocking it breaks Microsoft account sign-in.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: crl.microsoft.com
+    category: essential
+    purpose: Microsoft certificate revocation lists, used to check that certificates are still valid.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: mscrl.microsoft.com
+    category: essential
+    purpose: Microsoft certificate revocation lists, used to check that certificates are still valid.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: oneocsp.microsoft.com
+    category: essential
+    purpose: Microsoft certificate status (OCSP) checks for HTTPS certificates.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: ocsp.msocsp.com
+    category: essential
+    purpose: Microsoft certificate status (OCSP) checks for HTTPS certificates.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+
+  # --- Essential: updates, configuration, security --------------------------
+  - pattern: officecdn.microsoft.com
+    category: essential
+    purpose: Microsoft 365 Apps content delivery network that Office installs and monthly updates download from.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365-apps/updates/overview-update-process-microsoft-365-apps
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: officeclient.microsoft.com
+    category: essential
+    purpose: Office client configuration service that Microsoft lists as required for Microsoft 365 Apps.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: activation.sls.microsoft.com
+    category: essential
+    purpose: Microsoft software licensing service that Microsoft lists as required for Microsoft 365 Apps.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: edge.microsoft.com
+    category: essential
+    purpose: Microsoft Edge services such as sync, component and blocklist updates, Password Monitor and the extension store.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: config.edge.skype.com
+    category: essential
+    purpose: Experimentation and configuration service that Edge and other Microsoft apps read their settings from.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: urs.microsoft.com
+    category: essential
+    purpose: Microsoft Defender SmartScreen checks of websites and downloads against known threats.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+  - pattern: iecvlist.microsoft.com
+    category: essential
+    purpose: Microsoft Edge compatibility list; Microsoft says Edge requires it to reach external websites.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+
+  # --- Telemetry ------------------------------------------------------------
+  - pattern: watson.microsoft.com
+    category: telemetry
+    purpose: Windows Error Reporting, which uploads crash and error reports to Microsoft.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: nexus.officeapps.live.com
+    category: telemetry
+    purpose: Office telemetry upload endpoint used by the Nexus diagnostic-data module in Office apps.
+    confidence: high
+    evidence:
+      - https://www.bsi.bund.de/SharedDocs/Downloads/DE/BSI/Publikationen/Studien/Office_Telemetrie/Office_Telemetrie.pdf?__blob=publicationFile&v=5
+  - pattern: diagnostics.office.com
+    category: telemetry
+    purpose: Feedback and diagnostics service for Microsoft Edge on desktop and mobile.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+
+  # --- Ads ------------------------------------------------------------------
+  - pattern: fd.api.iris.microsoft.com
+    category: ads
+    purpose: Windows Spotlight service for lock-screen images, suggested apps, account notifications and Windows tips.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+
+  # --- Content: Microsoft 365, OneDrive, Teams ------------------------------
+  - pattern: office.com
+    category: content
+    purpose: Microsoft 365 and Office on the web, including Outlook on the web.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: office.net
+    category: content
+    purpose: Microsoft 365 shared content and configuration used by Office apps.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: office365.com
+    category: content
+    purpose: Exchange Online mail and calendar used by Outlook and other mail apps.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: outlook.com
+    category: content
+    purpose: Outlook.com and Exchange Online mail, calendar and contacts.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: officeapps.live.com
+    category: content
+    purpose: Office for the web and Office app services.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: cloud.microsoft
+    category: content
+    purpose: Microsoft 365 apps and services for signed-in users.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: static.microsoft
+    category: content
+    purpose: Static Microsoft 365 files (scripts, styles, images) served from CDNs.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: usercontent.microsoft
+    category: content
+    purpose: User content shown inside Microsoft 365 apps.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: graph.microsoft.com
+    category: content
+    purpose: Microsoft Graph API that Microsoft 365 apps and Edge use to read your mail, files and profile.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+  - pattern: sharepoint.com
+    category: content
+    purpose: SharePoint Online and OneDrive for work or school file storage.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: svc.ms
+    category: content
+    purpose: SharePoint and OneDrive service content.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: storage.live.com
+    category: content
+    purpose: OneDrive file storage and APIs.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: onedrive.live.com
+    category: content
+    purpose: OneDrive personal cloud storage.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: g.live.com
+    category: content
+    purpose: OneDrive service that tells the OneDrive app its current service addresses.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: oneclient.sfx.ms
+    category: content
+    purpose: OneDrive desktop app service endpoint that Microsoft lists as required.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: onenote.com
+    category: content
+    purpose: OneNote notebooks and sync.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: onenote.net
+    category: content
+    purpose: OneNote content delivery network.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: to-do.microsoft.com
+    category: content
+    purpose: Microsoft To Do app service.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: acompli.net
+    category: content
+    purpose: Outlook for Android and iOS mail service.
+    confidence: high
+    kind_hint: phone
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: outlookmobile.com
+    category: content
+    purpose: Outlook for Android and iOS mail service.
+    confidence: high
+    kind_hint: phone
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: teams.microsoft.com
+    category: content
+    purpose: Microsoft Teams chat, meetings and calls.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: config.teams.microsoft.com
+    category: essential
+    purpose: Configuration service the Microsoft Teams app loads its settings from.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: teams.live.com
+    category: content
+    purpose: Microsoft Teams (free) for personal accounts.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: statics.teams.cdn.live.net
+    category: content
+    purpose: Static files for the Microsoft Teams app.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: lync.com
+    category: content
+    purpose: Microsoft Teams (formerly Skype for Business) calling and meeting services.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: skype.com
+    category: content
+    purpose: Skype and Microsoft Teams calling services.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+
+  # --- Content: Windows apps, Bing, maps -----------------------------------
+  - pattern: fs.microsoft.com
+    category: content
+    purpose: Windows font streaming, which downloads fonts on demand.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: inference.location.live.net
+    category: content
+    purpose: Windows location service that supplies location data to apps that ask for it.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: maps.windows.com
+    category: content
+    purpose: Windows Maps, including update checks for maps downloaded for offline use.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: virtualearth.net
+    category: content
+    purpose: Bing Maps services used by Windows Maps and Office.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+      - https://learn.microsoft.com/en-us/microsoft-365/enterprise/urls-and-ip-address-ranges
+  - pattern: tile-service.weather.microsoft.com
+    category: content
+    purpose: Data for the Windows Weather app.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: www.bing.com
+    category: content
+    purpose: Bing search, also used for Edge address-bar suggestions and Windows search content.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: edgeservices.bing.com
+    category: content
+    purpose: Hosts Copilot chat in the Microsoft Edge sidebar.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/deployedge/microsoft-edge-security-endpoints
