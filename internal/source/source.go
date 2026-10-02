@@ -5,9 +5,15 @@ package source
 
 import (
 	"context"
+	"errors"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
 )
+
+// ErrBadCursor is wrapped by the error a source returns for a cursor it
+// cannot interpret: one saved by another kind of source under the same
+// name, or damaged. The caller may start over from "".
+var ErrBadCursor = errors.New("unreadable cursor")
 
 // DNSSource yields DNS lookups incrementally.
 //

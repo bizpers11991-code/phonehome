@@ -26,6 +26,11 @@ const (
 	TypeConntrack       = "conntrack"
 )
 
+// MaxRetentionDays bounds retention_days (about 100 years), so that the
+// retention period cannot overflow a time.Duration and wrap around to a
+// short one that would prune almost everything.
+const MaxRetentionDays = 36500
+
 // DefaultConntrackPath is used when a conntrack source has no path.
 const DefaultConntrackPath = "/proc/net/nf_conntrack"
 
@@ -147,8 +152,8 @@ func (c *Config) Validate() error {
 	if c.DB == "" {
 		bad("db is empty; set it to a writable file path such as /var/lib/phonehome/phonehome.db")
 	}
-	if c.RetentionDays < 0 {
-		bad("retention_days is %d; use a positive number of days, or 0 to keep everything", c.RetentionDays)
+	if c.RetentionDays < 0 || c.RetentionDays > MaxRetentionDays {
+		bad("retention_days is %d; use a number of days up to %d, or 0 to keep everything", c.RetentionDays, MaxRetentionDays)
 	}
 	if c.Interval < time.Second {
 		bad(`interval %v is too short; use a duration of at least 1s, e.g. "60s"`, c.Interval)
