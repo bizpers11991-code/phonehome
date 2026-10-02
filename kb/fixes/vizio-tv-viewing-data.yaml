@@ -1,0 +1,13 @@
+id: vizio-tv-viewing-data
+title: Turn off Viewing Data (Vizio's ACR)
+vendors: [vizio]
+kinds: [tv]
+when: [acr]
+steps:
+  - 'Press the Menu or Settings button and open All Settings › Admin & Privacy'
+  - 'Turn off "Viewing Data"'
+  - 'Older SmartCast models: System › Reset & Admin › "Viewing Data" (or "Smart Interactivity") › Off'
+notes: 'Viewing Data is Vizio''s automatic content recognition (Inscape). Vizio says turning it off does not affect the TV, but the separate activity data the platform needs for streaming cannot be switched off.'
+evidence:
+  - https://www.consumerreports.org/electronics/privacy/how-to-turn-off-smart-tv-snooping-features-a4840102036/
+  - https://www.malwarebytes.com/blog/news/2026/03/samsung-tvs-stop-spying-on-viewers-in-texas-heres-how-to-disable-acr-anywhere

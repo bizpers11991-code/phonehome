@@ -1,0 +1,279 @@
+# Samsung Tizen smart TVs.
+# Key sources:
+#  - Anselmi, Vekaria et al., "Watching TV with the Second-Party", IMC 2024 (ACR domains, UK + US)
+#  - Varmarken et al., "The TV is Smart and Full of Trackers", PETS 2020 (in-the-wild Samsung traffic)
+#  - Blocklists (HaGeZi native.samsung, Perflyst SmartTV) and owner write-ups for everything else.
+company: samsung
+rules:
+  # --- Content recognition (ACR) -------------------------------------------
+  - pattern: samsungacr.com
+    category: acr
+    purpose: Samsung's content-recognition logging and configuration service, which reports what is shown on screen.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/2409.06203
+      - https://arxiv.org/abs/1911.03447
+      - https://www.netify.ai/resources/domains/samsungacr.com
+  - pattern: acr-us-prd.samsungcloud.tv
+    category: acr
+    purpose: Receives fingerprints of on-screen content from US Samsung TVs so Samsung can identify what is being watched.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/2409.06203
+      - https://github.com/SafeNetIoT/ACR
+  - pattern: acr-eu-prd.samsungcloud.tv
+    category: acr
+    purpose: Receives fingerprints of on-screen content from European Samsung TVs so Samsung can identify what is being watched.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/2409.06203
+      - https://github.com/SafeNetIoT/ACR
+  - pattern: acr-au-prd.samsungcloud.tv
+    category: acr
+    purpose: Regional (Australia) endpoint of Samsung's content-recognition service, which identifies what is being watched.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+      - https://arxiv.org/abs/2409.06203
+  - pattern: acr-br-prd.samsungcloud.tv
+    category: acr
+    purpose: Regional (Brazil) endpoint of Samsung's content-recognition service, which identifies what is being watched.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+      - https://arxiv.org/abs/2409.06203
+  - pattern: acr-ca-prd.samsungcloud.tv
+    category: acr
+    purpose: Regional (Canada) endpoint of Samsung's content-recognition service, which identifies what is being watched.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+      - https://arxiv.org/abs/2409.06203
+  - pattern: acr-in-prd.samsungcloud.tv
+    category: acr
+    purpose: Regional (India) endpoint of Samsung's content-recognition service, which identifies what is being watched.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+      - https://arxiv.org/abs/2409.06203
+  - pattern: acr-kr-prd.samsungcloud.tv
+    category: acr
+    purpose: Regional (Korea) endpoint of Samsung's content-recognition service, which identifies what is being watched.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+      - https://arxiv.org/abs/2409.06203
+  - pattern: acr-mx-prd.samsungcloud.tv
+    category: acr
+    purpose: Regional (Mexico) endpoint of Samsung's content-recognition service, which identifies what is being watched.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+      - https://arxiv.org/abs/2409.06203
+  - pattern: acr-nz-prd.samsungcloud.tv
+    category: acr
+    purpose: Regional (New Zealand) endpoint of Samsung's content-recognition service, which identifies what is being watched.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+      - https://arxiv.org/abs/2409.06203
+  - pattern: acr0.samsungcloudsolution.com
+    category: acr
+    purpose: Part of Samsung's content-recognition service; contacted regularly while viewing information is switched on.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/2409.06203
+      - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
+
+  # --- Advertising ----------------------------------------------------------
+  - pattern: samsungads.com
+    category: ads
+    purpose: Samsung Ads, which serves and measures adverts on Samsung TVs.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://arxiv.org/abs/2409.06203
+  - pattern: samsungadhub.com
+    category: ads
+    purpose: Samsung's ad hub, used to deliver adverts and promotions to Samsung TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+  - pattern: samsungtvads.com
+    category: ads
+    purpose: Samsung TV advertising domain.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+  - pattern: adgrx.com
+    category: ads
+    purpose: AdGear, Samsung's ad-tech subsidiary, which serves adverts on Samsung TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: sspapi-prd.samsungrs.com
+    category: ads
+    purpose: Samsung Ads supply-side platform API used when selling ad space on Samsung devices.
+    confidence: medium
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+
+  # --- Telemetry ------------------------------------------------------------
+  - pattern: devicelog.samsungcloudsolution.net
+    category: telemetry
+    purpose: Receives device logs uploaded by Samsung TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+  - pattern: prderrordumpssm.samsungcloudsolution.net
+    category: telemetry
+    purpose: Receives error and crash reports from Samsung TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+  - pattern: prderrordumphsm.samsungcloudsolution.com
+    category: telemetry
+    purpose: Receives error and crash reports from Samsung TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+  - pattern: ureca.samsungapps.com
+    category: telemetry
+    purpose: Analytics endpoint used by Samsung apps to report usage.
+    confidence: medium
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: samsungelectronics.com
+    category: telemetry
+    purpose: Short hosts such as upu. and dpu. that Samsung TVs contact frequently; their exact function is undocumented.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
+      - https://mattcasmith.net/2020/02/15/pi-hole-samsung-smart-tv/
+  - pattern: infolink.pavv.co.kr
+    category: telemetry
+    purpose: Legacy Samsung TV service (2013-2015 models) that exchanges data with Samsung on a regular schedule.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://www.vnutz.com/articles/idle_network_activity_of_a_samsung_tv
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+
+  # --- Essential ------------------------------------------------------------
+  - pattern: time.samsungcloudsolution.com
+    category: essential
+    purpose: Clock sync for Samsung TVs; without it the time drifts and secure connections can fail.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://syntaxslinger.com/posts/tricking-samsung-tvs-into-thinking-they-have-internet/
+      - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
+  - pattern: cdn.samsungcloudsolution.com
+    category: essential
+    purpose: Connectivity check (a small check file) that Samsung TVs use to decide whether they are online.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://syntaxslinger.com/posts/tricking-samsung-tvs-into-thinking-they-have-internet/
+      - https://www.vnutz.com/articles/idle_network_activity_of_a_samsung_tv
+  - pattern: samsungotn.net
+    category: essential
+    purpose: Samsung's over-the-network firmware update service for TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://wiki.samygo.tv/index.php?title=How_To_Disable_Firmware_Updates
+      - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
+  - pattern: oempprd.samsungcloudsolution.com
+    category: essential
+    purpose: Supplies the list of installed-app updates available to Samsung TVs.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://www.vnutz.com/articles/idle_network_activity_of_a_samsung_tv
+  - pattern: fkp.samsungcloudsolution.com
+    category: essential
+    purpose: Used by Samsung TVs to set up secure delivery of apps.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://www.vnutz.com/articles/idle_network_activity_of_a_samsung_tv
+  - pattern: www.samsungrm.net
+    category: essential
+    purpose: Samsung device authentication and remote-management service contacted by TVs.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://www.vnutz.com/articles/idle_network_activity_of_a_samsung_tv
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: lcprd1.samsungcloudsolution.net
+    category: essential
+    purpose: Samsung TV service check-in host; non-breaking blocklists deliberately leave it reachable.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: lcprd2.samsungcloudsolution.net
+    category: essential
+    purpose: Samsung TV service check-in host; non-breaking blocklists deliberately leave it reachable.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: samsungapps.com
+    category: essential
+    purpose: Samsung's app store, used to find, install and update apps.
+    confidence: medium
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: account.samsung.com
+    category: essential
+    purpose: Samsung account sign-in.
+    confidence: medium
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+
+  # --- Content --------------------------------------------------------------
+  - pattern: samsungqbe.com
+    category: content
+    purpose: Samsung Smart Hub service layer used by TV apps and Samsung TV Plus.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: samsungcloud.tv
+    category: content
+    purpose: Samsung TV cloud services, including Samsung TV Plus channel guides and artwork.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt

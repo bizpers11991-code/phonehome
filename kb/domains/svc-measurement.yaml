@@ -1,0 +1,58 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+rules:
+- pattern: conviva.com
+  company: conviva
+  category: telemetry
+  purpose: 'Conviva streaming analytics: the app reports what you play, buffering and errors, tied to a device ID.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/conviva.com.json
+  - https://arxiv.org/abs/1911.03447
+  - https://docs.conviva.ai/common/a-common/proxy-setup/
+- pattern: imrworldwide.com
+  company: nielsen
+  category: tracking
+  purpose: 'Nielsen audience measurement: reports what you watch in this app to Nielsen for cross-platform ratings.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/imrworldwide.com.json
+  - https://arxiv.org/abs/1911.03447
+  - https://engineeringportal.nielsen.com/docs/Digital_Measurement_FAQ
+- pattern: scorecardresearch.com
+  company: comscore
+  category: tracking
+  purpose: 'Comscore audience measurement: reports your viewing and app use to Comscore for cross-media ratings.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/scorecardresearch.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: insightexpressai.com
+  company: kantar
+  category: tracking
+  purpose: Kantar ad-effectiveness and audience research tracking; seen in many Roku channels.
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/insightexpressai.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: tvsquared.com
+  company: innovid
+  category: ads
+  purpose: 'TVSquared (Innovid) TV ad measurement: links TV ad airings to later app or web activity.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/tvsquared.com.json
+- pattern: ispot.tv
+  company: ispot
+  category: ads
+  purpose: 'iSpot.tv TV ad measurement: tracks exposure to TV ads and resulting actions.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/ispot.tv.json
+- pattern: videoamp.com
+  company: videoamp
+  category: ads
+  purpose: VideoAmp ad measurement and identity syncing for TV and streaming ad campaigns.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/videoamp.com.json

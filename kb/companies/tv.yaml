@@ -1,0 +1,56 @@
+# TV makers, TV operating-system vendors and ACR / TV-measurement firms.
+# Owner: smart-TV knowledge base. Big platforms (google, amazon, apple,
+# microsoft, meta) and generic ad-tech/CDN/streaming firms live in other files.
+companies:
+  - id: samsung
+    name: Samsung Electronics
+    country: KR
+    url: https://www.samsung.com
+  - id: lg
+    name: LG Electronics
+    country: KR
+    url: https://www.lg.com
+  - id: vizio
+    name: Vizio (incl. Inscape)
+    country: US
+    url: https://www.vizio.com
+  - id: roku
+    name: Roku
+    country: US
+    url: https://www.roku.com
+  - id: tcl
+    name: TCL Electronics
+    country: CN
+    url: https://www.tcl.com
+  - id: hisense
+    name: Hisense (incl. VIDAA)
+    country: CN
+    url: https://www.hisense.com
+  - id: sony
+    name: Sony
+    country: JP
+    url: https://www.sony.com
+  - id: tpvision
+    name: TP Vision (Philips TV)
+    country: NL
+    url: https://www.tpvision.com
+  - id: panasonic
+    name: Panasonic
+    country: JP
+    url: https://www.panasonic.com
+  - id: sharp
+    name: Sharp
+    country: JP
+    url: https://global.sharp
+  - id: samba-tv
+    name: Samba TV
+    country: US
+    url: https://www.samba.tv
+  - id: alphonso
+    name: Alphonso (LG Ad Solutions)
+    country: US
+    url: https://www.lgads.tv
+  - id: whaletv
+    name: Whale TV (formerly ZEASN)
+    country: SG
+    url: https://www.zeasn.com

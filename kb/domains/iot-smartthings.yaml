@@ -1,0 +1,31 @@
+# SmartThings belongs to Samsung; the samsung company is defined by the TV group.
+company: samsung
+rules:
+  - pattern: connect.smartthings.com
+    category: essential
+    purpose: "SmartThings hub cloud connection (regional dc-*.connect hosts); hub automations that run in the cloud and the app stop if blocked."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://community.smartthings.com/t/smartthings-firewalling-serious-security-concerns/121724
+  - pattern: fw.dc.connect.smartthings.com
+    category: essential
+    purpose: "SmartThings hub firmware delivery; hubs stop receiving updates if blocked."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://community.smartthings.com/t/smartthings-firewalling-serious-security-concerns/121724
+  - pattern: fw-update.smartthings.com
+    category: essential
+    purpose: "SmartThings hub firmware update check; hubs stop receiving updates if blocked."
+    confidence: low
+    kind_hint: hub
+    evidence:
+      - https://community.smartthings.com/t/smartthings-firewalling-serious-security-concerns/121724
+  - pattern: fw-update2.smartthings.com
+    category: essential
+    purpose: "Alternate SmartThings hub firmware update server; hubs stop receiving updates if blocked."
+    confidence: low
+    kind_hint: hub
+    evidence:
+      - https://community.smartthings.com/t/smartthings-firewalling-serious-security-concerns/121724

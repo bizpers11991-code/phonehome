@@ -1,0 +1,13 @@
+id: roborock-privacy
+title: Turn off Roborock camera, voice and experience-programme data
+vendors: [roborock]
+kinds: [vacuum]
+steps:
+  - 'Roborock app › your robot › Settings › Product Information to see what the robot collects'
+  - 'In the robot''s settings, switch off AI obstacle recognition and the "Hello Rocky" voice assistant if you do not need them'
+  - 'Leave the User Experience Improvement Program off, or withdraw from it in the app settings if you joined'
+  - 'If you use Pet Snap or similar photo features, withdraw the permission to delete the photos'
+notes: 'Roborock says that with those features off the camera and microphone stay inactive; the robot still talks to Roborock''s cloud for app control. Menu names vary by model and app version.'
+evidence:
+  - https://us.roborock.com/pages/roborock-trust-center
+  - https://files.roborock.com/iot/doc/53bb73bb14364718b078ec8bd7419071.html

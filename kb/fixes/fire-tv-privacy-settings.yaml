@@ -1,0 +1,15 @@
+id: fire-tv-privacy-settings
+title: Turn off usage data and interest-based ads on Fire TV
+vendors: [amazon]
+kinds: [tv, streamer]
+steps:
+  - 'Settings › Preferences › Privacy Settings'
+  - 'Turn off "Device Usage Data"'
+  - 'Turn off "Collect App Usage Data" (on Fire TV smart TVs: "Collect App and Over-the-Air Usage")'
+  - 'Turn off "Interest-based Ads"'
+  - 'If present, open "Manage Sharing From Apps" and stop apps sending viewing information to Amazon'
+notes: 'Device and app usage data stop being used for marketing and product improvement, but Amazon still collects what it needs to run features such as the Recents row, and Prime Video watch history is separate. Some smart TVs with Fire TV also offer these switches at amazon.com/mycd › Privacy Settings › Amazon Devices Privacy.'
+evidence:
+  - https://www.amazon.com/gp/help/customer/display.html?nodeId=GQFYXZHZB2H629WN
+  - https://www.slashgear.com/1506262/how-to-opt-out-of-personal-data-collection-on-amazon-fire-tv/
+  - https://www.consumerreports.org/electronics/privacy/how-to-turn-off-smart-tv-snooping-features-a4840102036/

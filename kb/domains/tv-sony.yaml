@@ -1,0 +1,26 @@
+# Sony BRAVIA TVs. Most BRAVIA models run Google TV / Android TV, whose
+# Google hosts belong in the platform files, and older models use Samba TV
+# for ACR (see tv-acr-vendors.yaml). Only Sony-run hosts are listed here.
+company: sony
+rules:
+  - pattern: ndmdhs.com
+    category: telemetry
+    purpose: Sony back end for device configuration, metadata and logging, used by BRAVIA TVs and other Sony devices.
+    confidence: low
+    evidence:
+      - https://www.netify.ai/resources/domains/ndmdhs.com
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: info.update.sony.net
+    category: essential
+    purpose: Sony software-update information service; non-breaking TV blocklists keep it reachable so updates work.
+    confidence: low
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: update.biv.sony.tv
+    category: essential
+    purpose: Update service for BRAVIA TV internet features; non-breaking TV blocklists keep it reachable.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt

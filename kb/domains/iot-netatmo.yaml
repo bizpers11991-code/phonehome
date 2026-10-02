@@ -1,0 +1,15 @@
+company: netatmo
+rules:
+  - pattern: netatmo.net
+    category: essential
+    purpose: "Netatmo device cloud for cameras, thermostats and weather stations; Netatmo asks you to allow it, and the app stops updating if blocked."
+    confidence: medium
+    evidence:
+      - https://helpcenter.netatmo.com/hc/en-us/articles/360021432071-Advanced-network-troubleshooting-guide
+      - https://www.netify.ai/resources/domains/netatmo.net
+  - pattern: netatmo.com
+    category: essential
+    purpose: "Netatmo account, app API and website; Netatmo lists it as a domain to allow."
+    confidence: medium
+    evidence:
+      - https://helpcenter.netatmo.com/hc/en-us/articles/360021432071-Advanced-network-troubleshooting-guide

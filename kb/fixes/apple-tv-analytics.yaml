@@ -1,0 +1,12 @@
+id: apple-tv-analytics
+title: Stop sharing Apple TV analytics and Siri recordings
+vendors: [apple]
+kinds: [streamer]
+steps:
+  - 'Settings › General › Privacy & Security › Analytics & Improvements'
+  - 'Turn off "Share Apple TV Analytics" and "Improve Siri & Dictation"'
+  - 'Settings › General › Privacy & Security › Tracking and turn off "Allow Apps to Ask to Track"'
+notes: 'With tracking requests off, every app is automatically told you declined cross-app tracking (Apple''s replacement for the old Limit Ad Tracking switch). Apple TV traffic is mostly to Apple and app services, so expect a smaller change than on smart TVs.'
+evidence:
+  - https://support.apple.com/guide/tv/adjust-privacy-settings-atvb66239fa1/tvos
+  - https://support.apple.com/en-us/127070

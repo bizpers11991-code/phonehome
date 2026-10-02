@@ -1,0 +1,93 @@
+company: xiaomi
+rules:
+  - pattern: ot.io.mi.com
+    category: essential
+    purpose: "Xiaomi Mi Home cloud channel (incl. regional de/sg/us hosts) carrying commands and device reports; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://media.defcon.org/DEF%20CON%2026/DEF%20CON%2026%20presentations/DEFCON-26-Dennis-Giese-Having-Fun-With-IOT-Updated.pdf
+      - https://www.netify.ai/resources/hostnames/ot.io.mi.com
+  - pattern: ott.io.mi.com
+    category: essential
+    purpose: "Xiaomi Mi Home cloud channel used by devices such as vacuums for commands and reports; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://media.defcon.org/DEF%20CON%2026/DEF%20CON%2026%20presentations/DEFCON-26-Dennis-Giese-Having-Fun-With-IOT-Updated.pdf
+  - pattern: api.io.mi.com
+    category: essential
+    purpose: "Xiaomi Home app API that lists your devices and relays commands; the app cannot see devices if blocked."
+    confidence: high
+    evidence:
+      - https://media.defcon.org/DEF%20CON%2026/DEF%20CON%2026%20presentations/DEFCON-26-Dennis-Giese-Having-Fun-With-IOT-Updated.pdf
+  - pattern: fds.api.xiaomi.com
+    category: essential
+    purpose: "Xiaomi file storage for firmware and voice packs; vacuums also upload maps and logs here."
+    confidence: high
+    kind_hint: vacuum
+    evidence:
+      - https://media.defcon.org/DEF%20CON%2026/DEF%20CON%2026%20presentations/DEFCON-26-Dennis-Giese-Having-Fun-With-IOT-Updated.pdf
+  - pattern: fds.api.mi-img.com
+    category: essential
+    purpose: "Xiaomi download host for device firmware updates; devices stop receiving updates if blocked."
+    confidence: high
+    evidence:
+      - https://media.defcon.org/DEF%20CON%2026/DEF%20CON%2026%20presentations/DEFCON-26-Dennis-Giese-Having-Fun-With-IOT-Updated.pdf
+  - pattern: data.mistat.xiaomi.com
+    category: telemetry
+    purpose: "Xiaomi's usage-statistics service (Mi Stat), used by Xiaomi apps and devices to report how they are used."
+    confidence: medium
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: data.mistat.intl.xiaomi.com
+    category: telemetry
+    purpose: "Xiaomi's usage-statistics service (Mi Stat), used by Xiaomi apps and devices to report how they are used."
+    confidence: medium
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: data.mistat.india.xiaomi.com
+    category: telemetry
+    purpose: "Xiaomi's usage-statistics service (Mi Stat), used by Xiaomi apps and devices to report how they are used."
+    confidence: medium
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: data.mistat.rus.xiaomi.com
+    category: telemetry
+    purpose: "Xiaomi's usage-statistics service (Mi Stat), used by Xiaomi apps and devices to report how they are used."
+    confidence: medium
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: tracking.miui.com
+    category: telemetry
+    purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
+    confidence: medium
+    kind_hint: phone
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: tracking.intl.miui.com
+    category: telemetry
+    purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
+    confidence: medium
+    kind_hint: phone
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: tracking.india.miui.com
+    category: telemetry
+    purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
+    confidence: medium
+    kind_hint: phone
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: tracking.rus.miui.com
+    category: telemetry
+    purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
+    confidence: medium
+    kind_hint: phone
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: sa.api.intl.miui.com
+    category: telemetry
+    purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
+    confidence: medium
+    kind_hint: phone
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi

@@ -1,0 +1,5 @@
+2026-10-02T14:01:00.123456+02:00 nas dnsmasq[700]: query[A] connectivitycheck.gstatic.com from 192.168.1.60
+2026-10-02T14:01:00.124001+02:00 nas dnsmasq[700]: forwarded connectivitycheck.gstatic.com to 1.1.1.1
+Fri Oct  2 14:02:00 2026 daemon.info dnsmasq[1]: query[A] device-metrics-us.amazon.com from 192.168.1.61
+Fri Oct  2 14:02:00 2026 daemon.info dnsmasq[1]: config device-metrics-us.amazon.com is NODATA-IPv4
+Fri Oct  2 14:02:01 2026 daemon.notice netifd: Network device 'eth0' link is up

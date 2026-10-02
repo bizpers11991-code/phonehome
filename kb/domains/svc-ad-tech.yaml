@@ -1,0 +1,173 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+rules:
+- pattern: fwmrm.net
+  company: freewheel
+  category: ads
+  purpose: 'FreeWheel ad server: picks and tracks the video ads shown inside streaming TV apps.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/fwmrm.net.json
+- pattern: stickyadstv.com
+  company: freewheel
+  category: ads
+  purpose: FreeWheel (StickyADS.tv) video ad exchange; seen in Roku channels.
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/stickyadstv.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: innovid.com
+  company: innovid
+  category: ads
+  purpose: Innovid serves and measures video and connected-TV ads.
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/innovid.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: adsrvr.org
+  company: the-trade-desk
+  category: ads
+  purpose: 'The Trade Desk ad buying platform: ad bidding, ID matching and ad tracking.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/adsrvr.org.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: pubmatic.com
+  company: pubmatic
+  category: ads
+  purpose: 'PubMatic ad exchange: auctions ad slots in apps and sites, syncing user IDs with bidders.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/pubmatic.com.json
+- pattern: rubiconproject.com
+  company: magnite
+  category: ads
+  purpose: 'Magnite (Rubicon Project) ad exchange: auctions ad slots and syncs user IDs with bidders.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/rubiconproject.com.json
+- pattern: spotxchange.com
+  company: magnite
+  category: ads
+  purpose: 'SpotX (Magnite) video ad platform: serves and tracks video ads; very common on Roku.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/spotxchange.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: tremorhub.com
+  company: magnite
+  category: ads
+  purpose: 'Telaria (Magnite) connected-TV ad platform: serves and tracks video ads.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/tremorhub.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: springserve.com
+  company: magnite
+  category: ads
+  purpose: SpringServe (Magnite) video ad server used by connected-TV apps.
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/springserve.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: openx.net
+  company: openx
+  category: ads
+  purpose: 'OpenX ad exchange: auctions ad slots and syncs user IDs with bidders.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/openx.net.json
+- pattern: criteo.com
+  company: criteo
+  category: ads
+  purpose: 'Criteo retargeting ads: shows ads based on products you browsed elsewhere.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/criteo.com.json
+- pattern: criteo.net
+  company: criteo
+  category: ads
+  purpose: Criteo retargeting ad scripts and measurement.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/criteo.net.json
+- pattern: casalemedia.com
+  company: index-exchange
+  category: ads
+  purpose: 'Index Exchange ad exchange: ad auctions and user-ID syncing.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/casalemedia.com.json
+- pattern: indexww.com
+  company: index-exchange
+  category: ads
+  purpose: Index Exchange ad exchange scripts and event tracking.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/indexww.com.json
+- pattern: 3lift.com
+  company: triplelift
+  category: ads
+  purpose: TripleLift native and connected-TV ad exchange.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/3lift.com.json
+- pattern: teads.tv
+  company: teads
+  category: ads
+  purpose: 'Teads video ad platform: serves and measures video ads.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/teads.tv.json
+- pattern: smartadserver.com
+  company: equativ
+  category: ads
+  purpose: Equativ (Smart AdServer) ad server and exchange, including connected-TV ads.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/smartadserver.com.json
+- pattern: 1rx.io
+  company: unruly
+  category: ads
+  purpose: Unruly (formerly RhythmOne) video ad exchange; seen in Roku channels.
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/1rx.io.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: adsafeprotected.com
+  company: ias
+  category: ads
+  purpose: 'Integral Ad Science ad verification: checks where and whether ads were seen, and screens for fraud.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/adsafeprotected.com.json
+- pattern: doubleverify.com
+  company: doubleverify
+  category: ads
+  purpose: 'DoubleVerify ad verification: measures ad viewability and screens for ad fraud.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/doubleverify.com.json
+- pattern: adrta.com
+  company: pixalate
+  category: ads
+  purpose: Pixalate ad-fraud and viewability measurement; common on Roku channels.
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/adrta.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: moatads.com
+  company: oracle
+  category: ads
+  purpose: Moat (Oracle) ad viewability measurement; Oracle shut Moat down in 2024, so lookups likely come from outdated SDKs.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/moatads.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: everesttech.net
+  company: adobe
+  category: ads
+  purpose: Adobe Advertising (ex-TubeMogul/Efficient Frontier) ad tracking and ID syncing.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/everesttech.net.json

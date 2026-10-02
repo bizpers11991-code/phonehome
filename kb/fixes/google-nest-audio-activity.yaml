@@ -1,0 +1,14 @@
+id: google-nest-audio-activity
+title: Stop Google saving Nest speaker voice recordings
+vendors: [google]
+kinds: [speaker, hub]
+steps:
+  - 'Open myaccount.google.com (or Google app › Manage your Google Account) › Data & privacy'
+  - 'Under "History settings" open Web & App Activity'
+  - 'Untick "Include voice and audio activity"'
+  - 'To delete old recordings: Web & App Activity › Manage activity, then delete them; consider an auto-delete period too'
+  - 'Review Google Home app › Settings › Privacy for home history and other device data'
+notes: 'With the box unticked Google still processes your audio to answer, but no longer stores the recordings in your account. Turning Web & App Activity off entirely stops Assistant interactions being saved but also limits personalisation.'
+evidence:
+  - https://support.google.com/accounts/answer/6030020?hl=en&co=GENIE.Platform%3DAndroid
+  - https://support.google.com/googlenest/answer/7382500?hl=en

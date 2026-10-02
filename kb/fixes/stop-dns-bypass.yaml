@@ -1,0 +1,15 @@
+id: stop-dns-bypass
+title: Stop devices bypassing your DNS resolver
+vendors: []
+kinds: [tv, streamer, speaker, camera, vacuum, plug, hub, appliance]
+when: [bypass]
+steps:
+  - 'On your router, add a NAT/port-forward rule that redirects all LAN traffic to TCP and UDP port 53 to your Pi-hole or AdGuard Home, excluding the resolver''s own IP (OpenWrt calls this rule "Intercept-DNS")'
+  - 'Add a firewall rule rejecting LAN-to-WAN traffic on port 853 (DNS over TLS), again excluding your resolver'
+  - 'Repeat both rules for IPv6 if your network has it'
+  - 'Optionally block DNS over HTTPS by IP using a maintained list such as dibdot/DoH-IP-blocklists (OpenWrt: the banIP package)'
+  - 'Re-run phonehome and confirm the device''s lookups now appear and the DNS-bypass warning has gone'
+notes: 'Some devices (Chromecast and Google TV, Roku, many cameras) hard-code public resolvers such as 8.8.8.8 and ignore the DNS your router hands out. DNS over HTTPS looks like normal web traffic on port 443, so it can only be blocked with IP lists of known resolvers, which are never complete.'
+evidence:
+  - https://openwrt.org/docs/guide-user/firewall/fw3_configurations/intercept_dns
+  - https://github.com/dibdot/DoH-IP-blocklists

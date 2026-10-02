@@ -1,0 +1,118 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+rules:
+- pattern: cloudflare-dns.com
+  company: cloudflare
+  category: essential
+  purpose: Encrypted DNS resolver (Cloudflare 1.1.1.1); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://developers.cloudflare.com/1.1.1.1/setup/
+- pattern: mozilla.cloudflare-dns.com
+  company: cloudflare
+  category: essential
+  purpose: Encrypted DNS resolver (Firefox's default DoH via Cloudflare); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://wiki.mozilla.org/Trusted_Recursive_Resolver
+- pattern: one.one.one.one
+  company: cloudflare
+  category: essential
+  purpose: Encrypted DNS resolver (Cloudflare 1.1.1.1 DoT name); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://developers.cloudflare.com/1.1.1.1/encryption/dns-over-tls/
+- pattern: dns.quad9.net
+  company: quad9
+  category: essential
+  purpose: Encrypted DNS resolver (Quad9); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://www.quad9.net/service/service-addresses-and-features
+- pattern: dns10.quad9.net
+  company: quad9
+  category: essential
+  purpose: Encrypted DNS resolver (Quad9, unfiltered); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://www.quad9.net/service/service-addresses-and-features
+- pattern: dns11.quad9.net
+  company: quad9
+  category: essential
+  purpose: Encrypted DNS resolver (Quad9 with ECS); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://www.quad9.net/service/service-addresses-and-features
+- pattern: doh.opendns.com
+  company: cisco
+  category: essential
+  purpose: Encrypted DNS resolver (Cisco OpenDNS); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://en.wikipedia.org/wiki/OpenDNS
+  - https://github.com/curl/curl/wiki/DNS-over-HTTPS
+- pattern: dns.nextdns.io
+  company: nextdns
+  category: essential
+  purpose: Encrypted DNS resolver (NextDNS); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://help.nextdns.io/t/x2hmvas/what-is-nextdns
+- pattern: dns.adguard-dns.com
+  company: adguard
+  category: essential
+  purpose: Encrypted DNS resolver (AdGuard DNS); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://adguard-dns.io/en/public-dns.html
+- pattern: unfiltered.adguard-dns.com
+  company: adguard
+  category: essential
+  purpose: Encrypted DNS resolver (AdGuard DNS, unfiltered); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://adguard-dns.io/en/public-dns.html
+- pattern: family.adguard-dns.com
+  company: adguard
+  category: essential
+  purpose: Encrypted DNS resolver (AdGuard DNS family); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://adguard-dns.io/en/public-dns.html
+- pattern: doh.cleanbrowsing.org
+  company: cleanbrowsing
+  category: essential
+  purpose: Encrypted DNS resolver (CleanBrowsing); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://cleanbrowsing.org/filters/
+  - https://github.com/curl/curl/wiki/DNS-over-HTTPS
+- pattern: dns.mullvad.net
+  company: mullvad
+  category: essential
+  purpose: Encrypted DNS resolver (Mullvad); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://mullvad.net/en/help/dns-over-https-and-dns-over-tls
+- pattern: freedns.controld.com
+  company: controld
+  category: essential
+  purpose: Encrypted DNS resolver (Control D free DNS); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://controld.com/free-dns
+- pattern: dns.alidns.com
+  company: alibaba
+  category: essential
+  purpose: Encrypted DNS resolver (Alibaba AliDNS); a device using it can bypass your local DNS filtering.
+  confidence: high
+  evidence:
+  - https://www.alibabacloud.com/help/en/dns/dns-over-https
+  - https://github.com/curl/curl/wiki/DNS-over-HTTPS
+- pattern: =use-application-dns.net
+  company: mozilla
+  category: essential
+  purpose: 'Firefox''s canary domain: Firefox checks it to decide whether to switch on its own encrypted DNS, bypassing yours.'
+  confidence: high
+  evidence:
+  - https://support.mozilla.org/en-US/kb/canary-domain-use-application-dnsnet

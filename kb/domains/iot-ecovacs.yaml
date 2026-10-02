@@ -1,0 +1,43 @@
+company: ecovacs
+rules:
+  - pattern: ecouser.net
+    category: essential
+    purpose: "Ecovacs robot cloud (login, REST, XMPP and MQTT); Deebot app control and scheduling stop if blocked."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/bmartin5692/bumper/blob/master/docs/DNS_Setup.md
+      - https://github.com/kushagharahi/ecovacs-privacy-control
+  - pattern: mq-ww.ecouser.net
+    category: essential
+    purpose: "Ecovacs worldwide MQTT broker that newer Deebots connect to for commands and status; app control stops if blocked."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/kushagharahi/ecovacs-privacy-control
+      - https://github.com/bmartin5692/bumper/blob/master/docs/DNS_Setup.md
+  - pattern: portal.ecouser.net
+    category: essential
+    purpose: "Ecovacs login and REST API used by robots and the app; sign-in fails if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/bmartin5692/bumper/blob/master/docs/DNS_Setup.md
+      - https://github.com/kushagharahi/ecovacs-privacy-control
+  - pattern: bigdata-international.ecovacs.com
+    category: telemetry
+    purpose: "Ecovacs analytics collection endpoint; reverse engineers list it as telemetry that can be blocked."
+    confidence: low
+    evidence:
+      - https://github.com/bmartin5692/bumper/blob/master/docs/DNS_Setup.md
+  - pattern: bigdata-northamerica.ecovacs.com
+    category: telemetry
+    purpose: "Ecovacs analytics collection endpoint; reverse engineers list it as telemetry that can be blocked."
+    confidence: low
+    evidence:
+      - https://github.com/bmartin5692/bumper/blob/master/docs/DNS_Setup.md
+  - pattern: bigdata-europe.ecovacs.com
+    category: telemetry
+    purpose: "Ecovacs analytics collection endpoint; reverse engineers list it as telemetry that can be blocked."
+    confidence: low
+    evidence:
+      - https://github.com/bmartin5692/bumper/blob/master/docs/DNS_Setup.md

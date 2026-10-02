@@ -1,0 +1,24 @@
+company: reolink
+rules:
+  - pattern: reolink.com
+    category: essential
+    purpose: "Reolink cloud, including the p2p0–p2p15 relay servers (UDP 9999) used for remote viewing; the app cannot connect remotely if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://community.reolink.com/topic/6026/firewall-rules-reolink-host
+  - pattern: pushx.reolink.com
+    category: essential
+    purpose: "Reolink push-notification service; motion alerts on your phone stop if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://community.reolink.com/topic/14634/reolink-urls
+      - https://community.reolink.com/topic/6026/firewall-rules-reolink-host
+  - pattern: home-cdn.reolink.us
+    category: essential
+    purpose: "Reolink firmware download host; cameras and recorders stop receiving updates if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://community.reolink.com/topic/6026/firewall-rules-reolink-host

@@ -1,0 +1,9 @@
+company: govee
+rules:
+  - pattern: app2.govee.com
+    category: essential
+    purpose: "Govee app API used for sign-in and device lists; app control of lights stops if blocked."
+    confidence: medium
+    kind_hint: plug
+    evidence:
+      - https://github.com/wez/govee2mqtt/blob/main/src/undoc_api.rs

@@ -1,0 +1,415 @@
+# Google / Alphabet: Android, Google TV, Chromecast, Firebase, ads, YouTube.
+# Much of this is essential plumbing (connectivity checks, time, push, updates).
+# Sources: Google's own allowlists (Android Enterprise, ChromeOS, FCM), AOSP,
+# Leith "Mobile Handset Privacy" (SecureComm 2021), Moghaddam et al. CCS 2019,
+# Varmarken et al. PETS 2020.
+company: google
+rules:
+  # --- Essential: connectivity checks -------------------------------------
+  - pattern: connectivitycheck.gstatic.com
+    category: essential
+    purpose: Android and ChromeOS connectivity check (generate_204) that detects captive portals; contains no personal data.
+    confidence: high
+    evidence:
+      - https://android.googlesource.com/platform/packages/modules/NetworkStack/+/refs/heads/main/res/values/config.xml
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: connectivitycheck.android.com
+    category: essential
+    purpose: Android connectivity check used to tell whether the network has working internet access.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+      - https://support.google.com/chrome/a/answer/6334001?hl=en
+  - pattern: clients3.google.com
+    category: essential
+    purpose: Google endpoint used by ChromeOS and Google devices for clock sync and connectivity probing.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001?hl=en
+
+  # --- Essential: time ------------------------------------------------------
+  - pattern: time.google.com
+    category: essential
+    purpose: Google Public NTP, used to set the device clock.
+    confidence: high
+    evidence:
+      - https://developers.google.com/time/faq
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: time1.google.com
+    category: essential
+    purpose: Google Public NTP server, used to set the device clock.
+    confidence: high
+    evidence:
+      - https://developers.google.com/time/faq
+  - pattern: time2.google.com
+    category: essential
+    purpose: Google Public NTP server, used to set the device clock.
+    confidence: high
+    evidence:
+      - https://developers.google.com/time/faq
+  - pattern: time3.google.com
+    category: essential
+    purpose: Google Public NTP server, used to set the device clock.
+    confidence: high
+    evidence:
+      - https://developers.google.com/time/faq
+  - pattern: time4.google.com
+    category: essential
+    purpose: Google Public NTP server, used to set the device clock.
+    confidence: high
+    evidence:
+      - https://developers.google.com/time/faq
+
+  # --- Essential: push messaging (FCM) --------------------------------------
+  - pattern: mtalk.google.com
+    category: essential
+    purpose: Firebase Cloud Messaging connection that delivers push notifications to Android and Google devices.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: mtalk4.google.com
+    category: essential
+    purpose: Firebase Cloud Messaging connection that delivers push notifications.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: alt1-mtalk.google.com
+    category: essential
+    purpose: Alternate Firebase Cloud Messaging push connection.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: alt2-mtalk.google.com
+    category: essential
+    purpose: Alternate Firebase Cloud Messaging push connection.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: alt3-mtalk.google.com
+    category: essential
+    purpose: Alternate Firebase Cloud Messaging push connection.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: alt4-mtalk.google.com
+    category: essential
+    purpose: Alternate Firebase Cloud Messaging push connection.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: alt5-mtalk.google.com
+    category: essential
+    purpose: Alternate Firebase Cloud Messaging push connection.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: alt6-mtalk.google.com
+    category: essential
+    purpose: Alternate Firebase Cloud Messaging push connection.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: alt7-mtalk.google.com
+    category: essential
+    purpose: Alternate Firebase Cloud Messaging push connection.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: alt8-mtalk.google.com
+    category: essential
+    purpose: Alternate Firebase Cloud Messaging push connection.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: fcm.googleapis.com
+    category: essential
+    purpose: Firebase Cloud Messaging API used to register for and deliver push notifications.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: fcm-xmpp.googleapis.com
+    category: essential
+    purpose: Firebase Cloud Messaging connection used for push notifications.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: gcm-http.googleapis.com
+    category: essential
+    purpose: Legacy Google Cloud Messaging endpoint used for push notifications.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: gcm-xmpp.googleapis.com
+    category: essential
+    purpose: Legacy Google Cloud Messaging connection used for push notifications.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: device-provisioning.googleapis.com
+    category: essential
+    purpose: Registers the device for Firebase Cloud Messaging push notifications.
+    confidence: high
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+  - pattern: firebaseinstallations.googleapis.com
+    category: essential
+    purpose: Issues the per-app Firebase installation ID needed for push; the same ID is also used by Firebase analytics.
+    confidence: medium
+    evidence:
+      - https://firebase.google.com/docs/cloud-messaging/network-configuration
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+
+  # --- Essential: Android / Play plumbing -----------------------------------
+  - pattern: android.googleapis.com
+    category: essential
+    purpose: Android check-in and push registration; regular check-ins carry hardware, SIM and Android ID identifiers.
+    confidence: medium
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+  - pattern: android.clients.google.com
+    category: essential
+    purpose: Google Play and Android device check-in service; it also receives device identifiers such as the Android ID.
+    confidence: medium
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+  - pattern: android.apis.google.com
+    category: essential
+    purpose: Google Play and Android device policy service listed by Google as required for Android devices.
+    confidence: medium
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: accounts.google.com
+    category: essential
+    purpose: Google account sign-in and authentication.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001?hl=en
+      - https://support.google.com/work/android/answer/10513641?hl=en
+
+  # --- Essential: updates & downloads ---------------------------------------
+  - pattern: ota.googlezip.net
+    category: essential
+    purpose: Android over-the-air system update downloads.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: ota-cache1.googlezip.net
+    category: essential
+    purpose: Android over-the-air system update downloads (cache).
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: ota-cache3.googlezip.net
+    category: essential
+    purpose: Android over-the-air system update downloads (cache).
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: tools.google.com
+    category: essential
+    purpose: Omaha update server that tells Google software which updates are available.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001?hl=en
+  - pattern: dl.google.com
+    category: essential
+    purpose: Google download server for software and update payloads.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+      - https://support.google.com/chrome/a/answer/6334001?hl=en
+  - pattern: dl-ssl.google.com
+    category: essential
+    purpose: Google download server for software and update payloads.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: gvt1.com
+    category: essential
+    purpose: Google content delivery network for software downloads and update payloads.
+    confidence: medium
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001?hl=en
+      - https://support.google.com/work/android/answer/10513641?hl=en
+
+  # --- Essential: security --------------------------------------------------
+  - pattern: pki.goog
+    category: essential
+    purpose: Google Trust Services certificate revocation checks (CRL and OCSP).
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: pki.google.com
+    category: essential
+    purpose: Google certificate revocation checks.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: safebrowsing.googleapis.com
+    category: essential
+    purpose: Safe Browsing checks that warn about malicious websites and downloads.
+    confidence: high
+    evidence:
+      - https://support.google.com/chrome/a/answer/6334001?hl=en
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+  - pattern: safebrowsing.google.com
+    category: essential
+    purpose: Safe Browsing service that warns about malicious websites and downloads.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: android-safebrowsing.google.com
+    category: essential
+    purpose: Safe Browsing service for Android that warns about malicious websites and apps.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+
+  # --- Telemetry ------------------------------------------------------------
+  - pattern: play.googleapis.com
+    category: telemetry
+    purpose: Google Play services logging; measured sending about 1 MB of telemetry at setup even with usage reporting off.
+    confidence: high
+    evidence:
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+  - pattern: firebaselogging.googleapis.com
+    category: telemetry
+    purpose: Firebase logging and metrics upload from Android and apps that use Firebase.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: crashlytics.com
+    category: telemetry
+    purpose: Firebase Crashlytics crash reporting and its settings, built into many TV and phone apps.
+    confidence: high
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+      - https://www.princeton.edu/~pmittal/publications/tv-tracking-ccs19.pdf
+      - https://github.com/firebase/firebase-android-sdk/issues/7309
+  - pattern: crashlyticsreports-pa.googleapis.com
+    category: telemetry
+    purpose: Upload endpoint for Firebase Crashlytics crash reports.
+    confidence: medium
+    evidence:
+      - https://github.com/firebase/flutterfire/issues/9352
+
+  # --- Tracking / analytics -------------------------------------------------
+  - pattern: app-measurement.com
+    category: tracking
+    purpose: Google Analytics for Firebase; logs app events tied to an app instance ID that is linked to the advertising ID.
+    confidence: high
+    evidence:
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/android-tracking.txt
+  - pattern: google-analytics.com
+    category: tracking
+    purpose: Google Analytics usage tracking, one of the most common trackers in streaming-device apps.
+    confidence: high
+    evidence:
+      - https://www.princeton.edu/~pmittal/publications/tv-tracking-ccs19.pdf
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+
+  # --- Ads ------------------------------------------------------------------
+  - pattern: doubleclick.net
+    category: ads
+    purpose: Google ad serving and measurement (DoubleClick / Ad Manager), the most common tracker found in Roku channels.
+    confidence: high
+    evidence:
+      - https://www.princeton.edu/~pmittal/publications/tv-tracking-ccs19.pdf
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: googlesyndication.com
+    category: ads
+    purpose: Google ad serving for apps and websites (AdSense / AdMob).
+    confidence: high
+    evidence:
+      - https://www.princeton.edu/~pmittal/publications/tv-tracking-ccs19.pdf
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+  - pattern: googleadservices.com
+    category: ads
+    purpose: Google ad conversion tracking; the YouTube app was seen sending the advertising ID here.
+    confidence: high
+    evidence:
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/android-tracking.txt
+  - pattern: imasdk.googleapis.com
+    category: ads
+    purpose: Google Interactive Media Ads SDK that inserts video ads into streaming apps.
+    confidence: high
+    evidence:
+      - https://www.princeton.edu/~pmittal/publications/tv-tracking-ccs19.pdf
+
+  # --- Content --------------------------------------------------------------
+  - pattern: youtube.com
+    category: content
+    purpose: YouTube website and app.
+    confidence: high
+    evidence:
+      - https://knowledge.workspace.google.com/admin/youtube/control-youtube-content-available-to-users?hl=en
+  - pattern: youtubei.googleapis.com
+    category: content
+    purpose: YouTube app API that loads videos, feeds and search results.
+    confidence: high
+    evidence:
+      - https://knowledge.workspace.google.com/admin/youtube/control-youtube-content-available-to-users?hl=en
+  - pattern: youtube.googleapis.com
+    category: content
+    purpose: YouTube API used by YouTube apps.
+    confidence: high
+    evidence:
+      - https://knowledge.workspace.google.com/admin/youtube/control-youtube-content-available-to-users?hl=en
+  - pattern: youtube-nocookie.com
+    category: content
+    purpose: YouTube embedded-player domain.
+    confidence: high
+    evidence:
+      - https://knowledge.workspace.google.com/admin/youtube/control-youtube-content-available-to-users?hl=en
+  - pattern: ytimg.com
+    category: content
+    purpose: YouTube thumbnails and static images.
+    confidence: medium
+    evidence:
+      - https://knowledge.workspace.google.com/admin/youtube/control-youtube-content-available-to-users?hl=en
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: googlevideo.com
+    category: content
+    purpose: YouTube video stream delivery servers.
+    confidence: medium
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: play.google.com
+    category: content
+    purpose: Google Play Store.
+    confidence: high
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: ggpht.com
+    category: content
+    purpose: Google image hosting used by Google Play and other Google apps.
+    confidence: medium
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: googleusercontent.com
+    category: content
+    purpose: Google-hosted user and app content such as images and downloads.
+    confidence: medium
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: gstatic.com
+    category: content
+    purpose: Google static files (scripts, images, fonts) used by Google apps and websites.
+    confidence: medium
+    evidence:
+      - https://support.google.com/work/android/answer/10513641?hl=en
+      - https://support.google.com/chrome/a/answer/6334001?hl=en
+
+  # --- Encrypted DNS -----------------------------------------------------------
+  - pattern: dns.google
+    category: essential
+    purpose: Google Public DNS over HTTPS and TLS; a device using it can bypass your local DNS filtering.
+    confidence: high
+    evidence:
+      - https://developers.google.com/speed/public-dns/docs/doh
+      - https://developers.google.com/speed/public-dns/docs/dns-over-tls

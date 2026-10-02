@@ -1,0 +1,94 @@
+# Roku OS (Roku streaming sticks/boxes and Roku TVs made by TCL, Hisense,
+# Sharp and others). kind_hint is "streamer" because the same hosts are used
+# by sticks and Roku TVs alike; OUI/hostname data decides between them.
+# Note: Roku TVs have their own ACR ("Smart TV Experience" / "Use info from
+# TV inputs"), but we found no published evidence naming its hostname.
+company: roku
+rules:
+  # --- Telemetry ------------------------------------------------------------
+  - pattern: logs.roku.com
+    category: telemetry
+    purpose: Roku's logging service (scribe, cooper, giga and others); devices report activity here as often as every 30 seconds.
+    confidence: high
+    kind_hint: streamer
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://blog.nstoler.com/2020/09/05/stop-your-roku-from-tracking-you/
+
+  # --- Advertising ----------------------------------------------------------
+  - pattern: ads.roku.com
+    category: ads
+    purpose: Roku's ad platform, which serves and measures adverts across Roku channels.
+    confidence: high
+    kind_hint: streamer
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://blog.nstoler.com/2020/09/05/stop-your-roku-from-tracking-you/
+  - pattern: ravm.tv
+    category: ads
+    purpose: Roku-owned domain that delivers the adverts shown on the Roku home screen.
+    confidence: medium
+    kind_hint: streamer
+    evidence:
+      - https://blog.nstoler.com/2020/09/05/stop-your-roku-from-tracking-you/
+      - https://www.netify.ai/resources/domains/ravm.tv
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+
+  # --- Essential ------------------------------------------------------------
+  - pattern: api.rokutime.com
+    category: essential
+    purpose: Clock sync for Roku devices; blocking it can stop the home screen working properly.
+    confidence: medium
+    kind_hint: streamer
+    evidence:
+      - https://blog.nstoler.com/2020/09/05/stop-your-roku-from-tracking-you/
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: api.roku.com
+    category: essential
+    purpose: Roku's core device API, contacted by Roku devices regardless of which channel is in use.
+    confidence: medium
+    kind_hint: streamer
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: configsvc.cs.roku.com
+    category: essential
+    purpose: Roku configuration service that devices fetch settings from.
+    confidence: low
+    kind_hint: streamer
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: tvupdate.roku.com
+    category: essential
+    purpose: Hosts Roku TV software update files.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://support.roku.com/article/212361468
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+
+  # --- Content --------------------------------------------------------------
+  - pattern: channels.roku.com
+    category: content
+    purpose: Roku Channel Store catalogue and channel downloads.
+    confidence: medium
+    kind_hint: streamer
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: image.roku.com
+    category: content
+    purpose: Artwork and images shown in the Roku interface.
+    confidence: medium
+    kind_hint: streamer
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: therokuchannel.roku.com
+    category: content
+    purpose: The Roku Channel, Roku's own free streaming service.
+    confidence: low
+    kind_hint: streamer
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt

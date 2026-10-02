@@ -1,0 +1,24 @@
+company: wyze
+rules:
+  - pattern: wyzecam.com
+    category: essential
+    purpose: "Wyze's cloud services for cameras, plugs and sensors; remote viewing, alerts and app control stop if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://www.netify.ai/resources/domains/wyzecam.com
+      - https://forums.wyze.com/t/ip-whitelist/328437
+  - pattern: api.wyzecam.com
+    category: essential
+    purpose: "Wyze's main device and app API; cameras look it up very often, and app control stops if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://forums.wyze.com/t/massive-pings-queries-over-dns-to-www-google-com/234309
+  - pattern: wyze-general-api.wyzecam.com
+    category: essential
+    purpose: "Wyze cloud API host; some Cam v3 firmware looks it up tens of thousands of times a day."
+    confidence: low
+    kind_hint: camera
+    evidence:
+      - https://forums.wyze.com/t/wyze-cam-v3-exceeds-60-000-dns-lookups-per-day/157789

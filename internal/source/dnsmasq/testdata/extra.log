@@ -1,0 +1,14 @@
+Oct  2 13:59:00 dnsmasq[812]: 101 192.168.1.20/41234 query[A] example.org from 192.168.1.20
+Oct  2 13:59:00 dnsmasq[812]: 102 192.168.1.21/53001 query[A] example.org from 192.168.1.21
+Oct  2 13:59:00 dnsmasq[812]: 102 192.168.1.21/53001 cached example.org is 93.184.215.14
+Oct  2 13:59:00 dnsmasq[812]: 101 192.168.1.20/41234 forwarded example.org to 9.9.9.9
+Oct  2 13:59:00 dnsmasq[812]: 103 dnssec-query[DS] org to 9.9.9.9
+Oct  2 13:59:00 dnsmasq[812]: 101 192.168.1.20/41234 reply example.org is 93.184.215.14
+Oct  2 13:59:01 dnsmasq[812]: 104 fd00::20/40001 query[PTR] 2.2.1.1.0.0.e.f.f.f.c.c.b.b.a.a.0.0.0.0.0.0.0.0.0.0.0.0.0.0.d.f.ip6.arpa from fd00::20
+Oct  2 13:59:01 dnsmasq[812]: 104 fd00::20/40001 /etc/hosts fd00::aabb:ccff:fe00:1122 is nas.lan
+Oct  2 13:59:02 dnsmasq[812]: 105 192.168.1.50/5353 query[A] doubleclick.net from 192.168.1.50
+Oct  2 13:59:02 dnsmasq[812]: 105 192.168.1.50/5353 gravity blocked doubleclick.net is 0.0.0.0
+Oct  2 13:59:03 dnsmasq[812]: 106 192.168.1.51/5353 query[HTTPS] mask.icloud.com from 192.168.1.51
+Oct  2 13:59:03 dnsmasq[812]: 106 192.168.1.51/5353 special domain mask.icloud.com is NXDOMAIN
+Oct  2 13:59:04 dnsmasq[812]: 107 192.168.1.52/5353 query[A] metrics.roku.com from 192.168.1.52
+Oct  2 13:59:04 dnsmasq[812]: 107 192.168.1.52/5353 regex blacklisted metrics.roku.com is 0.0.0.0

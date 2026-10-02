@@ -1,0 +1,55 @@
+company: signify
+rules:
+  - pattern: meethue.com
+    category: essential
+    purpose: "Philips Hue cloud used by the bridge for remote control, voice assistants and updates; out-of-home control stops if blocked."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://www.sidnlabs.nl/en/news-and-blogs/looking-at-internet-traffic-using-spin-a-philips-hue-case-study
+      - https://raw.githubusercontent.com/dlpgithub/block_lists/master/hue-bridges.txt
+  - pattern: ws.meethue.com
+    category: essential
+    purpose: "Websocket the Hue bridge keeps open to the Hue cloud; out-of-home control and voice assistants stop if blocked."
+    confidence: high
+    kind_hint: hub
+    evidence:
+      - https://www.sidnlabs.nl/en/news-and-blogs/looking-at-internet-traffic-using-spin-a-philips-hue-case-study
+  - pattern: www2.meethue.com
+    category: essential
+    purpose: "Hue cloud host the bridge falls back to when its primary connection fails."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://www.sidnlabs.nl/en/news-and-blogs/looking-at-internet-traffic-using-spin-a-philips-hue-case-study
+      - https://raw.githubusercontent.com/buckmelanoma/block_lists/master/hue_bridge.txt
+  - pattern: discovery.meethue.com
+    category: essential
+    purpose: "Hue bridge discovery service apps use to find a bridge on your network."
+    confidence: high
+    evidence:
+      - https://developers.meethue.com/develop/get-started-2/
+      - https://github.com/peter-murray/node-hue-api/blob/typescript/docs/discovery.md
+  - pattern: api.meethue.com
+    category: essential
+    purpose: "Hue Remote API and OAuth sign-in used by apps and services to control lights away from home."
+    confidence: high
+    evidence:
+      - https://gotoguy.blog/2020/05/21/remote-authentication-and-controlling-philips-hue-api-using-postman/
+      - https://developers.meethue.com/develop/get-started-2/
+  - pattern: diagnostics.meethue.com
+    category: telemetry
+    purpose: "Hue diagnostics server that the bridge reports to; lights keep working if blocked."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://www.sidnlabs.nl/en/news-and-blogs/looking-at-internet-traffic-using-spin-a-philips-hue-case-study
+      - https://raw.githubusercontent.com/buckmelanoma/block_lists/master/hue_bridge.txt
+      - https://raw.githubusercontent.com/dlpgithub/block_lists/master/hue-bridges.txt
+  - pattern: diag.meethue.com
+    category: telemetry
+    purpose: "Hue diagnostics host contacted by bridges, listed by Hue blocklists; lights keep working if blocked."
+    confidence: low
+    kind_hint: hub
+    evidence:
+      - https://raw.githubusercontent.com/dlpgithub/block_lists/master/hue-bridges.txt

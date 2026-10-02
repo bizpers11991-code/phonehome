@@ -1,0 +1,11 @@
+id: irobot-mapping-features
+title: Stop your Roomba uploading maps of your home
+vendors: [irobot, roomba]
+kinds: [vacuum]
+steps:
+  - 'iRobot Home app › menu (☰) › Account › Privacy › Mapping Features › choose your robot'
+  - 'Switch "Mapping Features" off'
+notes: 'iRobot says this stops the robot sending spatial data to its cloud, at the cost of room-by-room cleaning, keep-out zones, schedules and time estimates; re-enabling means building a new map. iRobot''s manufacturer Picea took over the company through a Chapter 11 process starting in December 2025.'
+evidence:
+  - https://homesupport.irobot.com/articles/en_US/Knowledge/17752
+  - https://www.wbur.org/news/2025/12/15/irobot-bankruptcy-picea-restructuring-massachusetts

@@ -1,0 +1,15 @@
+id: block-acr-domains-dns
+title: Block content-recognition domains with Pi-hole or AdGuard Home
+vendors: []
+kinds: [tv, streamer]
+when: [acr]
+steps:
+  - 'In phonehome, open the device and copy the domains it reports as ACR, Ads, Tracking or Telemetry; skip anything marked Essential or Content'
+  - 'Pi-hole v6: web admin › Domains, add each domain to the denylist (or run pihole deny <domain>); Pi-hole v5 uses pihole -b'
+  - 'Optional in Pi-hole: put the TV in its own group under Group Management and assign the entries to that group only'
+  - 'AdGuard Home: Filters › Custom filtering rules, add ||<domain>^ (blocks subdomains too), or ||<domain>^$client=<TV IP> to target one device'
+  - 'Re-run phonehome after a day and check the TV, its apps and updates still work; unblock anything that broke'
+notes: 'Never block domains phonehome marks ESSENTIAL (time sync, firmware updates, connectivity checks, sign-in) or Content (the streams and apps you watch) or the TV may stop streaming or updating. DNS blocking only works if the device actually uses your resolver; see the DNS bypass fix.'
+evidence:
+  - https://docs.pi-hole.net/group_management/example/
+  - https://adguard-dns.io/kb/general/dns-filtering-syntax/

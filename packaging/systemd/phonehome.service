@@ -1,0 +1,53 @@
+[Unit]
+Description=phonehome - see what your devices say about you
+Documentation=https://github.com/bizpers11991-code/phonehome
+After=network-online.target pihole-FTL.service AdGuardHome.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/phonehome serve --config /etc/phonehome/phonehome.yaml
+Environment=PHONEHOME_DB=/var/lib/phonehome/phonehome.db
+Restart=on-failure
+RestartSec=10s
+
+# Runs as a throwaway user with its own state directory (/var/lib/phonehome).
+DynamicUser=yes
+StateDirectory=phonehome
+ConfigurationDirectory=phonehome
+# Pi-hole's database and logs are readable by the "pihole" group. If you do
+# not run Pi-hole, delete this line (systemd fails to start units that name a
+# group which does not exist); for AdGuard Home grant read access to its
+# querylog.json some other way, e.g. a dedicated group.
+SupplementaryGroups=pihole
+
+# Hardening: phonehome only reads files and serves HTTP.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged
+SystemCallErrorNumber=EPERM
+UMask=0077
+# "-" ignores paths that do not exist on this machine.
+ReadOnlyPaths=-/etc/pihole -/opt/AdGuardHome -/var/lib/AdGuardHome
+
+[Install]
+WantedBy=multi-user.target

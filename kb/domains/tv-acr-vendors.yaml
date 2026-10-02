@@ -1,0 +1,50 @@
+# Independent / partner ACR (automatic content recognition) vendors that TV
+# makers embed: Alphonso (LG Ad Solutions; LG's "Live Plus") and Samba TV
+# (Sony "Samba Interactive TV", TCL, Philips and others).
+rules:
+  - pattern: alphonso.tv
+    company: alphonso
+    category: acr
+    purpose: Receives fingerprints of on-screen content from LG TVs so Alphonso (LG Ad Solutions) can identify what is being watched.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/2409.06203
+      - https://github.com/SafeNetIoT/ACR
+
+  - pattern: samba.tv
+    company: samba-tv
+    category: acr
+    purpose: Samba TV, a content-recognition and audience-measurement firm built into some Sony, TCL and Philips TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://www.netify.ai/resources/domains/samba.tv
+      - https://en.wikipedia.org/wiki/Samba_TV
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: cid.samba.tv
+    company: samba-tv
+    category: acr
+    purpose: Samba TV's content-identification platform, which recognises what is on screen for viewing data and ads.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+      - https://www.netify.ai/resources/domains/samba.tv
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: hotlist.samba.tv
+    company: samba-tv
+    category: tracking
+    purpose: Samba TV endpoint observed receiving personal identifiers from smart TVs.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+  - pattern: ads.samba.tv
+    company: samba-tv
+    category: ads
+    purpose: Samba TV's ad endpoint, which uses viewing data to target adverts.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447

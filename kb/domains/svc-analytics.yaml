@@ -1,0 +1,143 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+rules:
+- pattern: amplitude.com
+  company: amplitude
+  category: telemetry
+  purpose: 'Amplitude product analytics: the app reports what you tap, watch and do so its maker can study usage.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/amplitude.com.json
+  - https://amplitude.com/docs/apis/analytics/http-v2
+- pattern: mixpanel.com
+  company: mixpanel
+  category: telemetry
+  purpose: 'Mixpanel product analytics: the app reports usage events tied to a user or device ID.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/mixpanel.com.json
+  - https://docs.mixpanel.com/docs/tracking-methods/sdks/javascript
+- pattern: segment.io
+  company: segment
+  category: telemetry
+  purpose: 'Segment (Twilio) event pipeline: collects app usage events and can forward them to many other analytics and ad tools.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/segment.io.json
+  - https://twilio.com/docs/segment/connections/sources/catalog/libraries/server/http-api
+- pattern: segment.com
+  company: segment
+  category: telemetry
+  purpose: Segment (Twilio) settings and data pipeline used by app analytics SDKs.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/segment.com.json
+- pattern: segmentapis.com
+  company: segment
+  category: telemetry
+  purpose: 'Segment (Twilio) event intake API: receives app usage events for forwarding to other tools.'
+  confidence: medium
+  evidence:
+  - https://twilio.com/docs/segment/connections/sources/catalog/libraries/server/http-api
+- pattern: braze.com
+  company: braze
+  category: telemetry
+  purpose: 'Braze customer-engagement SDK: reports app sessions and events and fetches targeted push and in-app messages.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/braze.com.json
+  - https://www.braze.com/docs/api/basics/
+- pattern: braze.eu
+  company: braze
+  category: telemetry
+  purpose: 'Braze customer-engagement SDK (EU cluster): reports app sessions and events for marketing messages.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/braze.eu.json
+  - https://www.braze.com/docs/api/basics/
+- pattern: appboy.com
+  company: braze
+  category: telemetry
+  purpose: Braze (formerly Appboy) legacy engagement SDK endpoint.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/appboy.com.json
+- pattern: mparticle.com
+  company: mparticle
+  category: telemetry
+  purpose: 'mParticle customer-data platform: collects app events and identities and forwards them to partners.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/mparticle.com.json
+- pattern: localytics.com
+  company: localytics
+  category: telemetry
+  purpose: Localytics app analytics and marketing SDK; seen on smart TV platforms.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/localytics.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: onesignal.com
+  company: onesignal
+  category: telemetry
+  purpose: 'OneSignal push-notification SDK: registers your device and reports message engagement.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/onesignal.com.json
+- pattern: launchdarkly.com
+  company: launchdarkly
+  category: telemetry
+  purpose: 'LaunchDarkly feature flags: the app fetches which features to enable and reports flag usage events.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/launchdarkly.com.json
+- pattern: optimizely.com
+  company: optimizely
+  category: telemetry
+  purpose: 'Optimizely A/B testing: the app fetches experiment settings and reports which variant you saw.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/optimizely.com.json
+- pattern: flurry.com
+  company: yahoo
+  category: telemetry
+  purpose: 'Flurry (Yahoo) app analytics SDK: reports app sessions and device details; common on Fire TV apps.'
+  confidence: high
+  evidence:
+  - https://arxiv.org/abs/1911.03447
+- pattern: omtrdc.net
+  company: adobe
+  category: telemetry
+  purpose: 'Adobe Analytics collection servers: the app or site reports usage to its owner via Adobe.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/omtrdc.net.json
+- pattern: 2o7.net
+  company: adobe
+  category: telemetry
+  purpose: Adobe Analytics (legacy Omniture) collection servers.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/2o7.net.json
+- pattern: cloudflareinsights.com
+  company: cloudflare
+  category: telemetry
+  purpose: 'Cloudflare Web Analytics beacon: page-load timing metrics reported to the site owner.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/cloudflareinsights.com.json
+  - https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/
+- pattern: go-mpulse.net
+  company: akamai
+  category: telemetry
+  purpose: 'Akamai mPulse real-user monitoring: reports page and app performance timings to the site owner.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/go-mpulse.net.json
+- pattern: akstat.io
+  company: akamai
+  category: telemetry
+  purpose: Akamai mPulse real-user monitoring beacons.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/akstat.io.json

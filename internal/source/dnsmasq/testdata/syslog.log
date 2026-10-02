@@ -1,0 +1,17 @@
+Oct  2 13:58:01 router dnsmasq[812]: query[A] api.amazonalexa.com from 192.168.1.30
+Oct  2 13:58:01 router dnsmasq[812]: forwarded api.amazonalexa.com to 9.9.9.9
+Oct  2 13:58:01 router dnsmasq[812]: reply api.amazonalexa.com is 52.94.236.248
+Oct  2 13:58:02 router dnsmasq[812]: query[A] samsungacr.com from 192.168.1.20
+Oct  2 13:58:02 router dnsmasq[812]: config samsungacr.com is 0.0.0.0
+Oct  2 13:58:02 router dnsmasq-dhcp[812]: DHCPREQUEST(br-lan) 192.168.1.20 aa:bb:cc:00:11:22
+Oct  2 13:58:02 router dnsmasq-dhcp[812]: DHCPACK(br-lan) 192.168.1.20 aa:bb:cc:00:11:22 samsung-tv
+Oct  2 13:58:03 router dnsmasq[812]: query[AAAA] samsungacr.com from 192.168.1.20
+Oct  2 13:58:03 router dnsmasq[812]: config samsungacr.com is ::
+Oct  2 13:58:04 router sshd[1001]: Accepted publickey for root from 192.168.1.5 port 50022 ssh2
+Oct  2 13:58:05 router dnsmasq[812]: query[type=65] Time.Samsungcloudsolution.COM from fe80::aabb:ccff:fe00:1122
+Oct  2 13:58:05 router dnsmasq[812]: cached time.samsungcloudsolution.com is <HTTPS>
+Oct  2 13:58:06 router dnsmasq[812]: query[A] tracking.example.net. from 192.168.1.40
+Oct  2 13:58:06 router dnsmasq[812]: config tracking.example.net is NXDOMAIN
+Oct  2 13:58:07 router dnsmasq[812]: query[PTR] 20.1.168.192.in-addr.arpa from 127.0.0.1
+Oct  2 13:58:07 router dnsmasq[812]: DHCP 192.168.1.20 is samsung-tv
+Oct  2 13:58:08 router dnsmasq[812]: query[A] broken.example from not-an-address

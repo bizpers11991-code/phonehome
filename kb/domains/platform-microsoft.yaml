@@ -1,0 +1,251 @@
+# Microsoft: Windows, Xbox, Microsoft Store, Microsoft Advertising.
+# Sources: Microsoft's published Windows 11 endpoint lists and diagnostic-data
+# documentation. Much Windows traffic is essential (updates, NCSI, Defender).
+company: microsoft
+rules:
+  # --- Telemetry ------------------------------------------------------------
+  - pattern: events.data.microsoft.com
+    category: telemetry
+    purpose: Microsoft's diagnostic event collector for Windows, Office, Teams and error reports.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: v10.events.data.microsoft.com
+    category: telemetry
+    purpose: Windows diagnostic data upload (Connected User Experiences and Telemetry).
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: v10c.events.data.microsoft.com
+    category: telemetry
+    purpose: Windows diagnostic data upload (Connected User Experiences and Telemetry).
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+  - pattern: vortex-win.data.microsoft.com
+    category: telemetry
+    purpose: Windows diagnostic data upload (Connected User Experiences and Telemetry).
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+  - pattern: telemetry.microsoft.com
+    category: telemetry
+    purpose: Windows Error Reporting and Online Crash Analysis uploads of crash and error data.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: oca.microsoft.com
+    category: telemetry
+    purpose: Windows Online Crash Analysis, which receives crash reports.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+  - pattern: www.telecommandsvc.microsoft.com
+    category: telemetry
+    purpose: Windows Error Reporting service.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: browser.events.data.msn.com
+    category: telemetry
+    purpose: Diagnostic data endpoint listed by Microsoft for Windows 11.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: manage.devcenter.microsoft.com
+    category: telemetry
+    purpose: Microsoft Store analytics.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+
+  # --- Ads ------------------------------------------------------------------
+  - pattern: bat.bing.com
+    category: ads
+    purpose: Microsoft Advertising Universal Event Tracking tag that reports website visits and conversions to advertisers.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/answers/questions/2289073/bat-bing-net-is-there-a-new-microsoft-ads-domain
+  - pattern: arc.msn.com
+    category: ads
+    purpose: Windows Spotlight lock-screen images plus suggested apps, tips and Microsoft account promotions.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: ris.api.iris.microsoft.com
+    category: ads
+    purpose: Windows Spotlight content service for lock-screen images, suggested apps and Windows tips.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+
+  # --- Essential: connectivity ----------------------------------------------
+  - pattern: msftconnecttest.com
+    category: essential
+    purpose: Windows Network Connection Status Indicator check that tests for internet access.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://learn.microsoft.com/en-us/windows-server/networking/ncsi/ncsi-overview
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: msftncsi.com
+    category: essential
+    purpose: Older Windows connectivity check that tests for internet access.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://learn.microsoft.com/en-us/windows-server/networking/ncsi/ncsi-overview
+
+  # --- Essential: updates ---------------------------------------------------
+  - pattern: windowsupdate.com
+    category: essential
+    purpose: Windows Update downloads and root-certificate list updates.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: update.microsoft.com
+    category: essential
+    purpose: Windows Update and Microsoft Update service.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: delivery.mp.microsoft.com
+    category: essential
+    purpose: Downloads of Windows updates and Microsoft Store apps.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: prod.do.dsp.mp.microsoft.com
+    category: essential
+    purpose: Windows Update Delivery Optimization, which coordinates update downloads, including from local peers.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: tsfe.trafficshaping.dsp.mp.microsoft.com
+    category: essential
+    purpose: Windows Update download regulation service.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: api.cdp.microsoft.com
+    category: essential
+    purpose: Update-check API used by Windows and Microsoft Edge.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: adl.windows.com
+    category: essential
+    purpose: Windows compatibility database updates.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: definitionupdates.microsoft.com
+    category: essential
+    purpose: Microsoft Defender antivirus definition updates.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: dmd.metaservices.microsoft.com
+    category: essential
+    purpose: Retrieves device metadata (names and icons) for connected hardware.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: settings-win.data.microsoft.com
+    category: essential
+    purpose: Remote configuration for Windows apps and diagnostic settings; Microsoft says it does not upload diagnostic data.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/configure-windows-diagnostic-data-in-your-organization
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: settings.data.microsoft.com
+    category: essential
+    purpose: Remote configuration that Windows apps such as the Xbox app download.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+
+  # --- Essential: security, auth, licensing, push ----------------------------
+  - pattern: wdcp.microsoft.com
+    category: essential
+    purpose: Microsoft Defender cloud-based protection lookups.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: wdcpalt.microsoft.com
+    category: essential
+    purpose: Microsoft Defender cloud-based protection lookups.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/windows-11-endpoints-non-enterprise-editions
+  - pattern: smartscreen.microsoft.com
+    category: essential
+    purpose: Defender SmartScreen checks of websites and downloads against known threats.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: smartscreen-prod.microsoft.com
+    category: essential
+    purpose: Defender SmartScreen checks of websites and downloads against known threats.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: checkappexec.microsoft.com
+    category: essential
+    purpose: Defender SmartScreen reputation check for apps you run.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: login.live.com
+    category: essential
+    purpose: Microsoft account sign-in and device authentication.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: licensing.mp.microsoft.com
+    category: essential
+    purpose: Windows online activation and app licensing.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: wns.windows.com
+    category: essential
+    purpose: Windows Push Notification Services, which delivers app notifications.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: storecatalogrevocation.storequality.microsoft.com
+    category: essential
+    purpose: Revokes licences of malicious Microsoft Store apps.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+
+  # --- Content --------------------------------------------------------------
+  - pattern: displaycatalog.mp.microsoft.com
+    category: content
+    purpose: Microsoft Store catalogue.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: storeedgefd.dsx.mp.microsoft.com
+    category: content
+    purpose: Loads content in the Microsoft Store app.
+    confidence: high
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: xboxlive.com
+    category: content
+    purpose: Xbox network services used by Xbox consoles and the Windows Xbox app.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
+  - pattern: msn.com
+    category: content
+    purpose: MSN news and Windows widgets content.
+    confidence: medium
+    evidence:
+      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints

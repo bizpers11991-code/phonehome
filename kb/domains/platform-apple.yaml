@@ -1,0 +1,305 @@
+# Apple: iPhone, iPad, Mac, Apple TV, HomePod.
+# Most Apple traffic is essential (time, updates, push, certificates, iCloud).
+# Primary source: Apple's "Use Apple products on enterprise networks" host list.
+# Telemetry/ads behaviour: Leith "Mobile Handset Privacy" (SecureComm 2021).
+company: apple
+rules:
+  # --- Essential: connectivity, time, setup ---------------------------------
+  - pattern: captive.apple.com
+    category: essential
+    purpose: Connectivity check that detects captive-portal Wi-Fi login pages.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: time.apple.com
+    category: essential
+    purpose: Apple time server used to set the device clock.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: time-ios.apple.com
+    category: essential
+    purpose: Apple time server used by iPhone, iPad and Apple TV to set the clock.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: time-macos.apple.com
+    category: essential
+    purpose: Apple time server used by Macs to set the clock.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: albert.apple.com
+    category: essential
+    purpose: Apple device activation service.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: humb.apple.com
+    category: essential
+    purpose: Apple device setup support service.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: push.apple.com
+    category: essential
+    purpose: Apple Push Notification service, which delivers notifications to Apple devices.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: doh.dns.apple.com
+    category: essential
+    purpose: Apple DNS-over-HTTPS resolver; lookups sent here bypass your local DNS server.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+
+  # --- Essential: software updates -----------------------------------------
+  - pattern: mesu.apple.com
+    category: essential
+    purpose: Hosts Apple software update catalogs.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: gdmf.apple.com
+    category: essential
+    purpose: Apple software update catalog service.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: gs.apple.com
+    category: essential
+    purpose: Authorises iOS, tvOS, watchOS and macOS software updates.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: gg.apple.com
+    category: essential
+    purpose: Supports iOS, tvOS, watchOS and macOS software updates.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: appldnld.apple.com
+    category: essential
+    purpose: Downloads for iOS, iPadOS and watchOS updates and carrier settings.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: updates.cdn-apple.com
+    category: essential
+    purpose: Apple software update downloads.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: updates-http.cdn-apple.com
+    category: essential
+    purpose: Apple software update downloads.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: swcdn.apple.com
+    category: essential
+    purpose: macOS software update downloads.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: swscan.apple.com
+    category: essential
+    purpose: macOS software update catalog checks.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: swdist.apple.com
+    category: essential
+    purpose: macOS software update distribution.
+    confidence: high
+    kind_hint: computer
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: lcdn-locator.apple.com
+    category: essential
+    purpose: Finds a local Apple content cache on your network to speed up downloads.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: diagassets.apple.com
+    category: essential
+    purpose: Downloads Apple hardware diagnostic assets that help detect hardware problems.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+
+  # --- Essential: certificates & account ------------------------------------
+  - pattern: ocsp.apple.com
+    category: essential
+    purpose: Apple certificate revocation checks (OCSP).
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: ocsp2.apple.com
+    category: essential
+    purpose: Apple certificate revocation checks (OCSP).
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: crl.apple.com
+    category: essential
+    purpose: Apple certificate revocation lists.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: valid.apple.com
+    category: essential
+    purpose: Apple certificate validation.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: certs.apple.com
+    category: essential
+    purpose: Apple certificate validation.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: idmsa.apple.com
+    category: essential
+    purpose: Apple Account sign-in and authentication.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: gsa.apple.com
+    category: essential
+    purpose: Apple Account authentication.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: token.safebrowsing.apple
+    category: essential
+    purpose: Safari fraudulent-website warnings.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: probe.icloud.com
+    category: essential
+    purpose: iCloud connection testing.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: pong.icloud.com
+    category: essential
+    purpose: iCloud connection testing.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+
+  # --- Telemetry ------------------------------------------------------------
+  - pattern: xp.apple.com
+    category: telemetry
+    purpose: Apple analytics endpoint; Apple lists it for updates, but it received telemetry even with iPhone Analytics off.
+    confidence: high
+    evidence:
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+      - https://support.apple.com/en-us/101555
+  - pattern: metrics.icloud.com
+    category: telemetry
+    purpose: iCloud device diagnostics.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: iphonesubmissions.apple.com
+    category: telemetry
+    purpose: Optional analytics sharing from iPhone.
+    confidence: high
+    kind_hint: phone
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: idiagnostics.apple.com
+    category: telemetry
+    purpose: Apple diagnostics service; an iPhone sent its hardware serial number here when a SIM was inserted.
+    confidence: medium
+    evidence:
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+  - pattern: ls.apple.com
+    category: telemetry
+    purpose: Apple Maps and Location Services; also receives location data and nearby Wi-Fi details for crowd-sourced positioning.
+    confidence: medium
+    evidence:
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+
+  # --- Ads ------------------------------------------------------------------
+  - pattern: iadsdk.apple.com
+    category: ads
+    purpose: Apple advertising configuration and ad-personalisation opt-out, contacted by the adprivacyd process.
+    confidence: high
+    evidence:
+      - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+  - pattern: api-adservices.apple.com
+    category: ads
+    purpose: Apple Ads attribution API that tells app makers whether an install came from an Apple ad.
+    confidence: medium
+    evidence:
+      - https://developer.apple.com/forums/thread/749538
+      - https://docs.apphud.com/docs/apple-search-ads
+
+  # --- Content --------------------------------------------------------------
+  - pattern: icloud.com
+    category: content
+    purpose: iCloud services such as backup, photos, mail and sync.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: icloud-content.com
+    category: content
+    purpose: iCloud file and photo storage.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: apple-cloudkit.com
+    category: content
+    purpose: iCloud (CloudKit) data sync used by Apple and third-party apps.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: mask.icloud.com
+    category: content
+    purpose: iCloud Private Relay, which hides your IP address from websites.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: itunes.apple.com
+    category: content
+    purpose: App Store, Apple Music, books and other store content.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: apps.apple.com
+    category: content
+    purpose: App Store content.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: mzstatic.com
+    category: content
+    purpose: Apple store artwork and downloads for apps, music and books.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: smoot.apple.com
+    category: content
+    purpose: Apple search services for Siri, Spotlight, Safari and Lookup; receives what you search for.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: guzzoni.apple.com
+    category: content
+    purpose: Siri and dictation requests.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555
+  - pattern: sylvan.apple.com
+    category: content
+    purpose: Aerial screen savers and wallpapers.
+    confidence: high
+    evidence:
+      - https://support.apple.com/en-us/101555

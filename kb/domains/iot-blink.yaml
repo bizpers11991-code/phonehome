@@ -1,0 +1,17 @@
+company: blink
+rules:
+  - pattern: immedia-semi.com
+    category: essential
+    purpose: "Blink's cloud API (regional rest-*.immedia-semi.com hosts); arming, clips and live view stop working if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/MattTW/BlinkMonitorProtocol
+      - https://github.com/MattTW/BlinkMonitorProtocol/blob/master/auth/login.md
+  - pattern: rest-prod.immedia-semi.com
+    category: essential
+    purpose: "Blink's sign-in endpoint, which then points the app at a regional server; logging in fails if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/MattTW/BlinkMonitorProtocol/blob/master/auth/login.md

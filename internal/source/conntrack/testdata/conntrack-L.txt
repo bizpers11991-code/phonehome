@@ -1,0 +1,4 @@
+tcp      6 86397 ESTABLISHED src=192.168.1.41 dst=52.94.233.129 sport=49822 dport=443 src=52.94.233.129 dst=203.0.113.7 sport=443 dport=49822 [ASSURED] mark=0 use=1
+udp      17 29 src=192.168.1.60 dst=129.6.15.28 sport=123 dport=123 [UNREPLIED] src=129.6.15.28 dst=203.0.113.7 sport=123 dport=123 mark=0 use=1
+tcp      6 102 TIME_WAIT src=10.0.0.15 dst=17.253.144.10 sport=58810 dport=80 src=17.253.144.10 dst=203.0.113.7 sport=80 dport=58810 [ASSURED] mark=0 use=1
+icmp     1 29 src=10.0.0.15 dst=8.8.4.4 type=8 code=0 id=33 src=8.8.4.4 dst=203.0.113.7 type=0 code=0 id=33 mark=0 use=1

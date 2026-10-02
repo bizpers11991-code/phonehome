@@ -1,0 +1,12 @@
+id: tcl-google-tv-acr
+title: Turn off TCL's viewing-data features on a TCL Google TV
+vendors: [tcl]
+kinds: [tv]
+when: [acr]
+steps:
+  - 'Settings › Display & Sound › Intelligent Settings (on some models under Settings › System) and switch every item off'
+  - 'Then apply the Google TV fixes: Settings › Privacy › Ads and Settings › Privacy › Usage & diagnostics'
+notes: 'TCL labels and menu positions change between model years, and not every TCL Google TV has a separate ACR switch. TCL Roku TVs use Roku''s "Use info from TV inputs" setting instead.'
+evidence:
+  - https://techaeris.com/2025/12/20/automated-content-recognition-turn-it-off/
+  - https://www.pocket-lint.com/how-to-disable-acr-on-google-tv/

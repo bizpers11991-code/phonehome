@@ -1,0 +1,10 @@
+company: throughtek
+rules:
+  - pattern: iotcplatform.com
+    category: essential
+    purpose: "ThroughTek Kalay peer-to-peer servers used by many camera brands to reach cameras remotely; remote live view stops if blocked."
+    confidence: high
+    kind_hint: camera
+    evidence:
+      - https://unit42.paloaltonetworks.com/iot-supply-chain-cve-2021-28372/
+      - https://forums.wyze.com/t/ip-list-that-wzye-cam-actually-connects-to/7247

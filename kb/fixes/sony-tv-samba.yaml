@@ -1,0 +1,14 @@
+id: sony-tv-samba
+title: Turn off Samba Interactive TV on a Sony Bravia
+vendors: [sony]
+kinds: [tv]
+when: [acr]
+steps:
+  - 'Home › Settings › All Settings › Privacy › "Samba Interactive TV" and switch it off'
+  - 'If it is not under Privacy, look in Settings › Initial Setup › "Samba Interactive TV" (older Android TV: System Preferences)'
+  - 'Optional: Settings › Apps › "Samba Services Manager" › Clear cache, Force stop, Disable'
+notes: 'Samba Interactive TV is third-party content recognition from Samba TV that Sony builds into many Bravia sets; it is used for interest-based ads. It does not cover Google''s own data collection, so also apply the Google TV fixes.'
+evidence:
+  - https://www.consumerreports.org/electronics/privacy/how-to-turn-off-smart-tv-snooping-features-a4840102036/
+  - https://www.pocket-lint.com/how-to-disable-acr-on-google-tv/
+  - https://www.malwarebytes.com/blog/news/2026/03/samsung-tvs-stop-spying-on-viewers-in-texas-heres-how-to-disable-acr-anywhere

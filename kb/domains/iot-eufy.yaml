@@ -1,0 +1,31 @@
+company: eufy
+rules:
+  - pattern: eufylife.com
+    category: essential
+    purpose: "eufy's cloud for cameras, doorbells and vacuums: app API, push and video relay; remote access stops if blocked."
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/domains/eufylife.com
+      - https://community.eufy.com/t/does-anyone-know-which-domains-and-ips-the-homebase-2-and-eufycam-2c-use/3760977
+  - pattern: security-app.eufylife.com
+    category: essential
+    purpose: "eufy Security app and HomeBase cloud API (US); the app cannot reach cameras remotely if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://www.netify.ai/resources/hostnames/security-app.eufylife.com
+      - https://community.eufy.com/t/does-anyone-know-which-domains-and-ips-the-homebase-2-and-eufycam-2c-use/3760977
+  - pattern: security-app-eu.eufylife.com
+    category: essential
+    purpose: "eufy Security app and HomeBase cloud API (Europe); the app cannot reach cameras remotely if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://community.eufy.com/t/does-anyone-know-which-domains-and-ips-the-homebase-2-and-eufycam-2c-use/3760977
+      - https://www.netify.ai/resources/domains/eufylife.com
+  - pattern: log.eufylife.com
+    category: telemetry
+    purpose: "eufy logging host; its name suggests diagnostic or usage logs, but eufy does not document what is sent."
+    confidence: low
+    evidence:
+      - https://www.netify.ai/resources/domains/eufylife.com

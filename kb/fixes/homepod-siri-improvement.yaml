@@ -1,0 +1,11 @@
+id: homepod-siri-improvement
+title: Turn off "Improve Siri & Dictation" on HomePod
+vendors: [apple]
+kinds: [speaker]
+steps:
+  - 'On the iPhone or iPad of the home owner, open the Home app'
+  - 'Touch and hold the HomePod › Accessory Settings › Analytics & Improvements'
+  - 'Turn off "Improve Siri & Dictation"'
+notes: 'When on, Apple stores and may have staff review a sample of your Siri audio and transcripts; turning it off stops that. HomePod copies this setting from the device used to set it up, so check it after setup.'
+evidence:
+  - https://support.apple.com/en-us/127070

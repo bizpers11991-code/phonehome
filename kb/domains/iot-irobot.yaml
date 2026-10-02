@@ -1,0 +1,17 @@
+company: irobot
+rules:
+  - pattern: irobotapi.com
+    category: essential
+    purpose: "iRobot's cloud for Roomba and Braava robots; the iRobot Home app and schedules stop working if blocked."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://www.netify.ai/resources/domains/irobotapi.com
+      - https://www.netify.ai/resources/applications/irobot
+  - pattern: disc-prod.iot.irobotapi.com
+    category: essential
+    purpose: "iRobot cloud discovery service that tells robots and the app which regional servers to use."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://www.netify.ai/resources/hostnames/disc-prod.iot.irobotapi.com

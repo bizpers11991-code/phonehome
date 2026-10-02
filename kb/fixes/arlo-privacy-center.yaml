@@ -1,0 +1,14 @@
+id: arlo-privacy-center
+title: Review Arlo's Privacy Center and remove old recordings and partners
+vendors: [arlo]
+kinds: [camera]
+steps:
+  - 'Arlo Secure app › profile icon › Privacy Center (web: my.arlo.com › Settings › Privacy Center)'
+  - 'Content tab: delete recordings you no longer need from Arlo''s cloud'
+  - 'Account tab: sign out any phones or browsers you do not recognise'
+  - 'Partners tab: unlink services you do not use (Alexa, Google, IFTTT and similar)'
+  - 'Not a subscriber: opt out of interest-based in-app advertising in Privacy Center where offered, or email privacy@arlo.com'
+notes: 'Arlo Secure subscribers are automatically opted out of interest-based in-app ads; non-subscribers still see general ads after opting out. Cameras still need Arlo''s cloud for remote viewing and alerts.'
+evidence:
+  - https://kb.arlo.com/000062614/About-the-Arlo-Privacy-Center
+  - https://policy.arlo.com/privacy/arlo/en/5/privacy.html

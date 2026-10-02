@@ -1,0 +1,28 @@
+company: meross
+rules:
+  - pattern: meross.com
+    category: essential
+    purpose: "Meross cloud (HTTP API and MQTT brokers such as mqtt-eu-4.meross.com); app and voice-assistant control stop if blocked."
+    confidence: medium
+    kind_hint: plug
+    evidence:
+      - https://www.netify.ai/resources/domains/meross.com
+      - https://www.netify.ai/resources/hostnames/mqtt-eu-4.meross.com
+  - pattern: iotx-eu.meross.com
+    category: essential
+    purpose: "Meross account and device API for Europe; the app cannot sign in or list devices if blocked."
+    confidence: medium
+    evidence:
+      - https://pypi.org/project/meross-iot/
+  - pattern: iotx-us.meross.com
+    category: essential
+    purpose: "Meross account and device API for the US; the app cannot sign in or list devices if blocked."
+    confidence: medium
+    evidence:
+      - https://pypi.org/project/meross-iot/
+  - pattern: iotx-ap.meross.com
+    category: essential
+    purpose: "Meross account and device API for Asia-Pacific; the app cannot sign in or list devices if blocked."
+    confidence: medium
+    evidence:
+      - https://pypi.org/project/meross-iot/

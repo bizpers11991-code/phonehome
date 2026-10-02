@@ -1,0 +1,2 @@
+ipv4     2 tcp      6 431999 ESTABLISHED src=192.168.1.20 dst=34.117.59.81 sport=50412 dport=443 packets=81 bytes=18100 src=34.117.59.81 dst=203.0.113.7 sport=443 dport=50412 packets=71 bytes=99500 [ASSURED] mark=0 use=1
+ipv4     2 tcp      6 120 SYN_SENT src=192.168.1.41 dst=52.94.233.129 sport=49822 dport=443 packets=1 bytes=60 [UNREPLIED] src=52.94.233.129 dst=203.0.113.7 sport=443 dport=49822 packets=0 bytes=0 mark=0 use=1

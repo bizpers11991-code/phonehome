@@ -1,0 +1,48 @@
+name: New device / domain report
+description: Tell us what a device phones home to, so the knowledge base can explain it.
+labels: [knowledge-base]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Every knowledge-base claim needs evidence, so please share what you saw
+        and how you know. Remove anything that identifies you (IPs, serials, account IDs).
+  - type: input
+    id: device
+    attributes:
+      label: Device make and model
+      placeholder: Samsung QN65Q80C
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware / software version
+      placeholder: Tizen 7.0, firmware 1402.5
+  - type: textarea
+    id: domains
+    attributes:
+      label: Domain(s)
+      description: One per line.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What you observed
+      description: When does it happen, how often, does it continue when the device is idle or a setting is off?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Links to vendor docs, papers or write-ups, and/or a description of your own capture. Say what is known versus guessed.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: What do you think it is for?
+      options: [Content recognition, Advertising, Tracking, Telemetry, Essential, Content & apps, Not sure]

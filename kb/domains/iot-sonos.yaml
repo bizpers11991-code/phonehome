@@ -1,0 +1,24 @@
+company: sonos
+rules:
+  - pattern: sonos.com
+    category: essential
+    purpose: "Sonos services (account, updates, music service menus); Sonos says the app loses features if *.sonos.com is blocked."
+    confidence: high
+    kind_hint: speaker
+    evidence:
+      - https://support.sonos.com/en-us/article/configure-your-firewall-to-work-with-sonos
+  - pattern: msmetrics.ws.sonos.com
+    category: telemetry
+    purpose: "Sonos usage-data collection; Sonos lists it as gathering usage data, and blocking it does not stop playback."
+    confidence: high
+    kind_hint: speaker
+    evidence:
+      - https://support.sonos.com/en-us/article/configure-your-firewall-to-work-with-sonos
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/sonos
+  - pattern: msmetrics-test.ws.sonos.com
+    category: telemetry
+    purpose: "Test instance of Sonos usage-data collection, listed alongside the production host by tracking blocklists."
+    confidence: medium
+    kind_hint: speaker
+    evidence:
+      - https://github.com/nextdns/native-tracking-domains/blob/main/domains/sonos

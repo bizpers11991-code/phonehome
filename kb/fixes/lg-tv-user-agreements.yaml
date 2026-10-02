@@ -1,0 +1,12 @@
+id: lg-tv-user-agreements
+title: Withdraw LG's viewing, voice and advertising agreements
+vendors: [lg]
+kinds: [tv]
+steps:
+  - 'Settings › All Settings › Support › Privacy & Terms › User Agreements'
+  - 'Untick "Viewing Information", "Voice Information", "Interest-Based Advertisement" and "Marketing Communications", then confirm'
+  - 'In Privacy & Terms, also turn on "Do Not Sell My Personal Information" where it is offered (US models)'
+notes: 'Withdrawing the Viewing Information agreement is the paperwork side of turning Live Plus off; do both. Exact agreement names differ slightly between webOS versions and regions.'
+evidence:
+  - https://www.pocket-lint.com/how-to-turn-off-acr-on-an-lg-tv/
+  - https://www.consumerreports.org/electronics/privacy/how-to-turn-off-smart-tv-snooping-features-a4840102036/

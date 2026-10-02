@@ -1,0 +1,14 @@
+id: keep-tv-offline
+title: Keep the TV offline and stream from a separate box
+vendors: []
+kinds: [tv]
+when: [acr, ads]
+steps:
+  - 'Pick a streaming box whose privacy settings you control (for example Apple TV, or a Roku/Fire TV/Google TV stick with the fixes above applied)'
+  - 'On the TV, open the network settings, choose "Forget" for your Wi-Fi network and unplug any Ethernet cable'
+  - 'Optionally block the TV''s MAC address in your router so it cannot rejoin, and change the Wi-Fi password if it was stored'
+  - 'Re-run phonehome to confirm the TV no longer makes DNS lookups'
+notes: 'Research on Samsung and LG sets found ACR fingerprints HDMI inputs even when the TV is used as a plain display, so an offline TV is the only way to be sure it reports nothing. You lose built-in apps, firmware updates over the internet and casting to the TV itself.'
+evidence:
+  - https://www.arxiv.org/pdf/2409.06203
+  - https://www.consumerreports.org/electronics/privacy/how-to-turn-off-smart-tv-snooping-features-a4840102036/

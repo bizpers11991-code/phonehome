@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<title>phonehome</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#devices">Skip to devices</a>
+<header class="masthead wrap">
+  <div class="brand">
+    <a class="wordmark" href="./" aria-label="phonehome, home">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 15.5 16 6l11 9.5V26a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path class="logo-wave" d="M12.5 19.5a5 5 0 0 1 7 0M10 16.8a8.5 8.5 0 0 1 12 0"/><circle cx="16" cy="22.6" r="1.4"/></svg>
+      <span>phonehome</span>
+    </a>
+    <p class="tagline">See what your devices say about you.</p>
+  </div>
+  <div class="period" role="radiogroup" aria-label="Time period">
+    <button type="button" role="radio" data-days="1">24 h</button>
+    <button type="button" role="radio" data-days="7">7 days</button>
+    <button type="button" role="radio" data-days="30">30 days</button>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+  <div id="banner"></div>
+  <section id="hero" class="hero" aria-live="polite">
+    <div class="loading"><span class="skeleton w60"></span><span class="skeleton w40"></span><span class="skeleton bar"></span></div>
+  </section>
+  <section id="devices" class="devices" tabindex="-1" aria-labelledby="devices-title"></section>
+  <noscript><p class="notice">phonehome's dashboard needs JavaScript. The JSON API is at <a href="api/report">api/report</a>.</p></noscript>
+</main>
+
+<footer class="wrap">
+  <div class="footer">
+    <div id="health" class="health"></div>
+    <p class="promise"><svg class="ico" aria-hidden="true"><use href="assets/icons.svg#lock"/></svg>Nothing leaves your network. phonehome has no telemetry.</p>
+  </div>
+</footer>
+
+<dialog id="drawer" class="drawer" aria-labelledby="drawer-title"></dialog>
+<dialog id="receipt" class="modal" aria-labelledby="receipt-title"></dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+company: ecobee
+rules:
+  - pattern: ecobee.com
+    category: essential
+    purpose: "ecobee's cloud, which thermostats keep a TLS connection to (port 8089); the app, schedules and remote sensors stop if blocked."
+    confidence: medium
+    evidence:
+      - https://documents.alpinehomeair.com/product/emssi%20wifi.pdf

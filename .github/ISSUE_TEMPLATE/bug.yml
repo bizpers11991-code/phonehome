@@ -1,0 +1,38 @@
+name: Bug report
+description: Something in phonehome is broken or wrong.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+  - type: input
+    id: version
+    attributes:
+      label: phonehome version
+      description: Output of `phonehome version`.
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How do you run it?
+      options: [Docker, Binary + systemd, Built from source, Other]
+  - type: dropdown
+    id: sources
+    attributes:
+      label: Data source
+      multiple: true
+      options: [Pi-hole v5, Pi-hole v6, AdGuard Home, dnsmasq log, DHCP leases, conntrack, Demo mode]
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Remove anything private (domains you visited, IPs, hostnames).
+      render: text

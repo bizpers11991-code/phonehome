@@ -1,0 +1,12 @@
+id: amazon-sidewalk-off
+title: Opt out of Amazon Sidewalk
+vendors: [amazon, ring]
+kinds: [speaker, camera, hub]
+steps:
+  - 'Alexa app › More › Settings › Account Settings › Amazon Sidewalk and turn it off'
+  - 'Ring app: Menu › Control Center › Amazon Sidewalk › Disable Sidewalk'
+  - 'Without the app: amazon.com Manage Your Content and Devices › Preferences › Amazon Sidewalk › Disabled'
+notes: 'Sidewalk turns compatible Echo and Ring devices into bridges that share a slice of your internet with nearby Sidewalk devices. The setting is per account and applies to all your devices; it only appears if you own a Sidewalk-capable device.'
+evidence:
+  - https://www.amazon.com/gp/help/customer/display.html?nodeId=GZ4VSNFMBDHLRJUK
+  - https://www.consumerreports.org/electronics-computers/privacy/ring-privacy-security-settings-to-check-a7189415320/

@@ -1,0 +1,139 @@
+# LG webOS smart TVs. LG's ACR (Live Plus) is run by Alphonso / LG Ad Solutions:
+# see tv-acr-vendors.yaml for alphonso.tv.
+# Key sources: PETS 2020 in-the-wild LG traffic; webOS homebrew (openlgtv / webosbrew)
+# notes for update and store hosts; community LG lists for the CDP/ad hosts.
+company: lg
+rules:
+  # --- Advertising / tracking ----------------------------------------------
+  - pattern: lgsmartad.com
+    category: ads
+    purpose: LG's smart-TV ad platform, which delivers and reports home-screen adverts.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/hagezi/dns-blocklists/issues/11412
+      - https://github.com/samsapti/LG-webOS-Blocklist
+  - pattern: ad.lgappstv.com
+    category: ads
+    purpose: Ad endpoint of the LG Content Store.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/samsapti/LG-webOS-Blocklist
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: lgtvcommon.com
+    category: tracking
+    purpose: LG's customer data platform for TVs, used for usage beacons, content profiles and recommendations.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/issues/11412
+      - https://github.com/samsapti/LG-webOS-Blocklist
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.lgwebos.txt
+  - pattern: cdpbeacon.lgtvcommon.com
+    category: tracking
+    purpose: Beacon sent about every five minutes to LG's customer data platform, which profiles TV use for advertising.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/issues/11412
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: adts.lgtvcommon.com
+    category: ads
+    purpose: LG ad-tracking heartbeat sent about every five minutes.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/issues/11412
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.lgwebos.txt
+  - pattern: ads.lgtvcommon.com
+    category: ads
+    purpose: LG TV advertising endpoint.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.lgwebos.txt
+
+  # --- Telemetry ------------------------------------------------------------
+  - pattern: rdx2.lgtvsdp.com
+    category: telemetry
+    purpose: Receives usage and recommendation data uploaded by LG TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://github.com/samsapti/LG-webOS-Blocklist
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.lgwebos.txt
+  - pattern: rdx2.nextlgsdp.com
+    category: telemetry
+    purpose: Receives usage and crash data uploaded by newer LG webOS TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.lgwebos.txt
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: lgtvonline.lge.com
+    category: telemetry
+    purpose: LG TV service endpoint that blocklists tested on webOS treat as non-essential data upload.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/samsapti/LG-webOS-Blocklist
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+
+  # --- Essential ------------------------------------------------------------
+  - pattern: snu.lge.com
+    category: essential
+    purpose: LG's software update server, used to check for and download TV firmware and app updates.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://gist.github.com/Informatic/1983f2e501444cf1cbd182e50820d6c1
+      - https://github.com/openlgtv/nsu_emu
+  - pattern: su.lge.com
+    category: essential
+    purpose: LG's software update server, used to check for and download TV firmware and app updates.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://gist.github.com/Informatic/1983f2e501444cf1cbd182e50820d6c1
+      - https://github.com/openlgtv/nsu_emu
+  - pattern: su-ssl.lge.com
+    category: essential
+    purpose: LG's software update server (encrypted), used for TV firmware and app updates.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://gist.github.com/Informatic/1983f2e501444cf1cbd182e50820d6c1
+  - pattern: nsu.lge.com
+    category: essential
+    purpose: LG's network software update server for TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://gist.github.com/Informatic/1983f2e501444cf1cbd182e50820d6c1
+  - pattern: lgtvsdp.com
+    category: essential
+    purpose: LG's Service Delivery Platform for TVs, which runs the Content Store, clock sync and other smart features.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://www.webosbrew.org/pages/glossary.html
+      - https://github.com/furkan-bayrak/lg-tv-blocklist/blob/main/docs/faq.md
+      - https://arxiv.org/abs/1911.03447
+  - pattern: nextlgsdp.com
+    category: essential
+    purpose: LG's newer Service Delivery Platform, used by recent webOS TVs for the app store and clock sync.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://github.com/furkan-bayrak/lg-tv-blocklist/blob/main/docs/faq.md
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: lgeapi.com
+    category: essential
+    purpose: Regional back end of the LG Content Store.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/furkan-bayrak/lg-tv-blocklist/blob/main/docs/faq.md

@@ -1,0 +1,93 @@
+# The format of this file is documented in the dhcpd.leases(5) manual page.
+# This lease file was written by isc-dhcp-4.4.3-P1
+
+# authoring-byte-order entry is generated, DO NOT DELETE
+authoring-byte-order little-endian;
+
+server-duid "\000\001\000\001,^\215A\270'\353\252\273\314";
+
+failover peer "dhcp-failover" state {
+  my state normal at 4 2025/10/02 08:00:00;
+  partner state normal at 4 2025/10/02 08:00:00;
+}
+
+lease 192.168.1.50 {
+  starts 4 2025/10/02 08:10:00;
+  ends 4 2025/10/02 20:10:00;
+  cltt 4 2025/10/02 08:10:00;
+  binding state active;
+  next binding state free;
+  rewind binding state free;
+  hardware ethernet 38:f7:3d:11:22:33;
+  uid "\0018\367=\021\"3";
+  client-hostname "Kitchen \"Echo\"";
+}
+lease 192.168.1.51 {
+  starts 4 2025/10/02 09:00:00;
+  ends 4 2025/10/02 21:00:00;
+  cltt 4 2025/10/02 09:00:00;
+  binding state active;
+  next binding state free;
+  rewind binding state free;
+  hardware ethernet 00:17:88:aa:bb:cc;
+  client-hostname "Philips-hue";
+}
+lease 192.168.1.52 {
+  starts 3 2025/10/01 07:00:00;
+  ends 3 2025/10/01 19:00:00;
+  tstp 3 2025/10/01 19:00:00;
+  cltt 3 2025/10/01 07:00:00;
+  binding state free;
+  hardware ethernet 3c:22:fb:44:55:66;
+  uid "\001<\"\373DUf";
+}
+lease 192.168.1.53 {
+  starts 4 2025/10/02 06:30:00;
+  ends never;
+  binding state active;
+  hardware ethernet DC:A6:32:01:02:03;
+  set vendor-class-identifier = "dhcpcd-9.4.1:Linux-6.6.31+rpt-rpi-v8:aarch64:BCM2835";
+  client-hostname "caf\303\251-pi";
+}
+lease 192.168.1.54 {
+  starts 4 2025/10/02 05:00:00;
+  ends 4 2025/10/02 05:00:00;
+  binding state abandoned;
+  next binding state free;
+}
+# The Echo renewed: the newer block for .50 wins.
+lease 192.168.1.50 {
+  starts epoch 1759401000; # Thu Oct 02 10:30:00 2025
+  ends epoch 1759444200; # Thu Oct 02 22:30:00 2025
+  cltt epoch 1759401000; # Thu Oct 02 10:30:00 2025
+  binding state active;
+  next binding state free;
+  rewind binding state free;
+  hardware ethernet 38:f7:3d:11:22:33;
+  client-hostname "Kitchen \"Echo\"";
+}
+# .51 was handed to a different device later on.
+lease 192.168.1.51 {
+  starts 4 2025/10/02 11:00:00;
+  ends 4 2025/10/02 23:00:00;
+  cltt 4 2025/10/02 11:00:00;
+  binding state active;
+  hardware ethernet 24:a1:60:0a:0b:0c;
+}
+lease 192.168.1.52 {
+  starts 4 2025/10/02 12:00:00;
+  ends 5 2025/10/03 00:00:00;
+  cltt 4 2025/10/02 12:00:00;
+  binding state active;
+  hardware ethernet 3c:22:fb:44:55:66;
+  client-hostname "MacBook-Air";
+}
+ia-na "\001\000\000\000\000\001\000\001,^\215A\270'\353\252\273\314" {
+  cltt 4 2025/10/02 08:00:00;
+  iaaddr fd00::1:50 {
+    binding state active;
+    preferred-life 27000;
+    max-life 43200;
+    ends 4 2025/10/02 20:00:00;
+  }
+}

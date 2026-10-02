@@ -1,0 +1,116 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+rules:
+- pattern: appsflyer.com
+  company: appsflyer
+  category: tracking
+  purpose: 'AppsFlyer mobile attribution SDK: ties app installs and in-app events to the ads you saw, using device identifiers.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/appsflyer.com.json
+  - https://www.netify.ai/resources/applications/appsflyer
+- pattern: appsflyersdk.com
+  company: appsflyer
+  category: tracking
+  purpose: 'AppsFlyer SDK endpoint: reports app installs, launches and in-app events for ad attribution.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/appsflyersdk.com.json
+  - https://www.netify.ai/resources/applications/appsflyer
+- pattern: onelink.me
+  company: appsflyer
+  category: tracking
+  purpose: 'AppsFlyer OneLink tracking links: record which ad or link led you to an app.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/onelink.me.json
+- pattern: adjust.com
+  company: adjust
+  category: tracking
+  purpose: 'Adjust mobile attribution SDK: links app installs and events to ad campaigns using device identifiers.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/adjust.com.json
+  - https://help.adjust.com/en/article/data-residency
+- pattern: adj.st
+  company: adjust
+  category: tracking
+  purpose: 'Adjust tracking links: record which ad or link led you to open or install an app.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/adj.st.json
+  - https://help.adjust.com/en/article/data-residency
+- pattern: branch.io
+  company: branch
+  category: tracking
+  purpose: 'Branch deep-linking and attribution SDK: reports app opens and installs and which link or ad caused them.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/branch.io.json
+  - https://help.branch.io/developers-hub/reference/createdeeplinkurl
+- pattern: app.link
+  company: branch
+  category: tracking
+  purpose: 'Branch deep links: record clicks and app opens for marketing attribution.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/app.link.json
+- pattern: kochava.com
+  company: kochava
+  category: tracking
+  purpose: 'Kochava attribution SDK: sends app install and usage events with device identifiers; common in smart TV apps.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/kochava.com.json
+  - https://support.kochava.com/sdk-integration/android-sdk-integration/
+- pattern: singular.net
+  company: singular
+  category: tracking
+  purpose: 'Singular attribution SDK: reports app installs and events so marketers can tie them to ad campaigns.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/singular.net.json
+- pattern: applovin.com
+  company: applovin
+  category: ads
+  purpose: 'AppLovin mobile ad network and ad SDK: requests and reports in-app ads.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/applovin.com.json
+- pattern: rlcdn.com
+  company: liveramp
+  category: tracking
+  purpose: 'LiveRamp identity matching: links your device and browser identifiers to a cross-company profile for ad targeting.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/rlcdn.com.json
+- pattern: agkn.com
+  company: transunion
+  category: tracking
+  purpose: TransUnion (ex-Neustar AdAdvisor) identity and audience data used for ad targeting; seen on Roku channels.
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/agkn.com.json
+  - https://arxiv.org/abs/1911.03447
+- pattern: crwdcntrl.net
+  company: lotame
+  category: tracking
+  purpose: 'Lotame data-management platform: collects behavioural data to build audience segments for advertisers.'
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/crwdcntrl.net.json
+- pattern: bluekai.com
+  company: oracle
+  category: tracking
+  purpose: Oracle BlueKai data marketplace; Oracle closed its ad business in 2024, so lookups likely come from outdated code.
+  confidence: medium
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/bluekai.com.json
+- pattern: demdex.net
+  company: adobe
+  category: tracking
+  purpose: 'Adobe Audience Manager: syncs identifiers and builds audience profiles shared with advertisers; seen in TV apps.'
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/demdex.net.json
+  - https://arxiv.org/abs/1911.03447

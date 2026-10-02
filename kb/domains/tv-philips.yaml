@@ -1,0 +1,37 @@
+# Philips and AOC TVs (TP Vision). Their Smart TV services are run by ZEASN
+# (now Whale TV) on the domains TP Vision names in its own supplier notices,
+# and the same domains also carry ad requests.
+company: whaletv
+rules:
+  - pattern: zeasn.tv
+    category: content
+    purpose: Smart TV services for Philips and AOC TVs run by ZEASN for TP Vision; ad requests also go through it.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://www.tpvision.com/policy/smarttv_suppliers.pdf
+      - https://www.tpvision.com/policy/Smart_TV_Platformproviders.pdf
+  - pattern: nettvservices.com
+    category: content
+    purpose: Smart TV services for Philips and AOC TVs run by ZEASN for TP Vision; ad requests also go through it.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://www.tpvision.com/policy/smarttv_suppliers.pdf
+      - https://www.tpvision.com/policy/Smart_TV_Platformproviders.pdf
+  - pattern: nettv.corio.com
+    category: content
+    purpose: Smart TV services for Philips and AOC TVs run by ZEASN for TP Vision; ad requests also go through it.
+    confidence: high
+    kind_hint: tv
+    evidence:
+      - https://www.tpvision.com/policy/smarttv_suppliers.pdf
+      - https://www.tpvision.com/policy/Smart_TV_Platformproviders.pdf
+  - pattern: ad.nettvservices.com
+    category: ads
+    purpose: Ad endpoint of the Philips/AOC smart TV platform, which ZEASN runs to sell ad space on these TVs.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://www.tpvision.com/policy/Smart_TV_Platformproviders.pdf
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt

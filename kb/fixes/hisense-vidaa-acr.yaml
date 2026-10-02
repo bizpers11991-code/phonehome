@@ -1,0 +1,14 @@
+id: hisense-vidaa-acr
+title: Turn off Enhanced Viewing Service on a Hisense VIDAA TV
+vendors: [hisense]
+kinds: [tv]
+when: [acr]
+steps:
+  - 'Settings › Advanced Settings › Enhanced Viewing Settings'
+  - 'Switch "Enable Automatic Content Recognition" off, then choose "No, thank you" and "Yes, Decline"'
+  - 'In the same menu also switch off "Enable Personalized Ads" and "Enable Content Recommendation"'
+  - 'US models: Settings › System › Advanced System › "Do Not Sell or Share My Personal Information"'
+notes: 'Enhanced Viewing Service is Hisense''s ACR on VIDAA sets; it hashes on-screen audio and video to log what you watch. Hisense models running Google TV, Roku or Fire TV use that platform''s settings instead, so apply those fixes.'
+evidence:
+  - https://www.pocket-lint.com/how-to-disable-acr-on-a-hisense-tv/
+  - https://www.hisense-usa.com/compliance/enhanced-viewing-service-privacy-notice-(effective-date:-march-01,-2025)

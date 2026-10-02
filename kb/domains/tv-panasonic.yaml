@@ -1,0 +1,27 @@
+# Panasonic TVs running My Home Screen (Panasonic's own TV OS).
+# Most myhomescreen.tv hosts seen in the wild are collect-*/usage-* data
+# uploads; the mhc-* app-start hosts are needed for apps to load.
+company: panasonic
+rules:
+  - pattern: myhomescreen.tv
+    category: telemetry
+    purpose: Panasonic My Home Screen service domain; most hosts seen on it are usage and data-collection uploads.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+      - https://support-uk.panasonic.eu/app/answers/detail/a_id/8966/
+  - pattern: mhc-ajax-eu.myhomescreen.tv
+    category: essential
+    purpose: My Home Screen app-start service; TVs report no internet connection when it is blocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: mhc-xpana-eu.myhomescreen.tv
+    category: essential
+    purpose: My Home Screen app-start service; TVs report no internet connection when it is blocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt

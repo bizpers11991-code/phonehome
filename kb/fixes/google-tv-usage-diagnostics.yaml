@@ -1,0 +1,13 @@
+id: google-tv-usage-diagnostics
+title: Turn off Usage & diagnostics on Google TV / Android TV
+vendors: [google]
+kinds: [tv, streamer]
+steps:
+  - 'Settings › Privacy › "Usage & diagnostics" › Off'
+  - 'Older Android TV: Settings › Personal › "Usage & diagnostics" › Off'
+  - 'Optionally turn off Settings › Privacy › Location'
+notes: 'Stops the device sending crash reports and usage statistics to Google; updates keep working. It does not affect data individual apps collect, or watch activity tied to your Google account (manage that at myactivity.google.com).'
+evidence:
+  - https://www.slashgear.com/962901/the-android-tv-privacy-setting-you-should-turn-off-right-now/
+  - https://support.google.com/googletv/answer/13427970?hl=en
+  - https://support.google.com/accounts/answer/6078260?hl=en

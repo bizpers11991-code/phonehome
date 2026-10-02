@@ -1,0 +1,64 @@
+company: tp-link
+rules:
+  - pattern: tplinkcloud.com
+    category: essential
+    purpose: "TP-Link's cloud for Kasa and Tapo devices (account, remote control, push); away-from-home control stops if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/sappafrancesco/dns-blocklists/blob/main/vendors/tplink/README.md
+      - https://www.softscheck.com/en/blog/tp-link-reverse-engineering/
+  - pattern: devs.tplinkcloud.com
+    category: essential
+    purpose: "Kasa cloud server that plugs connect to even when set to local only; remote control stops if blocked."
+    confidence: medium
+    kind_hint: plug
+    evidence:
+      - https://www.softscheck.com/en/blog/tp-link-reverse-engineering/
+  - pattern: n-device-api.tplinkcloud.com
+    category: essential
+    purpose: "TP-Link device registration and re-authentication API; Tapo devices may ask to re-pair if it stays blocked."
+    confidence: medium
+    evidence:
+      - https://community.tp-link.com/en/home/forum/topic/578442
+      - https://github.com/sappafrancesco/dns-blocklists/blob/main/vendors/tplink/README.md
+  - pattern: n-devs-dcipc.tplinkcloud.com
+    category: essential
+    purpose: "TP-Link cloud endpoint for Tapo cameras, looked up around a thousand times a day per camera."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://community.tp-link.com/en/home/forum/topic/578442
+  - pattern: n-deventry-dcipc.tplinkcloud.com
+    category: essential
+    purpose: "TP-Link cloud entry endpoint for Tapo cameras, looked up hundreds of times a day per camera."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://community.tp-link.com/en/home/forum/topic/578442
+  - pattern: tplinknbu.com
+    category: essential
+    purpose: "Tapo IoT backend (camera relay, Tapo Care storage, device check-in); remote viewing and cloud recording stop if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/sappafrancesco/dns-blocklists/blob/main/vendors/tplink/README.md
+      - https://community.tp-link.com/en/home/forum/topic/578442
+  - pattern: security.iot.i.tplinknbu.com
+    category: essential
+    purpose: "Tapo device authentication handshake; devices may drop off the app if it is blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/sappafrancesco/dns-blocklists/blob/main/vendors/tplink/README.md
+  - pattern: euw1-relay-dcipc.i.tplinknbu.com
+    category: essential
+    purpose: "Tapo camera video relay (Europe) for remote viewing; cameras look it up thousands of times a day."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://community.tp-link.com/en/home/forum/topic/578442
+  - pattern: rtsp-dcipc.tplinknbu.com
+    category: essential
+    purpose: "Tapo camera streaming relay host, looked up thousands of times a day per camera."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://community.tp-link.com/en/home/forum/topic/578442

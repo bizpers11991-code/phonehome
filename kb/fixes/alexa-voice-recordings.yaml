@@ -1,0 +1,13 @@
+id: alexa-voice-recordings
+title: Stop Amazon keeping your Alexa voice recordings
+vendors: [amazon]
+kinds: [speaker]
+steps:
+  - 'Alexa app › More › Settings › Alexa Privacy › Manage Your Alexa Data'
+  - 'Under Voice Recordings, tap "Choose how long to save recordings" and pick "Don''t save recordings" (or 3 months)'
+  - 'Optionally delete existing recordings in Alexa Privacy › Review Voice History'
+  - 'The same controls are on the web at amazon.com/alexaprivacysettings'
+notes: 'Since 28 March 2025 every Alexa request is processed in Amazon''s cloud; "Don''t save" deletes the audio after processing rather than keeping it on the device. Voice ID and some personalisation may stop working.'
+evidence:
+  - https://www.slashgear.com/2097518/amazon-echo-privacy-settings-change-immediately/
+  - https://techcrunch.com/2025/03/15/amazons-echo-will-send-all-voice-recordings-to-the-cloud-starting-march-28

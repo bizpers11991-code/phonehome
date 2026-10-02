@@ -1,0 +1,12 @@
+id: wyze-data-sharing
+title: Opt out of Wyze data sharing and video-based AI training
+vendors: [wyze]
+kinds: [camera, plug, hub]
+steps:
+  - 'On wyze.com, open "Your Privacy Choices" in the page footer and turn off "Targeted Advertising" (or use Wyze''s Do Not Sell or Share request form)'
+  - 'If you use Cam Plus Descriptive Alerts, do not agree to let Wyze use your videos to train its models; to withdraw consent already given, email privacy@wyze.com'
+  - 'Also ask privacy@wyze.com to opt you out of the collection of non-personal information from your videos'
+notes: 'Wyze''s policy says it derives non-personal information from video content and, with consent, uses videos and AI descriptions to improve its models. These opt-outs cover sharing and training; cameras still upload events to Wyze''s cloud to deliver alerts.'
+evidence:
+  - https://www.wyze.com/pages/privacy-statement
+  - https://www.wyze.com/policies/privacy-policy

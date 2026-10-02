@@ -1,0 +1,23 @@
+company: ring
+rules:
+  - pattern: ring.com
+    category: essential
+    purpose: "Ring's cloud for doorbells, cameras and alarms; alerts, live view and the app stop working if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://ring.com/support/articles/xws8s/Understanding-router-security-settings
+      - https://github.com/dgreif/ring/issues/302
+  - pattern: api.ring.com
+    category: essential
+    purpose: "Ring's main account and device API used by the app and integrations; the app stops working if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/dgreif/ring/issues/302
+      - https://github.com/dgreif/ring/issues/145
+  - pattern: oauth.ring.com
+    category: essential
+    purpose: "Ring account sign-in; the app and integrations cannot log in if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/tchellomello/python-ring-doorbell/issues/160

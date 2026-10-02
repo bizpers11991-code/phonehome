@@ -1,0 +1,10 @@
+id: alexa-help-improve
+title: Turn off "Help Improve Alexa" (human review of recordings)
+vendors: [amazon]
+kinds: [speaker]
+steps:
+  - 'Alexa app › More › Settings › Alexa Privacy › Manage How Your Data Improves Alexa'
+  - 'Turn off "Use of voice recordings" (and "Use messages to improve transcriptions" if shown)'
+notes: 'This stops Amazon staff and contractors reviewing samples of your recordings to train Alexa; Alexa still sends every request to the cloud to answer it.'
+evidence:
+  - https://www.slashgear.com/2097518/amazon-echo-privacy-settings-change-immediately/

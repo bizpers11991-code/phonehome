@@ -1,0 +1,12 @@
+id: sonos-usage-data
+title: Turn off Sonos "Additional Usage Data"
+vendors: [sonos]
+kinds: [speaker]
+steps:
+  - 'Sonos app › Account (profile icon) › Privacy & Security (labelled "Data & Privacy" in some app versions)'
+  - 'Open "Additional Usage Data" and switch off usage data sharing for your system'
+  - 'If the switch turns itself back on, sign out of the app, sign back in and switch it off again'
+notes: 'This stops optional telemetry; Sonos always collects "Functional Data" (registration, system and error data, IP addresses) and that cannot be turned off. Sonos Voice Control and Sonos Radio have their own data terms.'
+evidence:
+  - https://www.sonos.com/en-us/legal/privacy
+  - https://en.community.sonos.com/controllers-and-music-services-229131/turning-off-additional-usage-data-not-possible-in-recent-apps-6903711

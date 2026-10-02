@@ -1,0 +1,3 @@
+ipv4     2 tcp      6 431999 ESTABLISHED src=192.168.1.20 dst=34.117.59.81 sport=50412 dport=443 packets=40 bytes=9120 src=34.117.59.81 dst=203.0.113.7 sport=443 dport=50412 packets=38 bytes=51200 [ASSURED] mark=0 use=1
+ipv4     2 tcp      6 431999 ESTABLISHED src=192.168.1.41 dst=52.94.233.129 sport=49822 dport=443 packets=9 bytes=1200 src=52.94.233.129 dst=203.0.113.7 sport=443 dport=49822 packets=8 bytes=9000 [ASSURED] mark=0 use=1
+ipv4     2 udp      17 29 src=192.168.1.41 dst=8.8.8.8 sport=41234 dport=53 packets=1 bytes=72 src=8.8.8.8 dst=203.0.113.7 sport=53 dport=41234 packets=1 bytes=136 mark=0 use=1

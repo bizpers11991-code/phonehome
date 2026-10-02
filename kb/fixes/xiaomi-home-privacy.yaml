@@ -1,0 +1,12 @@
+id: xiaomi-home-privacy
+title: Leave Xiaomi Home's experience programme and withdraw device consent
+vendors: [xiaomi]
+kinds: [vacuum, plug, hub, camera, appliance]
+steps:
+  - 'Xiaomi Home app › Profile › Settings › Legal Information & Privacy Management › User Experience Improvement Program; switch off "Join User Experience Improvement Program"'
+  - 'For a device you no longer want linked: tap the device › Settings › Additional settings › Legal information › Withdraw authorization'
+  - 'To download or delete your data, use the Mi Account Privacy Center at account.xiaomi.com'
+notes: 'Xiaomi stores data by region (EEA/UK in Germany, US in the US, India in India, most others in Singapore, mainland China in China), so set the app to your real region. This only reduces optional analytics; the devices still depend on Xiaomi''s cloud to work with the app.'
+evidence:
+  - https://trust.mi.com/docs/iot-privacy-white-paper-global/5/1
+  - https://trust.mi.com/docs/iot-privacy-white-paper-global/4

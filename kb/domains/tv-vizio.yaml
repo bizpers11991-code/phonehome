@@ -1,0 +1,14 @@
+# Vizio SmartCast TVs. Vizio's ACR is Inscape, founded in 2009 as
+# "TV Interactive Systems" (later Cognitive Networks), bought by Vizio in 2015
+# and folded into Vizio's ad business. Vizio itself is now owned by Walmart.
+company: vizio
+rules:
+  - pattern: tvinteractive.tv
+    category: acr
+    purpose: Inscape, Vizio's content-recognition service, which identifies what is on screen to build viewing data.
+    confidence: medium
+    kind_hint: tv
+    evidence:
+      - https://arxiv.org/abs/1911.03447
+      - https://www.netify.ai/resources/domains/tvinteractive.tv
+      - https://en.wikipedia.org/wiki/Inscape_Data_Services

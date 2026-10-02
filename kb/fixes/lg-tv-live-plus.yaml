@@ -1,0 +1,14 @@
+id: lg-tv-live-plus
+title: Turn off Live Plus (LG's ACR)
+vendors: [lg]
+kinds: [tv]
+when: [acr]
+steps:
+  - 'Press the Settings button, then open All Settings › General › System › Additional Settings'
+  - 'Turn off "Live Plus"'
+  - 'To erase what was collected: All Settings › Support › Privacy & Terms › "Delete My Viewing Information" › Delete Request'
+notes: 'Live Plus is LG''s automatic content recognition and it also identifies content from HDMI devices. Some owners report it switching back on after webOS updates, so check it again after an update; on 2019 and older sets look under General › About This TV.'
+evidence:
+  - https://www.pocket-lint.com/how-to-turn-off-acr-on-an-lg-tv/
+  - https://www.malwarebytes.com/blog/news/2026/03/samsung-tvs-stop-spying-on-viewers-in-texas-heres-how-to-disable-acr-anywhere
+  - https://www.arxiv.org/pdf/2409.06203

@@ -1,0 +1,86 @@
+company: tuya
+rules:
+  - pattern: tuyaus.com
+    category: essential
+    purpose: "Tuya's Americas cloud, behind many white-label plugs, bulbs and cameras; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://moniotrlab.khoury.northeastern.edu/wp-content/uploads/2019/09/ren-imc19.pdf
+      - https://www.netify.ai/resources/applications/tuya-smart
+  - pattern: tuyaeu.com
+    category: essential
+    purpose: "Tuya's European cloud, behind many white-label plugs, bulbs and cameras; app control stops if blocked."
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/tuya-smart
+      - https://www.f-blog.info/tuya-cloud-server-addresses/
+  - pattern: tuyacn.com
+    category: essential
+    purpose: "Tuya's China cloud, used by devices registered in the China region; app control stops if blocked."
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/tuya-smart
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: tuyain.com
+    category: essential
+    purpose: "Tuya's India cloud, used by devices registered in the India region; app control stops if blocked."
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/tuya-smart
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: iotbing.com
+    category: essential
+    purpose: "Tuya-operated cloud domain (Singapore data centre); devices registered there need it for app control."
+    confidence: medium
+    evidence:
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+      - https://www.netify.ai/resources/applications/tuya-smart
+  - pattern: iot-dns.com
+    category: essential
+    purpose: "Tuya-operated domain listed among Tuya cloud endpoints; devices use it on the way to Tuya's regional servers."
+    confidence: low
+    evidence:
+      - https://www.netify.ai/resources/applications/tuya-smart
+      - https://www.f-blog.info/tuya-cloud-server-addresses/
+  - pattern: m1.tuyaus.com
+    category: essential
+    purpose: "Tuya MQTT broker (Western America data centre) that devices keep a connection to for commands; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: m1-ueaz.tuyaus.com
+    category: essential
+    purpose: "Tuya MQTT broker (Eastern America data centre) that devices keep a connection to for commands; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: m1.tuyaeu.com
+    category: essential
+    purpose: "Tuya MQTT broker (Central Europe data centre) that devices keep a connection to for commands; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: m1-weaz.tuyaeu.com
+    category: essential
+    purpose: "Tuya MQTT broker (Western Europe data centre) that devices keep a connection to for commands; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: m1.tuyacn.com
+    category: essential
+    purpose: "Tuya MQTT broker (China data centre) that devices keep a connection to for commands; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: m1.tuyain.com
+    category: essential
+    purpose: "Tuya MQTT broker (India data centre) that devices keep a connection to for commands; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: m1-sg.iotbing.com
+    category: essential
+    purpose: "Tuya MQTT broker (Singapore data centre) that devices keep a connection to for commands; app control stops if blocked."
+    confidence: high
+    evidence:
+      - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1

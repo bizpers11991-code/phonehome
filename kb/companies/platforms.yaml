@@ -1,0 +1,23 @@
+# Big platform companies. Owned by the platforms KB maintainer.
+# Rules for these companies live in kb/domains/platform-*.yaml.
+companies:
+  - id: google
+    name: Google (Alphabet)
+    country: US
+    url: https://about.google
+  - id: amazon
+    name: Amazon
+    country: US
+    url: https://www.aboutamazon.com
+  - id: apple
+    name: Apple
+    country: US
+    url: https://www.apple.com
+  - id: microsoft
+    name: Microsoft
+    country: US
+    url: https://www.microsoft.com
+  - id: meta
+    name: Meta Platforms
+    country: US
+    url: https://about.meta.com

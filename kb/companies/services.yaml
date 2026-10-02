@@ -1,0 +1,295 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+companies:
+- id: appsflyer
+  name: AppsFlyer
+  country: IL
+  url: https://www.appsflyer.com
+- id: adjust
+  name: Adjust (AppLovin)
+  country: DE
+  url: https://www.adjust.com
+- id: applovin
+  name: AppLovin
+  country: US
+  url: https://www.applovin.com
+- id: branch
+  name: Branch Metrics
+  country: US
+  url: https://www.branch.io
+- id: kochava
+  name: Kochava
+  country: US
+  url: https://www.kochava.com
+- id: singular
+  name: Singular
+  country: US
+  url: https://www.singular.net
+- id: liveramp
+  name: LiveRamp
+  country: US
+  url: https://liveramp.com
+- id: transunion
+  name: TransUnion (formerly Neustar)
+  country: US
+  url: https://www.transunion.com
+- id: lotame
+  name: Lotame
+  country: US
+  url: https://www.lotame.com
+- id: oracle
+  name: Oracle
+  country: US
+  url: https://www.oracle.com
+- id: adobe
+  name: Adobe
+  country: US
+  url: https://www.adobe.com
+- id: amplitude
+  name: Amplitude
+  country: US
+  url: https://amplitude.com
+- id: mixpanel
+  name: Mixpanel
+  country: US
+  url: https://mixpanel.com
+- id: segment
+  name: Segment (Twilio)
+  country: US
+  url: https://segment.com
+- id: braze
+  name: Braze
+  country: US
+  url: https://www.braze.com
+- id: mparticle
+  name: mParticle (Rokt)
+  country: US
+  url: https://www.mparticle.com
+- id: localytics
+  name: Localytics (Upland Software)
+  country: US
+  url: https://uplandsoftware.com/localytics/
+- id: onesignal
+  name: OneSignal
+  country: US
+  url: https://onesignal.com
+- id: launchdarkly
+  name: LaunchDarkly
+  country: US
+  url: https://launchdarkly.com
+- id: optimizely
+  name: Optimizely
+  country: US
+  url: https://www.optimizely.com
+- id: sentry
+  name: Sentry (Functional Software)
+  country: US
+  url: https://sentry.io
+- id: bugsnag
+  name: BugSnag (SmartBear)
+  country: US
+  url: https://www.bugsnag.com
+- id: datadog
+  name: Datadog
+  country: US
+  url: https://www.datadoghq.com
+- id: newrelic
+  name: New Relic
+  country: US
+  url: https://newrelic.com
+- id: yahoo
+  name: Yahoo
+  country: US
+  url: https://www.yahooinc.com
+- id: conviva
+  name: Conviva
+  country: US
+  url: https://www.conviva.ai
+- id: nielsen
+  name: Nielsen
+  country: US
+  url: https://www.nielsen.com
+- id: comscore
+  name: Comscore
+  country: US
+  url: https://www.comscore.com
+- id: kantar
+  name: Kantar
+  country: GB
+  url: https://www.kantar.com
+- id: ispot
+  name: iSpot.tv
+  country: US
+  url: https://www.ispot.tv
+- id: videoamp
+  name: VideoAmp
+  country: US
+  url: https://www.videoamp.com
+- id: freewheel
+  name: FreeWheel (Comcast)
+  country: US
+  url: https://www.freewheel.com
+- id: innovid
+  name: Innovid (Mediaocean)
+  country: US
+  url: https://www.innovid.com
+- id: the-trade-desk
+  name: The Trade Desk
+  country: US
+  url: https://www.thetradedesk.com
+- id: pubmatic
+  name: PubMatic
+  country: US
+  url: https://pubmatic.com
+- id: magnite
+  name: Magnite (incl. SpotX, Telaria, SpringServe)
+  country: US
+  url: https://www.magnite.com
+- id: openx
+  name: OpenX
+  country: US
+  url: https://www.openx.com
+- id: criteo
+  name: Criteo
+  country: FR
+  url: https://www.criteo.com
+- id: index-exchange
+  name: Index Exchange
+  country: CA
+  url: https://www.indexexchange.com
+- id: triplelift
+  name: TripleLift
+  country: US
+  url: https://triplelift.com
+- id: teads
+  name: Teads
+  country: US
+  url: https://www.teads.com
+- id: equativ
+  name: Equativ (formerly Smart AdServer)
+  country: FR
+  url: https://equativ.com
+- id: unruly
+  name: Unruly (formerly RhythmOne)
+  country: GB
+  url: https://unruly.co
+- id: ias
+  name: Integral Ad Science
+  country: US
+  url: https://integralads.com
+- id: doubleverify
+  name: DoubleVerify
+  country: US
+  url: https://doubleverify.com
+- id: pixalate
+  name: Pixalate
+  country: US
+  url: https://www.pixalate.com
+- id: netflix
+  name: Netflix
+  country: US
+  url: https://www.netflix.com
+- id: disney
+  name: The Walt Disney Company (Disney+, Hulu)
+  country: US
+  url: https://thewaltdisneycompany.com
+- id: spotify
+  name: Spotify
+  country: SE
+  url: https://www.spotify.com
+- id: warner-bros-discovery
+  name: Warner Bros. Discovery (Max, discovery+)
+  country: US
+  url: https://wbd.com
+- id: paramount
+  name: Paramount (Paramount+, Pluto TV)
+  country: US
+  url: https://www.paramount.com
+- id: nbcuniversal
+  name: NBCUniversal (Peacock)
+  country: US
+  url: https://www.nbcuniversal.com
+- id: plex
+  name: Plex
+  country: US
+  url: https://www.plex.tv
+- id: akamai
+  name: Akamai Technologies
+  country: US
+  url: https://www.akamai.com
+- id: cloudflare
+  name: Cloudflare
+  country: US
+  url: https://www.cloudflare.com
+- id: fastly
+  name: Fastly
+  country: US
+  url: https://www.fastly.com
+- id: ntp-pool
+  name: NTP Pool Project
+  country: US
+  url: https://www.ntppool.org
+- id: nist
+  name: NIST (US National Institute of Standards and Technology)
+  country: US
+  url: https://www.nist.gov
+- id: isrg
+  name: Let's Encrypt (Internet Security Research Group)
+  country: US
+  url: https://letsencrypt.org
+- id: digicert
+  name: DigiCert
+  country: US
+  url: https://www.digicert.com
+- id: sectigo
+  name: Sectigo
+  country: US
+  url: https://www.sectigo.com
+- id: globalsign
+  name: GlobalSign (GMO GlobalSign)
+  country: JP
+  url: https://www.globalsign.com
+- id: godaddy
+  name: GoDaddy
+  country: US
+  url: https://www.godaddy.com
+- id: entrust
+  name: Entrust
+  country: US
+  url: https://www.entrust.com
+- id: cisco
+  name: Cisco (OpenDNS)
+  country: US
+  url: https://www.opendns.com
+- id: mozilla
+  name: Mozilla
+  country: US
+  url: https://www.mozilla.org
+- id: quad9
+  name: Quad9 Foundation
+  country: CH
+  url: https://www.quad9.net
+- id: nextdns
+  name: NextDNS
+  country: US
+  url: https://nextdns.io
+- id: adguard
+  name: AdGuard
+  country: CY
+  url: https://adguard.com
+- id: cleanbrowsing
+  name: CleanBrowsing
+  country: US
+  url: https://cleanbrowsing.org
+- id: mullvad
+  name: Mullvad VPN
+  country: SE
+  url: https://mullvad.net
+- id: controld
+  name: Control D (Windscribe)
+  country: CA
+  url: https://controld.com
+- id: alibaba
+  name: Alibaba Cloud
+  country: CN
+  url: https://www.alibabacloud.com

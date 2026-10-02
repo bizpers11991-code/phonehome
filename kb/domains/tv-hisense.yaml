@@ -1,0 +1,45 @@
+# Hisense TVs running VIDAA OS (VIDAA International, a Hisense group company).
+# VIDAA's ACR data is licensed exclusively to Nexxen (Tremor/Unruly); its
+# endpoint belongs to an ad-tech company and is not listed here.
+# Hisense does not document its hostnames; purposes below are inferred by
+# community testers from names and observed behaviour, hence low confidence.
+company: hisense
+rules:
+  - pattern: api-logsdk.hismarttv.com
+    category: telemetry
+    purpose: Collects logs and usage events from Hisense VIDAA TVs.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/ipanalytics/Hisense-VIDAA-DNS-Clean-TV-Blocklist
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: ad-imp.hismarttv.com
+    category: ads
+    purpose: Reports ad impressions from the Hisense VIDAA home screen.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/ipanalytics/Hisense-VIDAA-DNS-Clean-TV-Blocklist
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: ad-download.hismarttv.com
+    category: ads
+    purpose: Delivers advert images and videos to Hisense VIDAA TVs.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/ipanalytics/Hisense-VIDAA-DNS-Clean-TV-Blocklist
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: synctime.hismarttv.com
+    category: essential
+    purpose: Clock sync for Hisense VIDAA TVs.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: ota-tv.vidaahub.com
+    category: essential
+    purpose: Firmware updates for Hisense VIDAA TVs.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt

@@ -1,0 +1,13 @@
+id: philips-tv-privacy
+title: Withdraw viewing-data and statistics consent on a Philips TV
+vendors: [philips, tpvision]
+kinds: [tv]
+steps:
+  - 'Titan OS: press Home › Settings (cog) tab › General settings › Privacy settings, and choose "Opt-out" for each item, including "Statistics to help us improve"'
+  - 'Saphi / Linux Smart TVs: open the Privacy Center (App Gallery, then press OPTIONS) and turn off "Enabling Personalized Content" and "Relevant Advertising"'
+  - 'If your TV has a "Viewing Data" menu (ACR via Inscape, only in some countries), turn it off there'
+  - 'Philips Google TV / Android TV: use the Google TV fixes (Settings › Privacy › Ads and Usage & diagnostics)'
+notes: 'TP Vision says ACR is off by default on Philips sets and can be revoked at any time without affecting the TV; "Enabling Personalized Content" shares click and channel-zap data with Samba TV. Philips Roku TVs use Roku''s settings instead.'
+evidence:
+  - https://www.tpvision.com/policy/Privacy_Policy_english.pdf
+  - https://tv-sound-monitors.philips.com/s/article/How-to-accept-change-or-review-the-Terms-of-Use-and-the-privacy-settings-on-a-Philips-Linux-based-TV-and-Titan-OS-TV-1711463703286?language=en_US

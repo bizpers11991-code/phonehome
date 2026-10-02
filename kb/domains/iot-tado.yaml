@@ -1,0 +1,21 @@
+company: tado
+rules:
+  - pattern: tado.com
+    category: essential
+    purpose: "tado cloud for smart thermostats and radiator valves; schedules, the app and geofencing depend on it."
+    confidence: medium
+    evidence:
+      - https://psytester.github.io/tado_smart_radiator_thermostat/
+  - pattern: ingress.tado.com
+    category: essential
+    purpose: "Endpoint the tado Internet Bridge reports to; the app loses contact with your heating if blocked."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://psytester.github.io/tado_smart_radiator_thermostat/
+  - pattern: nibbler.tado.com
+    category: essential
+    purpose: "tado GraphQL API for device queries and account verification."
+    confidence: low
+    evidence:
+      - https://psytester.github.io/tado_smart_radiator_thermostat/

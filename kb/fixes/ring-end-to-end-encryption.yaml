@@ -1,0 +1,12 @@
+id: ring-end-to-end-encryption
+title: Turn on Ring video end-to-end encryption
+vendors: [ring]
+kinds: [camera]
+steps:
+  - 'Ring app › Menu (☰) › Control Center › Video Encryption › End-to-End Encryption'
+  - 'Select "Enable End-to-End Encryption", save the passphrase somewhere safe, and enrol your phone'
+  - 'Enrol each compatible doorbell or camera when prompted'
+notes: 'Only your enrolled phones can then decrypt recordings; Ring cannot view them. You lose features that need Ring''s servers to see video (shared users, ring.com and Echo Show viewing, person detection, Familiar Faces, Event Timeline), and some older devices are not supported.'
+evidence:
+  - https://ring.com/support/articles/7e3lk/using-video-end-to-end-encryption-e2ee
+  - https://www.consumerreports.org/electronics-computers/privacy/ring-privacy-security-settings-to-check-a7189415320/

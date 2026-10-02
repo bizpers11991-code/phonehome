@@ -1,0 +1,280 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+rules:
+- pattern: netflix.com
+  company: netflix
+  category: content
+  purpose: 'Netflix app and service APIs: sign-in, browsing and playback control.'
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+  - https://arxiv.org/abs/1911.03447
+- pattern: netflix.net
+  company: netflix
+  category: content
+  purpose: Netflix service infrastructure.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+- pattern: nflxvideo.net
+  company: netflix
+  category: content
+  purpose: Netflix video streams from Open Connect servers, often hosted inside your internet provider.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+  - https://arxiv.org/abs/1911.03447
+- pattern: nflxso.net
+  company: netflix
+  category: content
+  purpose: Netflix artwork and app assets.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+  - https://arxiv.org/abs/1911.03447
+- pattern: nflxext.com
+  company: netflix
+  category: content
+  purpose: Netflix app code and static assets.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+  - https://help.netflix.com/en/node/124410
+- pattern: nflximg.com
+  company: netflix
+  category: content
+  purpose: Netflix images and app assets.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+  - https://arxiv.org/abs/1911.03447
+- pattern: nflximg.net
+  company: netflix
+  category: content
+  purpose: Netflix images and app assets.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+- pattern: nflxsearch.net
+  company: netflix
+  category: content
+  purpose: Netflix search service.
+  confidence: medium
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+- pattern: netflix.com.edgesuite.net
+  company: netflix
+  category: content
+  purpose: Netflix content delivered through Akamai.
+  confidence: medium
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+- pattern: ichnaea.netflix.com
+  company: netflix
+  category: telemetry
+  purpose: Netflix app event logging endpoint, contacted often by TVs running Netflix; exact payload is not public.
+  confidence: low
+  evidence:
+  - https://arxiv.org/abs/1911.03447
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
+- pattern: disneyplus.com
+  company: disney
+  category: content
+  purpose: Disney+ app and service.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/disneyplus.yml
+- pattern: disney-plus.net
+  company: disney
+  category: content
+  purpose: Disney+ images, video and app assets.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/disneyplus.yml
+- pattern: bamgrid.com
+  company: disney
+  category: content
+  purpose: Disney streaming platform (BAMTech) APIs and playback used by Disney+, Hulu and ESPN apps.
+  confidence: high
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/bamgrid.com.json
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/disneyplus.yml
+- pattern: dssott.com
+  company: disney
+  category: content
+  purpose: Disney streaming (DSS) video delivery for Disney+.
+  confidence: medium
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/disneyplus.yml
+- pattern: hulu.com
+  company: disney
+  category: content
+  purpose: Hulu app and service APIs.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hulu.yml
+  - https://arxiv.org/abs/1911.03447
+- pattern: hulustream.com
+  company: disney
+  category: content
+  purpose: Hulu video streams.
+  confidence: high
+  evidence:
+  - https://arxiv.org/abs/1911.03447
+- pattern: vortex.hulu.com
+  company: disney
+  category: telemetry
+  purpose: Hulu app event logging endpoint seen heavily on smart TVs; exact payload is not public.
+  confidence: low
+  evidence:
+  - https://arxiv.org/abs/1911.03447
+- pattern: spotify.com
+  company: spotify
+  category: content
+  purpose: Spotify app and service APIs.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/spotify.com.json
+- pattern: scdn.co
+  company: spotify
+  category: content
+  purpose: Spotify content and asset CDN.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/scdn.co.json
+- pattern: spotifycdn.com
+  company: spotify
+  category: content
+  purpose: Spotify content CDN (images and audio).
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/spotifycdn.com.json
+- pattern: spotifycdn.net
+  company: spotify
+  category: content
+  purpose: Spotify content CDN.
+  confidence: medium
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+- pattern: pscdn.co
+  company: spotify
+  category: content
+  purpose: Spotify podcast and preview content CDN.
+  confidence: medium
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+- pattern: =audio-ak-spotify-com.akamaized.net
+  company: spotify
+  category: content
+  purpose: Spotify audio streams delivered through Akamai.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+- pattern: =audio4-ak-spotify-com.akamaized.net
+  company: spotify
+  category: content
+  purpose: Spotify audio streams delivered through Akamai.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+- pattern: =heads-ak-spotify-com.akamaized.net
+  company: spotify
+  category: content
+  purpose: Spotify audio stream metadata delivered through Akamai.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+- pattern: spotify.com.edgesuite.net
+  company: spotify
+  category: content
+  purpose: Spotify content delivered through Akamai.
+  confidence: medium
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
+- pattern: max.com
+  company: warner-bros-discovery
+  category: content
+  purpose: Max (HBO Max) app and service.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hbomax.yml
+- pattern: hbomax.com
+  company: warner-bros-discovery
+  category: content
+  purpose: HBO Max app and service.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hbomax.yml
+- pattern: hbo.com
+  company: warner-bros-discovery
+  category: content
+  purpose: HBO app and service.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hbomax.yml
+- pattern: hbomaxcdn.com
+  company: warner-bros-discovery
+  category: content
+  purpose: HBO Max video and asset CDN.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hbomax.yml
+- pattern: discoveryplus.com
+  company: warner-bros-discovery
+  category: content
+  purpose: discovery+ app and service.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/discoveryplus.yml
+- pattern: disco-api.com
+  company: warner-bros-discovery
+  category: content
+  purpose: Discovery streaming platform API used by discovery+ and Max apps.
+  confidence: medium
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/discoveryplus.yml
+- pattern: paramountplus.com
+  company: paramount
+  category: content
+  purpose: Paramount+ app and service.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/paramountplus.yml
+- pattern: pplusstatic.com
+  company: paramount
+  category: content
+  purpose: Paramount+ static assets.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/paramountplus.yml
+- pattern: pluto.tv
+  company: paramount
+  category: content
+  purpose: Pluto TV free streaming service, preinstalled on many smart TVs.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/pluto_tv.yml
+- pattern: peacocktv.com
+  company: nbcuniversal
+  category: content
+  purpose: Peacock streaming app and service.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/peacock_tv.yml
+- pattern: plex.tv
+  company: plex
+  category: content
+  purpose: Plex media server and app service (sign-in, discovery, remote access).
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/plex.yml
+- pattern: plex.direct
+  company: plex
+  category: content
+  purpose: Plex secure connections to a Plex media server, often one on your own network.
+  confidence: high
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/plex.yml

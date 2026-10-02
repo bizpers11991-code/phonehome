@@ -1,0 +1,13 @@
+id: google-tv-ads
+title: Delete the advertising ID on Google TV / Android TV
+vendors: [google]
+kinds: [tv, streamer]
+when: [ads, tracking]
+steps:
+  - 'Settings › Privacy › Ads'
+  - 'Select "Delete advertising ID" (press the D-pad twice to focus it), or at least "Reset advertising ID"'
+  - 'Optionally review ad personalisation for your Google account at myadcenter.google.com'
+notes: 'Covers Chromecast with Google TV, Google TV Streamer and Google TV sets from Sony, TCL, Hisense, Philips and others. Apps can still show ads, they just cannot use this ID to personalise them; it does nothing about the TV maker''s own ACR.'
+evidence:
+  - https://support.google.com/googletv/answer/13392198?hl=en
+  - https://www.consumerreports.org/electronics/privacy/how-to-turn-off-smart-tv-snooping-features-a4840102036/

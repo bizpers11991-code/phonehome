@@ -1,0 +1,14 @@
+id: ring-control-center
+title: Opt out of Ring's Search Party and police video requests
+vendors: [ring]
+kinds: [camera]
+steps:
+  - 'Ring app › Menu (☰) › Control Center › Search Party; disable "Search for Lost Pets" and "Natural Hazards" for each camera'
+  - 'Control Center › Public Safety; opt out of Community Requests emails'
+  - 'Neighbors feed › gear icon › Neighborhood Settings › Feed Settings; untick "Community Requests" under Post Types and tap Apply'
+  - 'Optionally, Control Center › Neighbors to opt out of Neighbors entirely'
+notes: 'Search Party lets Ring scan your outdoor cameras'' footage for lost pets nearby and is on by default; Community Requests let police and other agencies ask for your clips. Ring says nothing is shared unless you choose to share it.'
+evidence:
+  - https://www.engadget.com/big-tech/heres-how-to-disable-rings-creepy-search-party-feature-185420455.html
+  - https://ring.com/support/articles/uds27/Community-request
+  - https://www.consumerreports.org/electronics-computers/privacy/ring-privacy-security-settings-to-check-a7189415320/

@@ -1,0 +1,31 @@
+company: shelly
+rules:
+  - pattern: shelly.cloud
+    category: essential
+    purpose: "Shelly cloud services (remote control, updates, app); local control keeps working if blocked, per Shelly's network guide."
+    confidence: medium
+    kind_hint: plug
+    evidence:
+      - https://kb.shelly.cloud/knowledge-base/network-design-guide-for-shelly-gen2-devices
+      - https://community.shelly.cloud/topic/10306-which-servers-are-required-for-shelly-to-work-properly-firewall-setting/
+  - pattern: iot.shelly.cloud
+    category: essential
+    purpose: "Shelly Cloud WebSocket (TCP 6012) for remote control, status and push; only cloud features stop if blocked."
+    confidence: high
+    kind_hint: plug
+    evidence:
+      - https://kb.shelly.cloud/knowledge-base/network-design-guide-for-shelly-gen2-devices
+      - https://shelly-api-docs.shelly.cloud/gen2/ComponentsAndServices/Cloud/
+  - pattern: updates.shelly.cloud
+    category: essential
+    purpose: "Shelly firmware update checks and downloads; devices stop receiving updates if blocked."
+    confidence: high
+    kind_hint: plug
+    evidence:
+      - https://kb.shelly.cloud/knowledge-base/network-design-guide-for-shelly-gen2-devices
+  - pattern: fleet.shelly.com
+    category: essential
+    purpose: "Shelly Fleet Manager connection, used only when devices are enrolled in fleet management."
+    confidence: high
+    evidence:
+      - https://kb.shelly.cloud/knowledge-base/network-design-guide-for-shelly-gen2-devices

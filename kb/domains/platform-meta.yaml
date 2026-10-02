@@ -1,0 +1,72 @@
+# Meta: Facebook SDK / pixel, Quest (Oculus), Facebook, Instagram, WhatsApp.
+# Sources: Varmarken et al. PETS 2020, Moghaddam et al. CCS 2019,
+# Trimananda et al. "OVRseen" (USENIX Security 2022), Meta developer docs.
+company: meta
+rules:
+  # --- Tracking -------------------------------------------------------------
+  - pattern: graph.facebook.com
+    category: tracking
+    purpose: Facebook Graph API; the Facebook SDK inside third-party apps reports app events and device IDs here.
+    confidence: high
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+      - https://www.usenix.org/system/files/sec22-trimananda.pdf
+  - pattern: connect.facebook.net
+    category: tracking
+    purpose: Serves the Meta Pixel and Facebook SDK scripts that report website and app activity to Meta.
+    confidence: high
+    evidence:
+      - https://developers.facebook.com/docs/meta-pixel/get-started
+
+  # --- Telemetry ------------------------------------------------------------
+  - pattern: graph.oculus.com
+    category: telemetry
+    purpose: Meta Quest platform API; collected several data types including the headset's serial number.
+    confidence: high
+    evidence:
+      - https://www.usenix.org/system/files/sec22-trimananda.pdf
+
+  # --- Content --------------------------------------------------------------
+  - pattern: facebook.com
+    category: content
+    purpose: Facebook website and app.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/facebook
+      - https://www.princeton.edu/~pmittal/publications/tv-tracking-ccs19.pdf
+  - pattern: fbcdn.net
+    category: content
+    purpose: Facebook content delivery network for photos, videos and app assets.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/facebook
+  - pattern: instagram.com
+    category: content
+    purpose: Instagram website and app.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/instagram
+  - pattern: cdninstagram.com
+    category: content
+    purpose: Instagram content delivery network for photos and videos.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/instagram
+  - pattern: whatsapp.net
+    category: content
+    purpose: WhatsApp messaging and media servers.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/whatsapp
+  - pattern: whatsapp.com
+    category: content
+    purpose: WhatsApp website and service.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/whatsapp
+  - pattern: oculus.com
+    category: content
+    purpose: Meta Quest (Oculus) store and services.
+    confidence: medium
+    evidence:
+      - https://www.usenix.org/system/files/sec22-trimananda.pdf

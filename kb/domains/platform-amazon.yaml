@@ -1,0 +1,217 @@
+# Amazon: Echo / Alexa, Fire TV, Kindle, Prime Video, Amazon Ads.
+# Ring and Blink are Amazon-owned but live in the IoT brand files.
+# Sources: Varmarken et al. PETS 2020 and Moghaddam et al. CCS 2019 (Fire TV),
+# Iqbal et al. IMC 2023 (Echo), Amazon developer docs, Perflyst Fire TV list.
+company: amazon
+rules:
+  # --- Ads ------------------------------------------------------------------
+  - pattern: amazon-adsystem.com
+    category: ads
+    purpose: Amazon's ad system; seen in 687 of the top 1,000 Fire TV channels.
+    confidence: high
+    evidence:
+      - https://www.princeton.edu/~pmittal/publications/tv-tracking-ccs19.pdf
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: aviary.amazon.com
+    category: ads
+    purpose: Fire TV ad endpoint (/GetAds); 697 apps sent it the serial number, device ID and advertising ID.
+    confidence: high
+    kind_hint: streamer
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: dna.amazon.com
+    category: ads
+    purpose: Fire TV sponsored-tile ad endpoint (/GetSponsoredTileAds) that received device serial numbers.
+    confidence: high
+    kind_hint: streamer
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: mads.amazon.com
+    category: ads
+    purpose: Amazon Mobile Ads endpoint used by apps on Fire TV.
+    confidence: medium
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: mads-eu.amazon.com
+    category: ads
+    purpose: Amazon Mobile Ads endpoint (EU) used by apps on Fire devices.
+    confidence: medium
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/AmazonFireTV.txt
+
+  # --- Telemetry / tracking -------------------------------------------------
+  - pattern: device-metrics-us.amazon.com
+    category: telemetry
+    purpose: Amazon device metrics collection from Echo, Fire TV, Kindle and other Amazon hardware.
+    confidence: high
+    evidence:
+      - https://developer.amazon.com/en-US/docs/alexa/alexa-smart-properties/networking-best-practices.html
+      - https://umariqbal.com/papers/alexa-echos-imc2023.pdf
+  - pattern: device-metrics-us-2.amazon.com
+    category: telemetry
+    purpose: Amazon device metrics collection; the most-contacted tracking domain in a study of Echo speakers.
+    confidence: high
+    evidence:
+      - https://umariqbal.com/papers/alexa-echos-imc2023.pdf
+  - pattern: applab-sdk.amazon.com
+    category: tracking
+    purpose: Amazon app analytics SDK flagged as a tracker in Fire TV apps.
+    confidence: medium
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: mobileanalytics.us-east-1.amazonaws.com
+    category: telemetry
+    purpose: AWS Mobile Analytics, used by Fire TV apps to report app usage.
+    confidence: high
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/AmazonFireTV.txt
+  - pattern: fls-na.amazon.com
+    category: telemetry
+    purpose: Logging endpoint contacted by Fire TV devices; blocked by Fire TV privacy blocklists.
+    confidence: low
+    kind_hint: streamer
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/AmazonFireTV.txt
+  - pattern: fls-eu.amazon.com
+    category: telemetry
+    purpose: Logging endpoint (EU) contacted by Fire TV devices; blocked by Fire TV privacy blocklists.
+    confidence: low
+    kind_hint: streamer
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/AmazonFireTV.txt
+
+  # --- Essential ------------------------------------------------------------
+  - pattern: fireoscaptiveportal.com
+    category: essential
+    purpose: Fire OS connectivity check (generate_204) that detects captive portals.
+    confidence: high
+    evidence:
+      - https://umariqbal.com/papers/alexa-echos-imc2023.pdf
+      - https://www.amazonforum.com/s/question/0D56Q00008WNU2WSAX/trying-to-set-up-and-getting-fireoscaptiveportalcomgenerate204-error-continuously
+  - pattern: acsechocaptiveportal.com
+    category: essential
+    purpose: Echo connectivity check that detects captive portals.
+    confidence: medium
+    kind_hint: speaker
+    evidence:
+      - https://umariqbal.com/papers/alexa-echos-imc2023.pdf
+      - https://www.netify.ai/resources/domains/acsechocaptiveportal.com
+  - pattern: firetvcaptiveportal.com
+    category: essential
+    purpose: Fire TV connectivity check that detects captive portals.
+    confidence: medium
+    kind_hint: streamer
+    evidence:
+      - https://www.netify.ai/resources/applications/amazon-devices
+  - pattern: ntp-fireos.com
+    category: essential
+    purpose: Time server used by Fire OS devices to set the clock.
+    confidence: medium
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/AmazonFireTV.txt
+      - https://www.netify.ai/resources/applications/amazon-devices
+  - pattern: ntp-g7g.amazon.com
+    category: essential
+    purpose: Amazon time server used by Amazon devices to set the clock.
+    confidence: medium
+    evidence:
+      - https://www.netify.ai/resources/applications/amazon-devices
+  - pattern: softwareupdates.amazon.com
+    category: essential
+    purpose: Software update checks for Amazon devices such as Fire TV.
+    confidence: medium
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/AmazonFireTV.txt
+      - https://www.netify.ai/resources/applications/amazon-devices
+  - pattern: api.amazon.com
+    category: essential
+    purpose: Login with Amazon token service that devices and apps use to authenticate.
+    confidence: high
+    evidence:
+      - https://developer.amazon.com/docs/login-with-amazon/authorization-code-grant.html
+
+  # --- Content --------------------------------------------------------------
+  - pattern: api.amazonalexa.com
+    category: content
+    purpose: Alexa service API used by Echo devices to answer requests and run skills.
+    confidence: high
+    kind_hint: speaker
+    evidence:
+      - https://umariqbal.com/papers/alexa-echos-imc2023.pdf
+  - pattern: atv-ext.amazon.com
+    category: content
+    purpose: Prime Video playback and catalogue API; Fire TV apps also sent device serial numbers here.
+    confidence: high
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: amazonvideo.com
+    category: content
+    purpose: Amazon Prime Video service.
+    confidence: medium
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: media-amazon.com
+    category: content
+    purpose: Amazon image and media hosting used by Amazon apps and Fire TV menus.
+    confidence: medium
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+  - pattern: ssl-images-amazon.com
+    category: content
+    purpose: Amazon image hosting used by Amazon apps and Fire TV menus.
+    confidence: medium
+    evidence:
+      - https://petsymposium.org/popets/2020/popets-2020-0021.pdf
+
+  # --- Alexa Voice Service ---------------------------------------------------
+  # Regional AVS endpoints. Echo devices also use numbered variants
+  # (avs-alexa-14-na, ...); add them as they are documented.
+  - pattern: =avs-alexa-na.amazon.com
+    category: essential
+    purpose: Alexa Voice Service; receives spoken requests after the wake word, and Alexa stops answering if blocked.
+    confidence: medium
+    kind_hint: speaker
+    evidence:
+      - https://www.netify.ai/resources/hostnames/avs-alexa-na.amazon.com
+      - https://github.com/alexa/avs-device-sdk/issues/711
+  - pattern: =avs-alexa-eu.amazon.com
+    category: essential
+    purpose: Alexa Voice Service; receives spoken requests after the wake word, and Alexa stops answering if blocked.
+    confidence: medium
+    kind_hint: speaker
+    evidence:
+      - https://www.netify.ai/resources/hostnames/avs-alexa-eu.amazon.com
+      - https://github.com/alexa/avs-device-sdk/issues/711
+  - pattern: =avs-alexa-fe.amazon.com
+    category: essential
+    purpose: Alexa Voice Service; receives spoken requests after the wake word, and Alexa stops answering if blocked.
+    confidence: medium
+    kind_hint: speaker
+    evidence:
+      - https://www.netify.ai/resources/hostnames/avs-alexa-fe.amazon.com
+      - https://github.com/alexa/avs-device-sdk/issues/711
+  - pattern: =avs-alexa-14-na.amazon.com
+    category: essential
+    purpose: Alexa Voice Service; receives spoken requests after the wake word, and Alexa stops answering if blocked.
+    confidence: medium
+    kind_hint: speaker
+    evidence:
+      - https://www.netify.ai/resources/hostnames/avs-alexa-14-na.amazon.com
+      - https://github.com/alexa/avs-device-sdk/issues/711
+  - pattern: =avs-alexa-18-na.amazon.com
+    category: essential
+    purpose: Alexa Voice Service; receives spoken requests after the wake word, and Alexa stops answering if blocked.
+    confidence: medium
+    kind_hint: speaker
+    evidence:
+      - https://www.netify.ai/resources/hostnames/avs-alexa-18-na.amazon.com
+      - https://github.com/alexa/avs-device-sdk/issues/711
+  - pattern: =avs-alexa-19-eu.amazon.com
+    category: essential
+    purpose: Alexa Voice Service; receives spoken requests after the wake word, and Alexa stops answering if blocked.
+    confidence: medium
+    kind_hint: speaker
+    evidence:
+      - https://www.netify.ai/resources/hostnames/avs-alexa-19-eu.amazon.com
+      - https://github.com/alexa/avs-device-sdk/issues/711

@@ -1,0 +1,73 @@
+# phonehome configuration. Every setting is optional; the values shown are
+# the defaults. Copy to /etc/phonehome/phonehome.yaml and edit.
+
+# Address the web UI listens on. Overridden by $PHONEHOME_LISTEN.
+listen: ":8099"
+
+# SQLite database file. Overridden by $PHONEHOME_DB.
+db: /var/lib/phonehome/phonehome.db
+
+# Delete lookups older than this many days. 0 keeps everything.
+retention_days: 90
+
+# How often to read new data from the sources.
+interval: 60s
+
+# Local hours when your home is normally asleep, [start, end). Devices that
+# stay chatty in this window are called out. May wrap midnight (23 → 6).
+quiet_hours: {start: 1, end: 6}
+
+# IANA time zone used for "evening", "overnight" etc. Empty = system zone.
+timezone: ""
+
+# HTTP basic auth for the web UI. Leave username empty to disable (fine on a
+# trusted LAN). Prefer password_file over putting the password here.
+auth:
+  username: ""
+  password: ""
+  password_file: ""
+
+# Where to read from. Leave empty (or delete) to auto-detect Pi-hole,
+# AdGuard Home, dnsmasq/OpenWrt leases and conntrack at their usual paths.
+# Each source gets a name (default: its type); keep names stable, they track
+# how far phonehome has read. phonehome never writes to any of these.
+sources: []
+#  # Pi-hole v5/v6 database (needs read access: see SupplementaryGroups=pihole
+#  # in the systemd unit, or run as a member of the pihole group).
+#  - type: pihole-db
+#    path: /etc/pihole/pihole-FTL.db
+#
+#  # Pi-hole v6 on another machine, over its API. Create an app password in
+#  # Settings › Web interface / API and store it in a file only phonehome reads.
+#  - type: pihole-api
+#    name: upstairs-pihole
+#    url: http://pi.hole
+#    password_file: /etc/phonehome/pihole-app-password
+#
+#  # AdGuard Home query log (rotated querylog.json.1 is read too).
+#  - type: adguard-querylog
+#    path: /opt/AdGuardHome/data/querylog.json
+#
+#  # dnsmasq with log-queries enabled (OpenWrt: logread > file, or plain dnsmasq).
+#  - type: dnsmasq-log
+#    path: /var/log/dnsmasq.log
+#
+#  # DHCP leases, to name devices (dnsmasq, odhcpd or ISC dhcpd format).
+#  - type: leases
+#    path: /var/lib/misc/dnsmasq.leases
+#
+#  # Connections leaving your network (only on the router/host doing NAT).
+#  # Lets phonehome spot devices that bypass your DNS. Default path shown.
+#  - type: conntrack
+#    path: /proc/net/nf_conntrack
+
+# Friendly names, by MAC address or IP. They win over everything else.
+labels: {}
+
+# The LAN addresses of your own DNS servers (the Pi-hole / AdGuard box).
+# Their upstream forwarding is not reported as "bypassing your DNS".
+# When phonehome runs on the Pi-hole host itself, its own addresses are added
+# automatically.
+resolvers: []
+#  "aa:bb:cc:dd:ee:ff": Living room TV
+#  "192.168.1.23": Kitchen speaker

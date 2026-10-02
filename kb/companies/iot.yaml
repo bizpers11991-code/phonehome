@@ -1,0 +1,96 @@
+# Home-IoT brands: cameras, doorbells, robot vacuums, plugs, bulbs, hubs,
+# speakers and thermostats. Samsung (SmartThings) and LG are defined in the
+# TV group; Google/Amazon/Apple platforms in the platform group.
+companies:
+  - id: ring
+    name: Ring (Amazon)
+    country: US
+    url: https://ring.com
+  - id: blink
+    name: Blink (Amazon)
+    country: US
+    url: https://blinkforhome.com
+  - id: wyze
+    name: Wyze Labs
+    country: US
+    url: https://www.wyze.com
+  - id: eufy
+    name: eufy (Anker Innovations)
+    country: CN
+    url: https://www.eufy.com
+  - id: arlo
+    name: Arlo Technologies
+    country: US
+    url: https://www.arlo.com
+  - id: throughtek
+    name: ThroughTek (Kalay P2P platform)
+    country: TW
+    url: https://www.throughtek.com
+  - id: xiaomi
+    name: Xiaomi
+    country: CN
+    url: https://www.mi.com
+  - id: roborock
+    name: Roborock
+    country: CN
+    url: https://www.roborock.com
+  - id: ecovacs
+    name: Ecovacs Robotics
+    country: CN
+    url: https://www.ecovacs.com
+  - id: irobot
+    name: iRobot
+    country: US
+    url: https://www.irobot.com
+  - id: tuya
+    name: Tuya Smart
+    country: CN
+    url: https://www.tuya.com
+  - id: tp-link
+    name: TP-Link (Kasa, Tapo)
+    country: US
+    url: https://www.tp-link.com
+  - id: signify
+    name: Signify (Philips Hue)
+    country: NL
+    url: https://www.philips-hue.com
+  - id: sonos
+    name: Sonos
+    country: US
+    url: https://www.sonos.com
+  - id: ecobee
+    name: ecobee (Generac)
+    country: CA
+    url: https://www.ecobee.com
+  - id: meross
+    name: Meross
+    country: CN
+    url: https://www.meross.com
+  - id: govee
+    name: Govee
+    country: CN
+    url: https://www.govee.com
+  - id: shelly
+    name: Shelly Group
+    country: BG
+    url: https://www.shelly.com
+  - id: ezviz
+    name: EZVIZ (Hikvision)
+    country: CN
+    url: https://www.ezviz.com
+  - id: hikvision
+    name: Hikvision
+    country: CN
+    url: https://www.hikvision.com
+  - id: reolink
+    name: Reolink
+    country: HK
+    url: https://reolink.com
+  - id: tado
+    name: tado
+    country: DE
+    url: https://www.tado.com
+  - id: netatmo
+    name: Netatmo (Legrand)
+    country: FR
+    url: https://www.netatmo.com

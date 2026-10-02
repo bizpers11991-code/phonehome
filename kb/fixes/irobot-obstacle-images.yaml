@@ -1,0 +1,10 @@
+id: irobot-obstacle-images
+title: Turn off Obstacle Image Review on camera Roombas
+vendors: [irobot, roomba]
+kinds: [vacuum]
+steps:
+  - 'iRobot Home app › menu (☰) › Account › Privacy › Map Features › choose your robot'
+  - 'Open "Obstacle Image Review" and switch it off'
+notes: 'On camera models such as the j-series, this stops the robot photographing detected obstacles and their surroundings for review in the app. iRobot says the robot still avoids obstacles; you just cannot give feedback on them.'
+evidence:
+  - https://prod-help-content.care.irobotapi.com/web/en-US/31163.html

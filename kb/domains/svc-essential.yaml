@@ -1,0 +1,179 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+rules:
+- pattern: pool.ntp.org
+  company: ntp-pool
+  category: essential
+  purpose: 'NTP Pool: volunteer time servers that keep the device clock correct.'
+  confidence: high
+  evidence:
+  - https://www.ntppool.org/en/use.html
+- pattern: =time.cloudflare.com
+  company: cloudflare
+  category: essential
+  purpose: Cloudflare public time service (NTP/NTS) that keeps the device clock correct.
+  confidence: high
+  evidence:
+  - https://developers.cloudflare.com/time-services/ntp/usage/
+- pattern: time.nist.gov
+  company: nist
+  category: essential
+  purpose: NIST public time servers that keep the device clock correct.
+  confidence: high
+  evidence:
+  - https://tf.nist.gov/tf-cgi/servers.cgi
+- pattern: lencr.org
+  company: isrg
+  category: essential
+  purpose: Let's Encrypt certificate data (revocation lists, issuer certs) used to check that HTTPS sites are genuine.
+  confidence: high
+  evidence:
+  - https://letsencrypt.org/docs/lencr.org/
+  - https://letsencrypt.org/2024/12/05/ending-ocsp/
+- pattern: ocsp.digicert.com
+  company: digicert
+  category: essential
+  purpose: DigiCert certificate status (OCSP) check, used to verify HTTPS certificates are not revoked.
+  confidence: high
+  evidence:
+  - https://knowledge.digicert.com/alerts/digicert-certificate-status-ip-address
+- pattern: crl3.digicert.com
+  company: digicert
+  category: essential
+  purpose: DigiCert certificate revocation list, used to verify HTTPS certificates are not revoked.
+  confidence: high
+  evidence:
+  - https://knowledge.digicert.com/alerts/digicert-certificate-status-ip-address
+- pattern: crl4.digicert.com
+  company: digicert
+  category: essential
+  purpose: DigiCert certificate revocation list, used to verify HTTPS certificates are not revoked.
+  confidence: high
+  evidence:
+  - https://knowledge.digicert.com/alerts/digicert-certificate-status-ip-address
+- pattern: cacerts.digicert.com
+  company: digicert
+  category: essential
+  purpose: DigiCert issuer certificates, fetched to complete an HTTPS certificate chain.
+  confidence: high
+  evidence:
+  - https://www.digicert.com/kb/digicert-root-certificates.htm
+- pattern: status.geotrust.com
+  company: digicert
+  category: essential
+  purpose: GeoTrust (DigiCert) certificate status check for HTTPS certificates.
+  confidence: high
+  evidence:
+  - https://knowledge.digicert.com/alerts/digicert-certificate-status-ip-address
+- pattern: status.rapidssl.com
+  company: digicert
+  category: essential
+  purpose: RapidSSL (DigiCert) certificate status check for HTTPS certificates.
+  confidence: high
+  evidence:
+  - https://knowledge.digicert.com/alerts/digicert-certificate-status-ip-address
+- pattern: status.thawte.com
+  company: digicert
+  category: essential
+  purpose: Thawte (DigiCert) certificate status check for HTTPS certificates.
+  confidence: high
+  evidence:
+  - https://knowledge.digicert.com/alerts/digicert-certificate-status-ip-address
+- pattern: ocsp.sectigo.com
+  company: sectigo
+  category: essential
+  purpose: Sectigo certificate status (OCSP) check, used to verify HTTPS certificates are not revoked.
+  confidence: high
+  evidence:
+  - https://www.sectigo.com/knowledge-base/detail/OCSP-and-CRL-access-information
+- pattern: crl.sectigo.com
+  company: sectigo
+  category: essential
+  purpose: Sectigo certificate revocation list for HTTPS certificate checks.
+  confidence: high
+  evidence:
+  - https://www.sectigo.com/knowledge-base/detail/OCSP-and-CRL-access-information
+- pattern: ocsp.usertrust.com
+  company: sectigo
+  category: essential
+  purpose: USERTrust (Sectigo) certificate status check for HTTPS certificates.
+  confidence: high
+  evidence:
+  - https://www.sectigo.com/knowledge-base/detail/OCSP-and-CRL-access-information
+- pattern: crl.usertrust.com
+  company: sectigo
+  category: essential
+  purpose: USERTrust (Sectigo) certificate revocation list for HTTPS certificate checks.
+  confidence: high
+  evidence:
+  - https://www.sectigo.com/knowledge-base/detail/OCSP-and-CRL-access-information
+- pattern: ocsp.comodoca.com
+  company: sectigo
+  category: essential
+  purpose: Comodo (Sectigo) certificate status check for HTTPS certificates.
+  confidence: high
+  evidence:
+  - https://www.sectigo.com/knowledge-base/detail/OCSP-and-CRL-access-information
+- pattern: crl.comodoca.com
+  company: sectigo
+  category: essential
+  purpose: Comodo (Sectigo) certificate revocation list for HTTPS certificate checks.
+  confidence: high
+  evidence:
+  - https://www.sectigo.com/knowledge-base/detail/OCSP-and-CRL-access-information
+- pattern: ocsp.globalsign.com
+  company: globalsign
+  category: essential
+  purpose: GlobalSign certificate status (OCSP) check for HTTPS certificates.
+  confidence: medium
+  evidence:
+  - https://github.com/threatstop/crl-ocsp-whitelist/blob/master/ocsp-hostnames.txt
+- pattern: ocsp2.globalsign.com
+  company: globalsign
+  category: essential
+  purpose: GlobalSign certificate status (OCSP) check for HTTPS certificates.
+  confidence: medium
+  evidence:
+  - https://www.netify.ai/resources/domains/globalsign.com
+- pattern: crl.globalsign.com
+  company: globalsign
+  category: essential
+  purpose: GlobalSign certificate revocation list for HTTPS certificate checks.
+  confidence: medium
+  evidence:
+  - https://github.com/threatstop/crl-ocsp-whitelist/blob/master/crl-hostnames.txt
+- pattern: ocsp.godaddy.com
+  company: godaddy
+  category: essential
+  purpose: GoDaddy certificate status (OCSP) check for HTTPS certificates.
+  confidence: medium
+  evidence:
+  - https://github.com/threatstop/crl-ocsp-whitelist/blob/master/ocsp-hostnames.txt
+- pattern: crl.godaddy.com
+  company: godaddy
+  category: essential
+  purpose: GoDaddy certificate revocation list for HTTPS certificate checks.
+  confidence: medium
+  evidence:
+  - https://github.com/threatstop/crl-ocsp-whitelist/blob/master/crl-hostnames.txt
+- pattern: ocsp.starfieldtech.com
+  company: godaddy
+  category: essential
+  purpose: Starfield (GoDaddy) certificate status check for HTTPS certificates.
+  confidence: medium
+  evidence:
+  - https://github.com/threatstop/crl-ocsp-whitelist/blob/master/ocsp-hostnames.txt
+- pattern: crl.starfieldtech.com
+  company: godaddy
+  category: essential
+  purpose: Starfield (GoDaddy) certificate revocation list for HTTPS certificate checks.
+  confidence: medium
+  evidence:
+  - https://github.com/threatstop/crl-ocsp-whitelist/blob/master/crl-hostnames.txt
+- pattern: ocsp.entrust.net
+  company: entrust
+  category: essential
+  purpose: Entrust certificate status (OCSP) check for HTTPS certificates.
+  confidence: medium
+  evidence:
+  - https://github.com/threatstop/crl-ocsp-whitelist/blob/master/ocsp-hostnames.txt

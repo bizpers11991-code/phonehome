@@ -1,0 +1,13 @@
+id: samsung-tv-interest-ads
+title: Turn off Interest-Based Advertisements on a Samsung TV
+vendors: [samsung]
+kinds: [tv]
+when: [ads, tracking]
+steps:
+  - 'Settings › All Settings › General & Privacy › Privacy Choices (older models: Terms & Privacy)'
+  - 'Turn off "Interest-Based Advertisements"'
+  - 'If you do not use voice control, also turn off "Voice Recognition Services" in the same menu'
+notes: 'This stops Samsung using your viewing profile to target ads; you will still see ads on the home screen, just less personalised ones. Turn off Viewing Information Services as well, because this switch alone does not stop content recognition.'
+evidence:
+  - https://www.consumerreports.org/electronics/privacy/how-to-turn-off-smart-tv-snooping-features-a4840102036/
+  - https://www.malwarebytes.com/blog/news/2026/03/samsung-tvs-stop-spying-on-viewers-in-texas-heres-how-to-disable-acr-anywhere

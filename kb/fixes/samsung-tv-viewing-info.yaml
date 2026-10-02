@@ -1,0 +1,14 @@
+id: samsung-tv-viewing-info
+title: Turn off Viewing Information Services (Samsung's ACR)
+vendors: [samsung]
+kinds: [tv]
+when: [acr]
+steps:
+  - 'Press Home on the remote, then open Settings › All Settings › General & Privacy › Privacy Choices'
+  - 'On older models use Settings › Support › Terms & Privacy (or General › Terms & Privacy) instead'
+  - 'Turn off "Viewing Information Services" and confirm with OK'
+notes: 'Viewing Information Services is Samsung''s automatic content recognition, which fingerprints whatever is on screen, including HDMI inputs such as consoles and cable boxes. Researchers found that opting out stops traffic to Samsung''s ACR servers, but the TV still contacts Samsung for apps, ads and updates.'
+evidence:
+  - https://www.pocket-lint.com/samsung-tv-disable-acr/
+  - https://www.malwarebytes.com/blog/news/2026/03/samsung-tvs-stop-spying-on-viewers-in-texas-heres-how-to-disable-acr-anywhere
+  - https://www.arxiv.org/pdf/2409.06203

@@ -1,0 +1,46 @@
+company: arlo
+rules:
+  - pattern: arloxcld.com
+    category: essential
+    purpose: "Arlo's device cloud (registration, MQTT brokers, presence); cameras go offline in the app if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://www.netify.ai/resources/domains/arloxcld.com
+      - https://www.netify.ai/resources/applications/arlo
+  - pattern: myapi.arlo.com
+    category: essential
+    purpose: "Arlo app and account API; the app cannot show or control cameras if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://www.netify.ai/resources/domains/arlo.com
+  - pattern: ocapi-app.arlo.com
+    category: essential
+    purpose: "Arlo app API host; the app reports it cannot connect if this is blocked."
+    confidence: medium
+    evidence:
+      - https://community.arlo.com/t5/Arlo-Pro/You-are-unable-to-access-ocapi-app-arlo-com/td-p/1920672
+      - https://www.netify.ai/resources/domains/arlo.com
+  - pattern: updates.arlo.com
+    category: essential
+    purpose: "Arlo firmware update host; cameras and base stations stop receiving security fixes if blocked."
+    confidence: low
+    kind_hint: camera
+    evidence:
+      - https://www.netify.ai/resources/domains/arlo.com
+  - pattern: ntp.arlo.com
+    category: essential
+    purpose: "Arlo time server; cameras need correct time for TLS and recording timestamps."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://www.netify.ai/resources/domains/arlo.com
+      - https://community.arlo.com/t5/Arlo/Internet-Connection-through-proxy-OR-firewall/td-p/1201096
+  - pattern: arlo.netgear.com
+    category: essential
+    purpose: "Older Arlo cloud endpoint from the Netgear era; base stations used it to reach the Arlo service."
+    confidence: low
+    kind_hint: camera
+    evidence:
+      - https://community.arlo.com/t5/Arlo/Internet-Connection-through-proxy-OR-firewall/td-p/1201096

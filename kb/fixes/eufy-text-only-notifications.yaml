@@ -1,0 +1,12 @@
+id: eufy-text-only-notifications
+title: Set eufy camera notifications to text-only
+vendors: [eufy]
+kinds: [camera]
+steps:
+  - 'eufy app › tap the three dots on the camera preview › gear icon › Notification'
+  - 'Choose "Most Efficient" instead of "Full Effect" or "Include Thumbnail"'
+  - 'Repeat for every camera and doorbell'
+notes: 'Thumbnail notifications make eufy upload a snapshot to its cloud servers to deliver the alert, even if you only record locally; "Most Efficient" sends a text-only alert. Eufy itself recommends this setting to anyone who does not want images sent to its cloud.'
+evidence:
+  - https://service.eufy.com/article-description/Modify-Notifications-of-eufy-App-Homebase-Professional-S1-and-eufy-Security-Cameras
+  - https://appleinsider.com/articles/22/12/06/eufy-not-patching-cameras-instead-just-warning-users-about-cloud-use

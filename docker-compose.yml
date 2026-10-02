@@ -1,0 +1,32 @@
+# phonehome next to an existing Pi-hole. phonehome only ever reads Pi-hole's
+# files; the mount is read-only.
+#
+#   docker compose up -d   →   http://<this-host>:8099
+services:
+  phonehome:
+    image: ghcr.io/bizpers11991-code/phonehome:latest
+    container_name: phonehome
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    volumes:
+      - phonehome-data:/data
+      - /etc/pihole:/etc/pihole:ro
+      # Optional config file; without it sources are auto-detected.
+      # - ./phonehome.yaml:/config/phonehome.yaml:ro
+
+      # AdGuard Home instead of Pi-hole: mount its data directory instead.
+      # - /opt/AdGuardHome/data:/opt/AdGuardHome/data:ro
+    environment:
+      TZ: Etc/UTC # set to your zone so "overnight" means your night
+    # Pi-hole's database is readable by the pihole group only. If phonehome
+    # reports "permission denied", run it with that group's GID:
+    # group_add: ["999"]   # getent group pihole | cut -d: -f3
+
+    # Connection data (conntrack) only exists in the host's network namespace.
+    # To see flows (e.g. devices bypassing your DNS) use host networking and
+    # drop the "ports:" section above:
+    # network_mode: host
+
+volumes:
+  phonehome-data:

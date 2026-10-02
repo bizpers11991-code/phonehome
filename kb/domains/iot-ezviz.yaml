@@ -1,0 +1,50 @@
+company: ezviz
+rules:
+  - pattern: ezvizlife.com
+    category: essential
+    purpose: "EZVIZ cloud for cameras and doorbells (app API, alarms, snapshots); the app and alerts stop working if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://www.netify.ai/resources/domains/ezvizlife.com
+      - https://www.home-assistant.io/integrations/ezviz/
+  - pattern: litedev.ezvizlife.com
+    category: essential
+    purpose: "EZVIZ device bootstrap server (TCP 8666) that gives cameras their MQTT, relay and upload servers; cameras go offline if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://seanblanchfield.com/2022/05/ezviz-db1-doorbell-deepdive-homeassistant
+  - pattern: apiieu.ezvizlife.com
+    category: essential
+    purpose: "EZVIZ app API (Europe) used by the app and integrations; remote access stops if blocked."
+    confidence: medium
+    evidence:
+      - https://www.home-assistant.io/integrations/ezviz/
+  - pattern: log.ezvizlife.com
+    category: telemetry
+    purpose: "EZVIZ logging host; its name suggests diagnostic logs, but EZVIZ does not document what is sent."
+    confidence: low
+    evidence:
+      - https://www.netify.ai/resources/domains/ezvizlife.com
+  - pattern: time.ys7.com
+    category: essential
+    purpose: "Default time server in EZVIZ firmware; cameras need correct time for TLS and recordings."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://seanblanchfield.com/2022/05/ezviz-db1-doorbell-deepdive-homeassistant
+  - pattern: ys7.com
+    category: essential
+    purpose: "EZVIZ/Hikvision cloud domain (China platform) hardcoded in camera firmware for device and alarm servers."
+    confidence: low
+    kind_hint: camera
+    evidence:
+      - https://seanblanchfield.com/2022/05/ezviz-db1-doorbell-deepdive-homeassistant
+  - pattern: ezviz7.com
+    category: essential
+    purpose: "Older EZVIZ cloud domain hardcoded in camera firmware for device and alarm servers."
+    confidence: low
+    kind_hint: camera
+    evidence:
+      - https://seanblanchfield.com/2022/05/ezviz-db1-doorbell-deepdive-homeassistant

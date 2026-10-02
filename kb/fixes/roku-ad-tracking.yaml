@@ -1,0 +1,14 @@
+id: roku-ad-tracking
+title: Limit ad personalisation and reset the Roku advertising ID
+vendors: [roku]
+kinds: [tv, streamer]
+when: [ads, tracking]
+steps:
+  - 'Home › Settings › Privacy › Advertising'
+  - 'Clear "Personalize ads" (some Roku OS versions show a "Limit ad tracking" checkbox instead; tick that)'
+  - 'Select "Reset advertising identifier" and confirm'
+  - 'Then open Settings › Privacy › Privacy Choices and opt out of the data-sharing options offered'
+notes: 'This asks Roku and channel apps not to build an ad profile from your viewing and starts you with a fresh ID; it does not remove ads and channels are not technically forced to honour it.'
+evidence:
+  - https://www.howtogeek.com/your-roku-is-tracking-more-than-you-think-heres-how-to-limit-it/
+  - https://www.malwarebytes.com/blog/news/2026/03/samsung-tvs-stop-spying-on-viewers-in-texas-heres-how-to-disable-acr-anywhere

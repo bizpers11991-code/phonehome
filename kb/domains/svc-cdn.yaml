@@ -1,0 +1,77 @@
+# Cross-cutting services: SDKs, ad tech, measurement, streaming, CDNs and
+# infrastructure found inside many devices. Owned by the services KB contributor.
+rules:
+- pattern: akamaized.net
+  company: akamai
+  category: content
+  purpose: 'Akamai CDN: delivers content for many companies, so this name alone does not say which app or what was fetched.'
+  confidence: medium
+  evidence:
+  - https://techdocs.akamai.com/property-mgr/docs/edge-hostnames
+  - https://arxiv.org/abs/1911.03447
+- pattern: akamaihd.net
+  company: akamai
+  category: content
+  purpose: 'Akamai CDN: delivers content for many companies, so this name alone does not say which app or what was fetched.'
+  confidence: medium
+  evidence:
+  - https://techdocs.akamai.com/property-mgr/docs/edge-hostnames
+  - https://arxiv.org/abs/1911.03447
+- pattern: edgekey.net
+  company: akamai
+  category: content
+  purpose: Akamai CDN edge name; it serves many companies, so it says little about what was fetched.
+  confidence: medium
+  evidence:
+  - https://techdocs.akamai.com/property-mgr/docs/edge-hostnames
+- pattern: edgesuite.net
+  company: akamai
+  category: content
+  purpose: Akamai CDN edge name; it serves many companies, so it says little about what was fetched.
+  confidence: medium
+  evidence:
+  - https://techdocs.akamai.com/property-mgr/docs/edge-hostnames
+- pattern: akamaiedge.net
+  company: akamai
+  category: content
+  purpose: Akamai CDN edge servers; they serve many companies, so this says little about what was fetched.
+  confidence: low
+  evidence:
+  - https://arxiv.org/abs/1911.03447
+- pattern: akamai.net
+  company: akamai
+  category: content
+  purpose: Akamai CDN servers; they serve many companies, so this says little about what was fetched.
+  confidence: low
+  evidence:
+  - https://arxiv.org/abs/1911.03447
+- pattern: cloudflare.net
+  company: cloudflare
+  category: content
+  purpose: Cloudflare CDN names; Cloudflare fronts millions of sites, so this says little about what was fetched.
+  confidence: low
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/cloudflare.yml
+- pattern: cloudflare.com
+  company: cloudflare
+  category: content
+  purpose: Cloudflare services (CDN, cdnjs, dashboard); too broad to say what a device was doing.
+  confidence: low
+  evidence:
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/cloudflare.com.json
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/cloudflare.yml
+- pattern: fastly.net
+  company: fastly
+  category: content
+  purpose: 'Fastly CDN: delivers content for many companies, so this name alone does not say what was fetched.'
+  confidence: medium
+  evidence:
+  - https://www.fastly.com/documentation/guides/concepts/routing-traffic-to-fastly/
+  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/fastly.net.json
+- pattern: fastlylb.net
+  company: fastly
+  category: content
+  purpose: Fastly CDN load-balancer names; they serve many companies, so this says little about what was fetched.
+  confidence: low
+  evidence:
+  - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
