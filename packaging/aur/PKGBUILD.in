@@ -1,0 +1,48 @@
+# PKGBUILD template for the AUR package phonehome-bin (prebuilt binaries).
+# Rendered by packaging/render.sh from a release's SHA256SUMS; the release
+# workflow attaches the result as PKGBUILD. See packaging/README.md.
+# Maintainer: bizpers11991-code <225170472+bizpers11991-code@users.noreply.github.com>
+pkgname=phonehome-bin
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc='See what your devices say about you, from Pi-hole/AdGuard DNS logs'
+arch=('x86_64' 'aarch64' 'armv7h' 'armv6h')
+url='https://github.com/bizpers11991-code/phonehome'
+license=('MIT')
+provides=('phonehome')
+conflicts=('phonehome')
+backup=('etc/phonehome/phonehome.yaml')
+options=('!strip' '!debug')
+
+_dl="https://github.com/bizpers11991-code/phonehome/releases/download/v${pkgver}"
+source_x86_64=("${_dl}/phonehome_v${pkgver}_linux-amd64.tar.gz")
+source_aarch64=("${_dl}/phonehome_v${pkgver}_linux-arm64.tar.gz")
+source_armv7h=("${_dl}/phonehome_v${pkgver}_linux-armv7.tar.gz")
+source_armv6h=("${_dl}/phonehome_v${pkgver}_linux-armv6.tar.gz")
+sha256sums_x86_64=('@SHA256_linux-amd64@')
+sha256sums_aarch64=('@SHA256_linux-arm64@')
+sha256sums_armv7h=('@SHA256_linux-armv7@')
+sha256sums_armv6h=('@SHA256_linux-armv6@')
+
+package() {
+	local goarch
+	case "$CARCH" in
+	x86_64) goarch=amd64 ;;
+	aarch64) goarch=arm64 ;;
+	armv7h) goarch=armv7 ;;
+	armv6h) goarch=armv6 ;;
+	esac
+	cd "phonehome_v${pkgver}_linux-${goarch}"
+
+	install -Dm755 phonehome "$pkgdir/usr/bin/phonehome"
+	install -Dm644 phonehome.example.yaml "$pkgdir/etc/phonehome/phonehome.yaml"
+	install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+	# systemd refuses to start a unit that names a missing group, and most
+	# machines have no "pihole" group. Pi-hole users add it back with
+	# `systemctl edit phonehome` (see docs/setup/pihole-bare-metal.md).
+	sed -e 's|/usr/local/bin/phonehome|/usr/bin/phonehome|' \
+		-e '/^SupplementaryGroups=pihole$/d' \
+		systemd/phonehome.service >phonehome.service
+	install -Dm644 phonehome.service "$pkgdir/usr/lib/systemd/system/phonehome.service"
+}

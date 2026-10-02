@@ -1,0 +1,64 @@
+# Homebrew formula template for phonehome's prebuilt binaries.
+# Rendered by packaging/render.sh from a release's SHA256SUMS; the release
+# workflow attaches the result as phonehome.rb. See packaging/README.md.
+class Phonehome < Formula
+  desc "See what your devices say about you, from Pi-hole/AdGuard DNS logs"
+  homepage "https://github.com/bizpers11991-code/phonehome"
+  version "@VERSION@"
+  license "MIT"
+
+  on_macos do
+    on_arm do
+      url "https://github.com/bizpers11991-code/phonehome/releases/download/v@VERSION@/phonehome_v@VERSION@_darwin-arm64.tar.gz"
+      sha256 "@SHA256_darwin-arm64@"
+    end
+    on_intel do
+      url "https://github.com/bizpers11991-code/phonehome/releases/download/v@VERSION@/phonehome_v@VERSION@_darwin-amd64.tar.gz"
+      sha256 "@SHA256_darwin-amd64@"
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "https://github.com/bizpers11991-code/phonehome/releases/download/v@VERSION@/phonehome_v@VERSION@_linux-arm64.tar.gz"
+      sha256 "@SHA256_linux-arm64@"
+    end
+    on_intel do
+      url "https://github.com/bizpers11991-code/phonehome/releases/download/v@VERSION@/phonehome_v@VERSION@_linux-amd64.tar.gz"
+      sha256 "@SHA256_linux-amd64@"
+    end
+  end
+
+  def install
+    bin.install "phonehome"
+    (etc/"phonehome").install "phonehome.example.yaml" => "phonehome.yaml"
+  end
+
+  def post_install
+    (var/"phonehome").mkpath
+  end
+
+  def caveats
+    <<~EOS
+      Try it with a synthetic household:
+        phonehome demo
+
+      To read a Pi-hole v6 on another machine, add a pihole-api source to
+        #{etc}/phonehome/phonehome.yaml
+      then start the service:
+        brew services start phonehome
+    EOS
+  end
+
+  service do
+    run [opt_bin/"phonehome", "serve", "--config", etc/"phonehome/phonehome.yaml"]
+    environment_variables PHONEHOME_DB: var/"phonehome/phonehome.db"
+    keep_alive true
+    log_path var/"log/phonehome.log"
+    error_log_path var/"log/phonehome.log"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/phonehome version")
+  end
+end
