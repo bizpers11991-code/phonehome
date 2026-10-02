@@ -63,6 +63,13 @@ about you rather than for you. [The rules are short and public.](docs/grading.md
 phonehome is a single static binary. It runs on anything from a Raspberry Pi
 Zero to a NAS, and it only ever **reads** your DNS server's files.
 
+**Step-by-step guides:** [Pi-hole in Docker](docs/setup/pihole-docker.md) ·
+[Pi-hole on the host](docs/setup/pihole-bare-metal.md) ·
+[Pi-hole on another machine](docs/setup/pihole-api.md) ·
+[AdGuard Home](docs/setup/adguard-home.md) · [OpenWrt / dnsmasq](docs/setup/openwrt.md) ·
+[Unraid](docs/setup/unraid.md) · [Synology](docs/setup/synology.md) ·
+[Proxmox LXC](docs/setup/proxmox-lxc.md). Questions: [FAQ](docs/FAQ.md).
+
 ### Next to Pi-hole (Docker)
 
 ```sh
@@ -71,6 +78,8 @@ docker compose up -d        # → http://<pi-hole-host>:8099
 ```
 
 The compose file mounts `/etc/pihole` read-only, and phonehome finds the database on its own.
+Pi-hole in Docker too? Use [`packaging/compose/pihole.yml`](packaging/compose/pihole.yml)
+([guide](docs/setup/pihole-docker.md)); AdGuard Home: [`adguard.yml`](packaging/compose/adguard.yml).
 
 ### On the Pi-hole host (binary + systemd)
 

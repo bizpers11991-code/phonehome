@@ -19,9 +19,10 @@ services:
       # - /opt/AdGuardHome/data:/opt/AdGuardHome/data:ro
     environment:
       TZ: Etc/UTC # set to your zone so "overnight" means your night
-    # Pi-hole's database is readable by the pihole group only. If phonehome
-    # reports "permission denied", run it with that group's GID:
-    # group_add: ["999"]   # getent group pihole | cut -d: -f3
+    # Pi-hole's database is readable by the pihole group only. If the
+    # dashboard says no source was found, run phonehome with that group's GID
+    # (1000 in the official pihole/pihole image):
+    # group_add: ["1000"]   # stat -c %g /etc/pihole/pihole-FTL.db
 
     # Connection data (conntrack) only exists in the host's network namespace.
     # To see flows (e.g. devices bypassing your DNS) use host networking and

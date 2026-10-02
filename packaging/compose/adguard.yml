@@ -1,0 +1,52 @@
+# AdGuard Home and phonehome, side by side.
+#
+#   docker compose -f adguard.yml up -d
+#   AdGuard Home first-run setup: http://<this-host>:3000
+#   phonehome dashboard:          http://<this-host>:8099
+#
+# Already running AdGuard Home? Copy just the "phonehome" service (and the
+# "configs:" block) and point its mount at the host directory that holds
+# AdGuard's work/data folder. Guide: docs/setup/adguard-home.md
+services:
+  adguardhome:
+    image: adguard/adguardhome:latest
+    container_name: adguardhome
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+      - "3000:3000/tcp" # first-run setup wizard
+    volumes:
+      - ./adguard/work:/opt/adguardhome/work
+      - ./adguard/conf:/opt/adguardhome/conf
+
+  phonehome:
+    image: ghcr.io/bizpers11991-code/phonehome:latest
+    container_name: phonehome
+    restart: unless-stopped
+    ports:
+      - "8099:8099"
+    environment:
+      TZ: Etc/UTC # your zone, so "overnight" means your night
+    # AdGuard Home runs as root and writes querylog.json with mode 0600, so
+    # only root can read it. phonehome therefore runs as root here, but with
+    # every capability dropped and AdGuard's files mounted read-only.
+    user: "0:0"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ./phonehome-data:/data
+      - ./adguard/work/data:/adguard-data:ro
+    # querylog.json only appears once AdGuard first writes it, so name it
+    # explicitly rather than relying on auto-detection at startup.
+    configs:
+      - source: phonehome
+        target: /config/phonehome.yaml
+
+configs:
+  phonehome:
+    content: |
+      sources:
+        - type: adguard-querylog
+          path: /adguard-data/querylog.json

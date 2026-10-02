@@ -1,0 +1,53 @@
+# Pi-hole v6 and phonehome, side by side.
+#
+#   docker compose -f pihole.yml up -d
+#   Pi-hole:   http://<this-host>/admin
+#   phonehome: http://<this-host>:8099
+#
+# Already running Pi-hole from your own compose file? Copy just the
+# "phonehome" service into it and point its /etc/pihole mount at the same
+# host directory Pi-hole uses. Guide: docs/setup/pihole-docker.md
+services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+    environment:
+      TZ: Etc/UTC # your zone
+      FTLCONF_webserver_api_password: "change me"
+      FTLCONF_dns_listeningMode: all
+    volumes:
+      - ./etc-pihole:/etc/pihole
+    cap_add:
+      - SYS_NICE
+
+  phonehome:
+    image: ghcr.io/bizpers11991-code/phonehome:latest
+    container_name: phonehome
+    restart: unless-stopped
+    # Sources are auto-detected once, at startup, so wait until Pi-hole has
+    # created its database.
+    depends_on:
+      pihole:
+        condition: service_healthy
+    ports:
+      - "8099:8099"
+    environment:
+      TZ: Etc/UTC # same zone as Pi-hole, so "overnight" means your night
+    # pihole-FTL.db is readable only by the pihole group. In the official
+    # image that group is GID 1000 unless you set PIHOLE_GID.
+    group_add: ["1000"]
+    volumes:
+      - phonehome-data:/data
+      # Read-only: phonehome never writes to Pi-hole. It finds
+      # /etc/pihole/pihole-FTL.db on its own.
+      - ./etc-pihole:/etc/pihole:ro
+      # Optional config file; without it sources are auto-detected.
+      # - ./phonehome.yaml:/config/phonehome.yaml:ro
+
+volumes:
+  phonehome-data:
