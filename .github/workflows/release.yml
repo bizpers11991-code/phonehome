@@ -37,10 +37,21 @@ jobs:
             rm -rf "dist/$dir"
           done
           cd dist && sha256sum -- *.tar.gz > SHA256SUMS && cat SHA256SUMS
+      # Homebrew formula and AUR PKGBUILD, attached to the release for the
+      # tap / AUR maintainer to copy. No tap or AUR credentials live here.
+      - name: render package manifests
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: sh packaging/render.sh "${{ github.ref_name }}" dist/SHA256SUMS dist/manifests
       - name: publish release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" dist/*.tar.gz dist/SHA256SUMS --title "${{ github.ref_name }}" --generate-notes --verify-tag
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          extra=""
+          if [ -d dist/manifests ]; then extra="dist/manifests/phonehome.rb dist/manifests/PKGBUILD"; fi
+          # shellcheck disable=SC2086 # $extra is a list of paths without spaces
+          gh release create "$TAG" dist/*.tar.gz dist/SHA256SUMS $extra --title "$TAG" --generate-notes --verify-tag
 
   image:
     runs-on: ubuntu-latest
@@ -69,3 +80,8 @@ jobs:
           build-args: VERSION=${{ github.ref_name }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Build provenance and an SPDX SBOM, stored as attestations
+          # next to the image (`docker buildx imagetools inspect --format
+          # '{{ json .SBOM }}' ghcr.io/bizpers11991-code/phonehome`).
+          provenance: mode=max
+          sbom: true
