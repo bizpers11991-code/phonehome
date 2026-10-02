@@ -200,6 +200,13 @@ Routes: `GET /` (embedded SPA), `GET /api/report?days=7`, `GET /api/status`,
 - `config`: YAML config file + defaults + `Validate()`; auto-detects
   `/etc/pihole/pihole-FTL.db` and AdGuard paths when no sources are configured.
 - `ingest`: the loop. For each source: read cursor, fetch in batches, write,
-  save cursor, record status. Survives source errors and backs off.
+  save cursor, record status. Survives source errors and backs off. A
+  cursor a source rejects (`source.ErrBadCursor`) is reset and the source
+  read from the start.
+- Retention: `retention_days` (default 90, max 36500, 0 = keep forever)
+  makes ingest call `Store.Prune` for anything older: once a day under
+  `serve` / `ingest`, and at the end of every `ingest --once`. Prune
+  deletes in 5000-row transactions so ingestion is never blocked for long.
+  Measured sizes and timings are in `docs/performance.md`.
 - `demo`: deterministic synthetic household (seeded), clearly labelled.
 - CLI: `phonehome serve | ingest --once | report | receipt | demo | kb lint | version`.
