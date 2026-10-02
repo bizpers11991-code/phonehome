@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bizpers11991-code/phonehome/internal/analyze"
 	"github.com/bizpers11991-code/phonehome/internal/model"
 )
 
@@ -279,6 +280,7 @@ func (b *Backend) Report(_ context.Context, p model.Period) (model.HomeReport, e
 		}
 	}
 	slices.SortStableFunc(rep.Devices, func(a, b model.DeviceReport) int { return cmp.Compare(b.Snooping, a.Snooping) })
+	rep.Grade = analyze.HomeGrade(rep.Devices)
 	return rep, nil
 }
 

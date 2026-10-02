@@ -418,15 +418,15 @@ func Home(r model.HomeReport, o Options) Doc {
 	perDay = float64(r.Snooping) / r.Period.Days()
 	b.totals(r.Total, share, perDay)
 
-	grade := ""
 	if worst != nil {
-		grade = worst.Grade
-		g := fit(clean(grade), 1)
+		g := fit(clean(worst.Grade), 1)
 		val := " (" + g + ")"
 		b.bold("WORST OFFENDER  " + fit(clean(worst.Device.DisplayName()), Cols-16-width(val)) + val)
 	}
 	b.kind(Rule)
-	b.stamp(grade, []string{"HOME GRADE", "A QUIET ... F LOUD", "", "AS GOOD AS ITS", "WORST DEVICE."})
+	// The home grade is computed by analyze (HomeReport.Grade); the receipt
+	// only prints it.
+	b.stamp(r.Grade, []string{"HOME GRADE", "A QUIET ... F LOUD", "", "AS GOOD AS ITS", "WORST DEVICE."})
 	if worst != nil {
 		b.fix(worst.Fixes)
 	}

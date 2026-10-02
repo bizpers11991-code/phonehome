@@ -318,6 +318,9 @@ func TestAggregates(t *testing.T) {
 	if d.Grade != "D" { // ACR lookups, no ACR heartbeat
 		t.Errorf("Grade = %s, want D", d.Grade)
 	}
+	if r.Grade != "D" { // the only device's grade
+		t.Errorf("home Grade = %s, want D", r.Grade)
+	}
 	for dom, n := range kb.classify {
 		if n != 1 {
 			t.Errorf("Classify(%q) called %d times, want 1", dom, n)
@@ -349,7 +352,7 @@ func TestAnalyzeEmpty(t *testing.T) {
 	now = func() time.Time { return fixed }
 
 	r := Analyze(newFakeKB(), week, []model.Device{{ID: "mac:x"}}, nil, nil, Options{})
-	if len(r.Devices) != 0 || r.Total != 0 || r.Snooping != 0 {
+	if len(r.Devices) != 0 || r.Total != 0 || r.Snooping != 0 || r.Grade != "" {
 		t.Errorf("report = %+v, want empty", r)
 	}
 	if len(r.ByCategory) != len(model.Categories()) {

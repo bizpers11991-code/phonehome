@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bizpers11991-code/phonehome/internal/kb"
 	"github.com/bizpers11991-code/phonehome/internal/model"
 )
 
@@ -132,5 +133,44 @@ func TestShortPeriod(t *testing.T) {
 	}
 	if len(h.DNS) == 0 {
 		t.Fatal("no lookups")
+	}
+}
+
+// The demo keeps a realistic share of lookups the knowledge base cannot
+// classify, but only for hostnames that genuinely lack a sourced KB rule.
+// Every other demo hostname must be classified, so a KB regression or a new
+// unsourced demo hostname shows up here. Remove a name from this list when a
+// rule with evidence lands for it.
+var unclassifiedOnPurpose = []string{
+	"api.github.com",
+	"dmls-na.amazon.com",
+	"edgeapi.slack.com",
+	"fonts.googleapis.com",
+	"github.com",
+	"unagi-na.amazon.com",
+	"weatherkit.apple.com",
+	"wss-primary.slack.com",
+	"www.google.com",
+	"www.googletagmanager.com",
+	"zoom.us",
+}
+
+func TestDemoDomainsClassified(t *testing.T) {
+	k := kb.Default()
+	h := Generate(42, end, 7)
+	seen := map[string]bool{}
+	var unknown []string
+	for _, q := range h.DNS {
+		if seen[q.Domain] {
+			continue
+		}
+		seen[q.Domain] = true
+		if k.Classify(q.Domain).Category == model.CatUnknown {
+			unknown = append(unknown, q.Domain)
+		}
+	}
+	slices.Sort(unknown)
+	if !slices.Equal(unknown, unclassifiedOnPurpose) {
+		t.Errorf("unclassified demo hostnames = %v\nwant %v", unknown, unclassifiedOnPurpose)
 	}
 }

@@ -365,6 +365,7 @@ func TestReportJSON(t *testing.T) {
 		From       string
 		Total      int
 		SnoopShare float64
+		Grade      string
 		Categories []struct {
 			ID, Label string
 			Snooping  bool
@@ -393,6 +394,9 @@ func TestReportJSON(t *testing.T) {
 	}
 	if rep.Total == 0 || rep.SnoopShare <= 0 || rep.SnoopShare >= 1 {
 		t.Errorf("total %d, share %v", rep.Total, rep.SnoopShare)
+	}
+	if rep.Grade != "F" {
+		t.Errorf("home grade = %q, want F (the worst device's)", rep.Grade)
 	}
 	tv := rep.Devices[0]
 	if tv.Name != "Living room TV" || tv.DefaultName != "Samsung-QN65Q80B" || tv.Grade != "F" || tv.Kind != "tv" {
@@ -432,6 +436,9 @@ func TestEmptyReportUsesArrays(t *testing.T) {
 	body := get(t, newServer(b, web.Options{}), "/api/report").Body.String()
 	if !strings.Contains(body, `"devices":[]`) {
 		t.Errorf("empty report should have devices: [], got %s", body)
+	}
+	if !strings.Contains(body, `"grade":""`) {
+		t.Errorf("empty report should have an empty home grade, got %s", body)
 	}
 }
 

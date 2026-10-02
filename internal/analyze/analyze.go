@@ -342,6 +342,7 @@ func (a *analysis) report() model.HomeReport {
 			cmp.Compare(x.Device.ID, y.Device.ID),
 		)
 	})
+	hr.Grade = HomeGrade(hr.Devices)
 	return hr
 }
 

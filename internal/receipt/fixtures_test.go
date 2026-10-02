@@ -126,7 +126,7 @@ func home() model.HomeReport {
 		dev("Smart Plug — Kettle", model.KindPlug, 1440, 12, "A"),
 		hueBridge(),
 	}
-	r := model.HomeReport{Period: lastWeek, GeneratedAt: printed, Devices: devs, ByCategory: map[model.Category]int{}, Demo: true}
+	r := model.HomeReport{Period: lastWeek, GeneratedAt: printed, Devices: devs, ByCategory: map[model.Category]int{}, Grade: "F", Demo: true}
 	for _, d := range devs {
 		r.Total += d.Total
 		r.Snooping += d.Snooping

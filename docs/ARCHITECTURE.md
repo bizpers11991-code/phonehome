@@ -163,6 +163,7 @@ type Classifier interface {
 func Analyze(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQuery, fl []model.Flow, o Options) model.HomeReport
 func InferKind(d model.Device, hints map[model.DeviceKind]int) model.DeviceKind
 func Grade(r model.DeviceReport) string
+func HomeGrade(devs []model.DeviceReport) string   // worst device grade; "" with no devices
 ```
 Lookups are attributed to devices by `ClientIP ∈ Device.IPs`; unattributed
 client IPs become synthetic devices `ip:<addr>`. Heartbeats, quiet-hours

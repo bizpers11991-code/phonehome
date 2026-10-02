@@ -17,6 +17,19 @@ The first row that matches wins.
 | **B** | 50+ snooping lookups a day. |
 | **A** | Fewer than 50 snooping lookups a day. |
 
+## The home grade
+
+Your whole home gets a letter too, shown on the home receipt, at the top of
+`phonehome report` and as `grade` in `/api/report`. The rule is the simplest
+honest one: **a home is as good as its worst device.** The home grade is the
+worst grade among the devices seen in the period (F is worst, then D, C, B,
+A). One loud TV is enough to make a home loud, however quiet the light bulbs
+are, and averaging would hide exactly the device you most need to look at.
+
+A period with no devices has no home grade (the receipt shows `?` and the
+API returns an empty string). The rule lives in `HomeGrade` in
+`internal/analyze/grade.go`.
+
 ## The terms
 
 - **Snooping lookups** are DNS lookups of destinations the knowledge base
