@@ -83,6 +83,12 @@ var migrations = []string{
 		last_error TEXT    NOT NULL
 	) WITHOUT ROWID;
 	INSERT INTO meta(key, value) VALUES ('dns_seq', 0), ('domains_gen', 0);`,
+
+	// v2: what the alert engine remembers between checks (internal/alert).
+	`CREATE TABLE alert_state (
+		key   TEXT PRIMARY KEY,
+		value TEXT NOT NULL
+	) WITHOUT ROWID;`,
 }
 
 // migrate brings the schema up to len(migrations), one transaction per step.

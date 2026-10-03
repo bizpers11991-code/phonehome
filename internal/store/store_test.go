@@ -629,3 +629,19 @@ func TestConcurrentReadWrite(t *testing.T) {
 		t.Errorf("final DNSBetween = %d rows, %v; want %d", len(got), err, batches*size)
 	}
 }
+
+func TestAlertState(t *testing.T) {
+	s := openMem(t)
+	ctx := context.Background()
+	if v, err := s.AlertState(ctx, "state"); err != nil || v != "" {
+		t.Fatalf("empty: %q, %v", v, err)
+	}
+	for _, v := range []string{`{"a":1}`, `{"a":2}`} {
+		if err := s.SetAlertState(ctx, "state", v); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := s.AlertState(ctx, "state"); err != nil || got != v {
+			t.Fatalf("got %q, %v; want %q", got, err, v)
+		}
+	}
+}

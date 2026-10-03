@@ -49,6 +49,7 @@ type Config struct {
 	Labels        map[string]string `yaml:"labels"`    // MAC or IP → friendly name
 	Resolvers     []string          `yaml:"resolvers"` // your own DNS servers' LAN IPs; exempt from DNS-bypass findings
 	Metrics       bool              `yaml:"metrics"`   // serve /metrics for Prometheus (off by default)
+	Alerts        Alerts            `yaml:"alerts"`    // notifications to your own services; off unless a target is set
 }
 
 // QuietHours is the local-time window [Start, End) in which a home is
@@ -83,6 +84,7 @@ func Default() *Config {
 		RetentionDays: 90,
 		Interval:      60 * time.Second,
 		QuietHours:    QuietHours{Start: 1, End: 6},
+		Alerts:        Alerts{Interval: 5 * time.Minute, MaxPerHour: 6},
 	}
 }
 
@@ -112,6 +114,7 @@ func Parse(b []byte) (*Config, error) {
 	for i := range c.Sources {
 		c.Sources[i].fillDefaults()
 	}
+	c.Alerts.fillDefaults()
 	if err := c.Validate(); err != nil {
 		return nil, err
 	}
@@ -169,6 +172,9 @@ func (c *Config) Validate() error {
 		bad(`timezone %q is not a known IANA zone; use a name like "Europe/Berlin" or leave it empty for the system zone`, c.Timezone)
 	}
 	if err := c.Auth.validate(); err != nil {
+		errs = append(errs, err)
+	}
+	if err := c.Alerts.validate(); err != nil {
 		errs = append(errs, err)
 	}
 
