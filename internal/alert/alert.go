@@ -95,7 +95,12 @@ type Store interface {
 
 // Engine runs the checks.
 type Engine struct {
-	Report     func(ctx context.Context, p model.Period) (model.HomeReport, error)
+	Report func(ctx context.Context, p model.Period) (model.HomeReport, error)
+	// Devices lists every device phonehome knows, active this week or not.
+	// The baseline includes them, so a device that was quiet when alerts
+	// were turned on is not announced as new when it wakes up. nil: only
+	// the week's devices.
+	Devices    func(ctx context.Context) ([]model.Device, error)
 	Store      Store
 	Notifiers  []Notifier
 	Publishers []Publisher
@@ -166,6 +171,15 @@ func (e *Engine) Check(ctx context.Context) error {
 	for id, d := range st.Devices {
 		next[id] = d // devices not seen this week keep what we knew
 	}
+	if baseline && e.Devices != nil {
+		known, err := e.Devices(ctx)
+		if err != nil {
+			return fmt.Errorf("alerts: devices: %w", err)
+		}
+		for _, d := range known {
+			next[d.ID] = &deviceState{} // known, state still to be learnt
+		}
+	}
 	var events []Event
 	keys := map[int]string{}
 	add := func(key string, ev Event) {
@@ -189,6 +203,9 @@ func (e *Engine) Check(ctx context.Context) error {
 		if prev == nil {
 			add(NewDevice+":"+dev.ID, Event{Kind: NewDevice, Device: dev, Grade: d.Grade})
 			continue
+		}
+		if prev.Grade == "" {
+			continue // known from the baseline, first seen active now: learn it
 		}
 		if worse(cur.Grade, prev.Grade) {
 			add(GradeWorse+":"+dev.ID+":"+cur.Grade, Event{Kind: GradeWorse, Device: dev, Grade: cur.Grade, Before: prev.Grade})
