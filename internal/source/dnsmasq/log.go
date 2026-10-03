@@ -271,7 +271,7 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 
 // answer settles the oldest unanswered query e refers to. A blocking
 // verdict for a query already answered with a CNAME (and still held back)
-// overrides that answer.
+// overrides that answer and releases it.
 func answer(queue []pending, e event, lineNum int) {
 	matches := func(p *pending) bool {
 		if p.e.serial != "" && e.serial != "" {
@@ -295,7 +295,7 @@ func answer(queue []pending, e event, lineNum int) {
 	}
 	for i := range queue {
 		if p := &queue[i]; p.hold > 0 && matches(p) {
-			p.e.blocked = true
+			p.e.blocked, p.hold = true, 0 // the verdict is final
 			return
 		}
 	}

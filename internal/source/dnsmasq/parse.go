@@ -98,7 +98,7 @@ func parseMessage(msg string) (event, bool) {
 	if i := strings.Index(msg, " (EDE:"); i >= 0 {
 		msg = msg[:i]
 	}
-	msg = strings.TrimSuffix(msg, " (DNSSEC signed)")
+	msg = strings.TrimSuffix(strings.TrimSpace(msg), " (DNSSEC signed)")
 	var e event
 	f := strings.Fields(msg)
 	if len(f) > 2 && (f[0] == "UDP" || f[0] == "TCP") && isDigits(f[1]) {
@@ -113,7 +113,7 @@ func parseMessage(msg string) (event, bool) {
 	// Pi-hole blocks a whole CNAME chain when one of its names is on a
 	// list: "reply tracker.example is blocked during CNAME inspection".
 	if n := len(f); n >= 7 && strings.Join(f[n-5:], " ") == "is blocked during CNAME inspection" {
-		f = append(f[:n-4:n-4], "is", "blocked")
+		f = append(f[:n-5:n-5], "is", "blocked")
 	}
 	switch n := len(f); {
 	case n == 4 && strings.HasPrefix(f[0], "query[") && strings.HasSuffix(f[0], "]") && f[2] == "from":
@@ -125,9 +125,11 @@ func parseMessage(msg string) (event, bool) {
 		e.qtype = typeName(f[0][len("query[") : len(f[0])-1])
 		e.client = client.WithZone("").Unmap()
 		e.name = normalize(f[1])
-	case n >= 4 && f[n-2] == "is":
+	case n >= 4 && f[n-2] == "is" && f[0] != "validation":
 		// source, name, "is", answer; the source may be several words.
-		// Lines with no name ("reply is truncated") are not answers.
+		// Lines with no name ("reply is truncated") are not answers, and
+		// neither are DNSSEC results ("validation a.example is SECURE"),
+		// which dnsmasq logs before it processes the reply.
 		e.name = normalize(f[n-3])
 		e.blocked = isBlock(strings.Join(f[:n-3], " "), f[n-1])
 		e.cname = f[n-1] == "<CNAME>"
