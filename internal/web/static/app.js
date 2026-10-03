@@ -483,8 +483,107 @@ function clearHash() {
 
 // ---------- Empty state ----------
 
+// Setup guides, by source type. Plain links the person clicks; the
+// dashboard itself never requests anything from GitHub.
+const DOCS = 'https://github.com/bizpers11991-code/phonehome/blob/main/docs/';
+const GUIDES = {
+  'pihole-db': [['Pi-hole in Docker', 'setup/pihole-docker.md'], ['Pi-hole on the host', 'setup/pihole-bare-metal.md']],
+  'pihole-api': [['Pi-hole over its API', 'setup/pihole-api.md']],
+  'adguard-querylog': [['AdGuard Home', 'setup/adguard-home.md']],
+  'dnsmasq-log': [['OpenWrt and dnsmasq', 'setup/openwrt.md']],
+  leases: [['Device names', 'setup/README.md#configuration-in-one-minute']],
+  conntrack: [['Connection data', 'detectors.md#dns-bypass-routing-around-your-filter']],
+};
+const ALL_GUIDES = [
+  ['Pi-hole in Docker', 'setup/pihole-docker.md'], ['Pi-hole on the host', 'setup/pihole-bare-metal.md'],
+  ['AdGuard Home', 'setup/adguard-home.md'], ['OpenWrt and dnsmasq', 'setup/openwrt.md'],
+  ['All setup guides', 'setup/README.md'],
+];
+const DNS_TYPES = new Set(['pihole-db', 'pihole-api', 'adguard-querylog', 'dnsmasq-log']);
+
+function guideLinks(list) {
+  return h('ul', { class: 'guides' }, list.map(([label, path]) => h('li', {},
+    h('a', { href: DOCS + path, target: '_blank', rel: 'noopener noreferrer' }, label, icon('external')))));
+}
+
+// problemItem is one file auto-detection found but could not read.
+function problemItem(p) {
+  return h('li', { class: 'callout' + (p.optional ? ' optional' : '') }, icon(p.optional ? 'info' : 'warning'),
+    h('div', {},
+      h('p', {}, h('b', {}, 'Found ', h('code', { text: p.path }), ` but ${p.problem}.`),
+        p.optional ? ' Optional.' : null),
+      h('p', { text: capitalize(p.hint) + '.' }),
+      GUIDES[p.type] ? guideLinks(GUIDES[p.type]) : null));
+}
+
+// codeList renders locations as "a, b, c" in code spans.
+function codeList(locs) {
+  return locs.flatMap((loc, i) => [i ? ', ' : null, h('code', { text: loc })]);
+}
+
+function capitalize(t) { return t ? t[0].toUpperCase() + t.slice(1) : ''; }
+
+// sourceRow is one source in use, with its last check and any error.
+function sourceRow(src) {
+  const err = src.health === 'error' && src.lastError;
+  return h('li', {},
+    h('div', { class: 'src-line' },
+      h('span', { class: 'dot ' + src.health, role: 'img', 'aria-label': src.health === 'ok' ? 'healthy' : src.health }),
+      h('b', { text: src.name }),
+      h('span', { class: 'src-meta', text: `${fmt(src.records)} records · checked ${ago(src.lastRun)}` })),
+    err ? h('p', { class: 'callout' }, icon('warning'), h('span', {},
+      h('b', { text: 'Failing: ' }), h('code', { text: src.lastError }),
+      /permission denied/i.test(src.lastError)
+        ? ' phonehome is not allowed to read this. The setup guide for your DNS server explains which group or user it needs.'
+        : null)) : null);
+}
+
+// setupStatus says what phonehome found: nothing usable yet (with every file
+// it could not read and how to fix it), or sources that have not delivered
+// a lookup yet. It returns null when status is unknown.
+function setupStatus(st) {
+  const setup = st?.setup;
+  if (!setup || st.demo) return null;
+  const required = setup.problems.filter((p) => !p.optional);
+  const optional = setup.problems.filter((p) => p.optional);
+  const hasDNS = setup.sources.some((src) => DNS_TYPES.has(src.type));
+  const reading = setup.sources.map((src) => src.location);
+
+  if (!hasDNS) {
+    return h('section', { class: 'setup', 'aria-labelledby': 'setup-title' },
+      h('h2', { id: 'setup-title', text: required.length
+        ? "phonehome found your DNS log but can't read it"
+        : "phonehome hasn't found a DNS log yet" }),
+      required.length ? h('ul', { class: 'problems' }, required.map(problemItem)) : null,
+      setup.autoDetect ? h('p', { class: 'setup-note' },
+        'It looks for Pi-hole, AdGuard Home and dnsmasq files in their usual places, and looks again every minute ',
+        `(last ${ago(setup.checkedAt)}). This page updates on its own once it finds one. `,
+        'If your DNS server runs elsewhere, or its files live somewhere unusual, add a source below.') : null,
+      reading.length ? h('p', { class: 'setup-note' }, 'Also reading: ',
+        codeList(reading)) : null,
+      optional.length ? h('details', { class: 'optional-problems' },
+        h('summary', { text: `Optional extras it could not read (${optional.length})` }),
+        h('ul', { class: 'problems' }, optional.map(problemItem))) : null,
+      h('div', { class: 'setup-guides' }, h('h3', { text: 'Setup guides' }), guideLinks(ALL_GUIDES)));
+  }
+
+  const used = new Set(setup.sources.map((src) => src.type));
+  const errors = st.sources.filter((src) => src.health === 'error');
+  return h('section', { class: 'setup', 'aria-labelledby': 'setup-title' },
+    h('h2', { id: 'setup-title', text: errors.length ? 'A source is failing' : 'Waiting for the first lookups' }),
+    h('p', { class: 'setup-note' }, 'Reading ', codeList(reading), '. ',
+      st.newest ? `The newest lookup is from ${ago(st.newest)}, outside this period. `
+        : 'Pi-hole writes its database about once a minute and AdGuard Home its query log in batches, so the first lookups can take a few minutes. ',
+      'This page updates on its own.'),
+    st.sources.length ? h('ul', { class: 'src-list' }, st.sources.map(sourceRow))
+      : h('p', { class: 'setup-note', text: 'The first check is still running.' }),
+    errors.length ? guideLinks([...used].flatMap((t) => GUIDES[t] ?? [])) : null);
+}
+
 function renderOnboarding() {
   document.getElementById('devices').replaceChildren();
+  const status = setupStatus(state.status);
+  const waiting = status && state.status.setup.sources.some((src) => DNS_TYPES.has(src.type));
   const tabs = Object.keys(SNIPPETS);
   const panel = h('div', { class: 'snippet', role: 'tabpanel', id: 'snippet' });
   const buttons = tabs.map((name, i) => h('button', {
@@ -505,10 +604,11 @@ function renderOnboarding() {
 
   document.getElementById('hero').replaceChildren(h('div', { class: 'onboard' },
     h('div', {},
-      h('h1', { text: "Let's see who your devices are calling." }),
+      h('h1', { text: waiting ? 'Almost there.' : "Let's see who your devices are calling." }),
       h('p', { class: 'lede', text: 'Every time a device on your network looks up a name, your DNS server writes it down. ' +
         'phonehome reads that log — it never changes it — and turns it into plain English.' })),
-    h('ol', { class: 'steps' },
+    status,
+    waiting ? null : h('ol', { class: 'steps' },
       h('li', {}, h('h2', { text: 'Point phonehome at your DNS log' }),
         h('p', { text: 'Add a source to phonehome.yaml:' }),
         h('div', {}, h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'DNS server' }, buttons), panel)),
@@ -521,6 +621,28 @@ function renderOnboarding() {
       h('span', {}, 'Just want to look around? Run ', h('code', { text: 'phonehome demo' }), ' to explore a made-up household.'))));
 }
 
+// While the page is empty, poll the status and reload once something a
+// first-run visitor would care about changes: a source found or fixed, an
+// error, or the first lookups.
+let emptyPoll;
+const EMPTY_POLL_MS = 15000;
+
+function statusKey(st) {
+  if (!st) return '';
+  return JSON.stringify([st.newest, st.setup?.sources, st.setup?.problems,
+    st.sources.map((src) => [src.name, src.health, src.lastError, src.records])]);
+}
+
+function watchEmpty() {
+  clearTimeout(emptyPoll);
+  if (!state.report || state.report.devices.length || state.report.demo) return;
+  const seen = statusKey(state.status);
+  emptyPoll = setTimeout(async () => {
+    const st = await api('api/status').catch(() => null);
+    if (st && statusKey(st) !== seen) load();
+    else watchEmpty();
+  }, EMPTY_POLL_MS);
+}
 // ---------- Footer ----------
 
 function renderHealth() {
@@ -577,6 +699,7 @@ async function load() {
   }
   renderHealth();
   route();
+  watchEmpty();
 }
 
 function setDays(days) {

@@ -140,6 +140,29 @@ type statusDTO struct {
 	Oldest  string      `json:"oldest,omitempty"`
 	Newest  string      `json:"newest,omitempty"`
 	Sources []sourceDTO `json:"sources"`
+	Setup   setupDTO    `json:"setup"`
+}
+
+// setupDTO tells the first-run screen which sources are in use and which
+// well-known files auto-detection found but could not read.
+type setupDTO struct {
+	AutoDetect bool              `json:"autoDetect"`
+	CheckedAt  string            `json:"checkedAt,omitempty"`
+	Sources    []setupSourceDTO  `json:"sources"`
+	Problems   []setupProblemDTO `json:"problems"`
+}
+
+type setupSourceDTO struct {
+	Type     string `json:"type"`
+	Location string `json:"location"`
+}
+
+type setupProblemDTO struct {
+	Type     string `json:"type"`
+	Path     string `json:"path"`
+	Problem  string `json:"problem"`
+	Hint     string `json:"hint"`
+	Optional bool   `json:"optional"`
 }
 
 type sourceDTO struct {
@@ -324,6 +347,7 @@ func newStatusDTO(s model.Status, now time.Time) statusDTO {
 		Oldest:  stamp(s.Oldest),
 		Newest:  stamp(s.Newest),
 		Sources: make([]sourceDTO, 0, len(s.Sources)),
+		Setup:   newSetupDTO(s.Setup),
 	}
 	rank := map[string]int{"ok": 0, "stale": 1, "error": 2}
 	for _, src := range s.Sources {
@@ -339,6 +363,24 @@ func newStatusDTO(s model.Status, now time.Time) statusDTO {
 	}
 	if len(s.Sources) == 0 && !s.Demo {
 		out.Health = "stale"
+	}
+	return out
+}
+
+func newSetupDTO(s model.Setup) setupDTO {
+	out := setupDTO{
+		AutoDetect: s.AutoDetect,
+		CheckedAt:  stamp(s.CheckedAt),
+		Sources:    make([]setupSourceDTO, 0, len(s.Sources)),
+		Problems:   make([]setupProblemDTO, 0, len(s.Problems)),
+	}
+	for _, src := range s.Sources {
+		out.Sources = append(out.Sources, setupSourceDTO{Type: src.Type, Location: src.Location})
+	}
+	for _, p := range s.Problems {
+		out.Problems = append(out.Problems, setupProblemDTO{
+			Type: p.Type, Path: p.Path, Problem: p.Problem, Hint: p.Hint, Optional: p.Optional,
+		})
 	}
 	return out
 }
