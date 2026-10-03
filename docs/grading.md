@@ -30,6 +30,51 @@ A period with no devices has no home grade (the receipt shows `?` and the
 API returns an empty string). The rule lives in `HomeGrade` in
 `internal/analyze/grade.go`.
 
+## Compared with the previous period
+
+When you fix something, the next report should show it. So each report is
+also compared with the period of the same length just before it: the last 7
+days with the 7 days before those, the last 24 hours with the day before. The
+dashboard, the receipt ("SINCE LAST WEEK") and `phonehome report` show, for
+the home and for each device:
+
+- **snooping lookups per day**, before → now, and the change in percent;
+- **the grade**, before → now;
+- **heartbeats that stopped** (and new ones): snooping destinations contacted
+  on a clock in the previous period but not in this one. Clocks for time sync
+  or firmware checks are left out, since they say nothing about you;
+- per category, the change in lookups per day;
+- devices seen before but not now. phonehome cannot say why: unplugged,
+  switched off, or a new address it cannot tie to the old device.
+
+Both periods are graded by exactly the rules above, so "F → D" means the same
+thing as two separate reports would.
+
+**When no comparison is shown.** phonehome compares only against data it
+actually has. There is no comparison when:
+
+- stored data starts inside the current period (a fresh install, or
+  retention shorter than twice the period: a 30-day view with 30 days of
+  data has nothing before it);
+- less than half of the previous period has data;
+- the previous period has no lookups at all.
+
+**Partial previous periods.** If data starts partway through the previous
+period (but covers at least half of it), the comparison is shown and marked:
+"only 4.2 of those 7 days have data". Its rates are per day of data, so a
+short baseline is not mistaken for a quiet one.
+
+**Percentages.** The change is (now − before) ÷ before. When a device had no
+snooping before and has some now there is no meaningful percentage, so it
+says "up from none"; a device not seen before is "new". Neither is ever shown
+as a division by zero.
+
+**What it does not prove.** A drop shows *that* a device asks less often, not
+*why*. If you changed a setting, a drop right after is good evidence it
+worked, but a TV that was simply switched off for a week would drop too:
+check the hour-by-hour chart before you credit the fix. The comparison lives
+in `internal/analyze/compare.go`.
+
 ## The terms
 
 - **Snooping lookups** are DNS lookups of destinations the knowledge base

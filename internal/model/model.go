@@ -183,6 +183,11 @@ func (p Period) Days() float64 {
 	return d
 }
 
+// Previous is the period of the same length that ends where p starts.
+func (p Period) Previous() Period {
+	return Period{From: p.From.Add(-p.To.Sub(p.From)), To: p.From}
+}
+
 // DomainStat is how often a device looked up one domain.
 type DomainStat struct {
 	Domain      string
@@ -254,6 +259,64 @@ type DeviceReport struct {
 	// names and reverse lookups are left out: no rule can describe them and
 	// they can identify the household.
 	Unknown []UnknownDomain
+	// Previous compares this device with the period just before Period; nil
+	// when the home has no comparison (see HomeReport.Previous).
+	Previous *Comparison
+}
+
+// Comparison sets a period's figures beside those of the period of equal
+// length just before it. The rules (when one is made, what Partial means)
+// are in docs/grading.md, "Compared with the previous period".
+type Comparison struct {
+	Period  Period  // the previous period: same length, ending where this one starts
+	Days    float64 // days of the previous period with data; < Period.Days() when Partial
+	Partial bool    // stored data begins inside the previous period
+	// Seen reports whether the device made lookups or connections in the
+	// previous period. Always true for a home. When false, the figures below
+	// describing the previous period are zero and Grade is "".
+	Seen     bool
+	Total    int     // previous lookups
+	Snooping int     // previous snooping lookups
+	PerDay   float64 // previous snooping lookups per day of data
+	// NowPerDay is this period's snooping lookups per day by the same rule
+	// (equal to DeviceReport.PerDay for a device), so the two sit side by
+	// side.
+	NowPerDay  float64
+	Grade      string           // previous grade, "" when not Seen
+	ByCategory map[Category]int // previous lookups per category
+	// CategoryDelta is the change in lookups per day, per category: this
+	// period's rate minus the previous one's.
+	CategoryDelta map[Category]float64
+	// Stopped lists snooping heartbeats detected in the previous period but
+	// not in this one; Started the reverse. Devices only, and only when Seen.
+	Stopped []Heartbeat
+	Started []Heartbeat
+}
+
+// Change is the relative change in snooping lookups per day: -0.92 means 92%
+// fewer, 0.5 means 50% more. ok is false when there is no meaningful ratio:
+// the device was not seen before, or it went from none to some.
+func (c Comparison) Change() (change float64, ok bool) {
+	switch {
+	case !c.Seen:
+		return 0, false
+	case c.PerDay == 0 && c.NowPerDay == 0:
+		return 0, true
+	case c.PerDay == 0:
+		return 0, false
+	}
+	return (c.NowPerDay - c.PerDay) / c.PerDay, true
+}
+
+// HomeComparison compares a whole home with the previous period.
+type HomeComparison struct {
+	Comparison
+	Devices int // devices active in the previous period
+	// Gone holds the previous-period reports of devices that were active
+	// then but made no lookups or connections in this period, worst first.
+	// It cannot say why: unplugged, switched off, or a new address phonehome
+	// cannot tie to the old device.
+	Gone []DeviceReport
 }
 
 // HomeReport is the whole-network view.
@@ -266,6 +329,11 @@ type HomeReport struct {
 	ByCategory  map[Category]int
 	Grade       string // "A".."F", the worst device grade; "" with no devices. See docs/grading.md
 	Demo        bool   // true when built from synthetic demo data
+	// Previous compares the home with the period of equal length just
+	// before Period. nil when there is nothing honest to compare with: no
+	// stored data then, too little of it, or no lookups at all. See
+	// docs/grading.md.
+	Previous *HomeComparison
 }
 
 // SourceStatus is the health of one ingestion source.

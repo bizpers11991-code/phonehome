@@ -68,6 +68,25 @@ and allocates its result once; `InsertDNS` sends 64 rows per statement):
 | `BenchmarkInsertDNS` | 2399 ns/row | 1830 ns/row |
 | `BenchmarkDNSBetween7Days` | 263 ms | 170 ms |
 
+## Comparing with the previous period
+
+Since reports compare each period with the one before it (see
+[grading.md](grading.md)), a report reads and analyses **twice the period**
+whenever stored data reaches back that far: one `DNSBetween` over both
+periods, one pass that classifies each domain once and feeds each lookup to
+its period. The timings above are for one period; with the comparison a 7-day
+report costs roughly what a 14-day report did before, and a 30-day report
+with 60 days stored roughly doubles its time and memory (still within reach
+of 512 MB on 32-bit, per the figures above). On the same laptop:
+
+| | ns/op | B/op |
+|---|---|---|
+| `BenchmarkAnalyze` (1M lookups, one week) | 209 ms | 60 MB |
+| `BenchmarkAnalyzeCompared` (2M lookups, two weeks) | 425 ms | 119 MB |
+
+The previous period skips fix lookups, so the overhead is the data itself,
+not extra work per lookup.
+
 ## What this means for a Pi Zero
 
 - Ingest is cheap: a few MiB of heap, and the steady state (one minute of a

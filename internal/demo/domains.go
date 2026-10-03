@@ -102,7 +102,10 @@ func household() []spec {
 	const m, s = time.Minute, time.Second
 	return []spec{
 		{
-			// The villain: ACR on a steady clock around the clock, even overnight.
+			// The villain: ACR on a steady clock around the clock, even
+			// overnight, until the household turned off Viewing Information
+			// Services ACROff before the end. Ads, the error dumps and the
+			// DNS bypass carry on: that setting does not cover them.
 			device: dev(20, "8c:b0:e9:4a:17:c2", "Samsung-QN65Q80", "Living Room TV", "Samsung", model.KindTV),
 			usage:  tvEvening, weekend: tvWeekend, perHour: 420, qtypes: qA,
 			use: []dom{
@@ -117,10 +120,10 @@ func household() []spec {
 				{"rr4---sn-a5mekn6s.googlevideo.com", 10, false},
 			},
 			beats: []beat{
-				{name: "acr-us-prd.samsungcloud.tv", every: 60 * s, jitter: 0.04, always: true},
-				{name: "log-ingestion.samsungacr.com", every: 5 * m, jitter: 0.05, always: true},
-				{name: "log-config.samsungacr.com", every: 30 * m, jitter: 0.05, always: true},
-				{name: "acr0.samsungcloudsolution.com", every: 15 * m, jitter: 0.05, always: true},
+				{name: "acr-us-prd.samsungcloud.tv", every: 60 * s, jitter: 0.04, always: true, offLast: ACROff},
+				{name: "log-ingestion.samsungacr.com", every: 5 * m, jitter: 0.05, always: true, offLast: ACROff},
+				{name: "log-config.samsungacr.com", every: 30 * m, jitter: 0.05, always: true, offLast: ACROff},
+				{name: "acr0.samsungcloudsolution.com", every: 15 * m, jitter: 0.05, always: true, offLast: ACROff},
 				{name: "time.samsungcloudsolution.com", every: time.Hour, jitter: 0.1, always: true},
 				{name: "otnprd9.samsungcloudsolution.net", every: 12 * time.Hour, jitter: 0.2, always: true},
 				{name: "dns.google", every: 6 * time.Hour, jitter: 0.3, always: true, doh: true},

@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"math"
 	"net"
 	"net/http"
 	"net/netip"
@@ -436,10 +437,37 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 	if r.Grade != "" {
 		fmt.Fprintf(w, "Home grade: %s (as good as its worst device).\n", r.Grade)
 	}
+	since := ""
+	if pc := r.Previous; pc != nil {
+		since = previousLabel(pc.Period)
+		fmt.Fprintf(w, "Compared with the %s: %s → %s snooping lookups/day (%s), home grade %s → %s.\n",
+			since, thousands(round(pc.PerDay)), thousands(round(pc.NowPerDay)), changeText(pc.Comparison),
+			gradeOrDash(pc.Grade), gradeOrDash(r.Grade))
+		if pc.Partial {
+			fmt.Fprintf(w, "  Only %.1f of those %.0f days have data; rates are per day of data.\n", pc.Days, pc.Period.Days())
+		}
+		for _, g := range pc.Gone {
+			fmt.Fprintf(w, "  Not seen this period: %s (was %s)\n", g.Device.DisplayName(), gradeOrDash(g.Grade))
+		}
+	}
 	fmt.Fprintln(w)
 	for _, d := range r.Devices {
 		fmt.Fprintf(w, "%s  %-28s %8s lookups  %7s snooping/day  (%s)\n",
 			gradeOrDash(d.Grade), d.Device.DisplayName(), thousands(d.Total), thousands(int(d.PerDay)), d.Device.Kind)
+		if c := d.Previous; c != nil {
+			if !c.Seen {
+				fmt.Fprintf(w, "     new: not seen in the %s\n", since)
+			} else {
+				fmt.Fprintf(w, "     vs %s: %s → %s snooping/day (%s), grade %s → %s\n", since,
+					thousands(round(c.PerDay)), thousands(round(c.NowPerDay)), changeText(*c), gradeOrDash(c.Grade), gradeOrDash(d.Grade))
+			}
+			for _, h := range c.Stopped {
+				fmt.Fprintf(w, "     stopped: %s heartbeat (%s)\n", h.Domain, h.Category.Label())
+			}
+			for _, h := range c.Started {
+				fmt.Fprintf(w, "     new heartbeat: %s (%s)\n", h.Domain, h.Category.Label())
+			}
+		}
 		cats := make([]model.Category, 0, len(d.ByCategory))
 		for c, n := range d.ByCategory {
 			if n > 0 && c.Snooping() {
@@ -463,6 +491,37 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 		}
 	}
 }
+
+// previousLabel names the period before a report: "previous 7 days".
+func previousLabel(p model.Period) string {
+	d := p.Days()
+	switch {
+	case d == 1:
+		return "previous 24 hours"
+	case d == math.Trunc(d):
+		return fmt.Sprintf("previous %.0f days", d)
+	}
+	return fmt.Sprintf("previous %.1f days", d)
+}
+
+// changeText describes a change in snooping per day: "↓ 92%", "↑ 50%",
+// "no change", or "up from none".
+func changeText(c model.Comparison) string {
+	ch, ok := c.Change()
+	if !ok {
+		return "up from none"
+	}
+	p := math.Round(ch * 100)
+	switch {
+	case p < 0:
+		return fmt.Sprintf("↓ %.0f%%", -p)
+	case p > 0:
+		return fmt.Sprintf("↑ %.0f%%", p)
+	}
+	return "no change"
+}
+
+func round(f float64) int { return int(math.Round(f)) }
 
 func gradeOrDash(g string) string {
 	if g == "" {

@@ -22,10 +22,12 @@ var (
 func samples() map[string]Doc {
 	o := Options{Demo: true, Now: printed}
 	return map[string]Doc{
-		"device-demo": Device(samsungTV(), o),
-		"device-a":    Device(hueBridge(), o),
-		"device-long": Device(longName(), o),
-		"home-demo":   Home(home(), o),
+		"device-demo":  Device(samsungTV(), o),
+		"device-a":     Device(hueBridge(), o),
+		"device-long":  Device(longName(), o),
+		"home-demo":    Home(home(), o),
+		"device-since": Device(fixedTV(), o),
+		"home-since":   Home(fixedHome(), o),
 	}
 }
 

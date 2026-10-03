@@ -80,6 +80,53 @@ function every(sec) {
   return `every ${Math.round(sec / 3600)} h`;
 }
 
+// ---------- Compared with the previous period ----------
+// The server only sends `previous` when the period before has enough data
+// (docs/grading.md); these helpers word it so the direction never relies on
+// colour alone.
+
+function prevLabel(p) {
+  const d = Math.round(p.days * 10) / 10;
+  return d === 1 ? 'the previous 24 hours' : `the previous ${d} days`;
+}
+
+function trend(p) {
+  if (!p.seen) return h('span', { class: 'trend new', text: 'New' });
+  if (p.change == null) return h('span', { class: 'trend worse' }, h('span', { 'aria-hidden': 'true', text: '↑ ' }), 'up from none');
+  const n = Math.round(p.change * 100);
+  if (n === 0) return h('span', { class: 'trend same', text: 'No change' });
+  const down = n < 0;
+  return h('span', { class: 'trend ' + (down ? 'better' : 'worse') },
+    h('span', { 'aria-hidden': 'true', text: down ? '↓ ' : '↑ ' }),
+    `${Math.abs(n)}%`, h('span', { class: 'visually-hidden', text: down ? ' less snooping' : ' more snooping' }));
+}
+
+function gradeShift(before, now) {
+  return h('span', { class: 'grade-shift', 'aria-label': `grade ${before || 'none'} before, ${now || 'none'} now` },
+    h('b', { class: 'mini-grade grade-' + (before || 'c').toLowerCase(), text: before || '?' }),
+    h('span', { 'aria-hidden': 'true', text: ' → ' }),
+    h('b', { class: 'mini-grade grade-' + (now || 'c').toLowerCase(), text: now || '?' }));
+}
+
+function stoppedList(beats, max) {
+  if (!beats.length) return null;
+  const top = beats.slice(0, max);
+  return h('ul', { class: 'stopped', 'aria-label': 'Heartbeats that stopped' },
+    top.map((b) => h('li', {}, icon('pulse'), h('span', {}, 'Stopped: ', h('code', { text: b.domain }),
+      ` ${b.categoryLabel.toLowerCase()} heartbeat`))),
+    beats.length > max ? h('li', { class: 'muted', text: `+${beats.length - max} more` }) : null);
+}
+
+// sinceCard is the one-line change on a device card.
+function sinceCard(d) {
+  const p = d.previous;
+  if (!p) return null;
+  if (!p.seen) return h('div', { class: 'since' }, h('p', {}, trend(p), ` · not seen in ${prevLabel(p)}`));
+  return h('div', { class: 'since' },
+    h('p', {}, trend(p), ` vs ${prevLabel(p)}`, p.grade !== d.grade ? [' · ', gradeShift(p.grade, d.grade)] : null),
+    stoppedList(p.stopped, 1));
+}
+
 const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
 function ago(ts) {
   if (!ts) return 'never';
@@ -192,6 +239,7 @@ function renderHero() {
     h('p', { class: 'sub', text: `${r.devices.length} ${r.devices.length === 1 ? 'device' : 'devices'}` +
       ` · ${fmt(r.snooping)} lookups for advertising, tracking and telemetry` +
       (blocked ? ` · ${fmt(blocked)} blocked by your DNS filter` : '') }),
+    sinceHero(r),
     stack(r.categories, r.total),
     h('div', { class: 'legend' },
       legendGroup('About you', snoop, r.total),
@@ -200,6 +248,29 @@ function renderHero() {
       h('button', { type: 'button', class: 'btn primary', onclick: () => go('receipt', '') },
         icon('receipt'), 'Home receipt'),
       h('span', { class: 'hint', text: 'A one-page summary you can share.' })));
+}
+
+// sinceHero sums up the change for the whole home.
+function sinceHero(r) {
+  const p = r.previous;
+  if (!p) return null;
+  // One line per device: "Living Room TV: 4 heartbeats stopped, incl. acr-…".
+  const stopped = r.devices.filter((d) => d.previous?.stopped.length).map((d) => d.previous.stopped);
+  const notes = [];
+  if (p.partial) notes.push(`Only ${Math.round(p.dataDays * 10) / 10} of those ${Math.round(p.days * 10) / 10} days have data; rates are per day of data.`);
+  if (p.gone.length) notes.push(`Not seen this period: ${p.gone.map((g) => g.name).join(', ')}.`);
+  return h('div', { class: 'since since-hero' },
+    h('p', {}, trend(p), ` vs ${prevLabel(p)} `,
+      h('span', { class: 'muted', text: `(${fmt(p.perDay)} → ${fmt(p.nowPerDay)} snooping lookups a day)` }),
+      ' · Home grade ', gradeShift(p.grade, r.grade)),
+    stopped.length ? h('ul', { class: 'stopped', 'aria-label': 'Heartbeats that stopped' },
+      r.devices.filter((d) => d.previous?.stopped.length).slice(0, 3).map((d) => {
+        const bs = d.previous.stopped;
+        return h('li', {}, icon('pulse'), h('span', {}, h('b', { text: d.name }), ': stopped ',
+          h('code', { text: bs[0].domain }), ` ${bs[0].categoryLabel.toLowerCase()} heartbeat`,
+          bs.length > 1 ? ` and ${bs.length - 1} more` : ''));
+      })) : null,
+    notes.length ? h('p', { class: 'since-note', text: notes.join(' ') }) : null);
 }
 
 function legendGroup(title, cats, total) {
@@ -248,6 +319,7 @@ function card(d) {
     h('div', { class: 'figure' },
       h('p', {}, h('span', { class: 'big', text: fmt(d.perDay) }), h('span', { class: 'unit', text: 'snooping lookups a day' })),
       h('p', { class: 'share' }, h('b', { text: pct(d.snoopShare) }), ' of its traffic')),
+    sinceCard(d),
     d.total ? stack(d.categories, d.total, true) : null,
     sparkline(d),
     d.heartbeats.length ? h('ul', { class: 'chips', 'aria-label': 'Heartbeats' },
@@ -324,6 +396,8 @@ function details(d) {
     stat('Blocked', fmt(d.blocked), d.total ? pct(d.blocked / d.total) : null),
     stat('While you sleep', fmt(d.quiet.lookups))));
 
+  if (d.previous) sections.push(sinceDetails(d));
+
   if (d.bypasses.length) {
     sections.push(h('section', {}, h('h3', { text: 'Bypassing your DNS' }),
       h('div', { class: 'bypasses' }, d.bypasses.map((b) => h('p', { class: 'callout' }, icon('warning'),
@@ -381,6 +455,30 @@ function details(d) {
       h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', onclick: () => dlg.close() }, icon('close'))),
     h('div', { class: 'drawer-body' }, sections));
   return dlg;
+}
+
+// sinceDetails is the drawer's comparison with the previous period.
+function sinceDetails(d) {
+  const p = d.previous;
+  const title = 'Compared with ' + prevLabel(p);
+  if (!p.seen) {
+    return h('section', {}, h('h3', { text: title }),
+      h('p', { class: 'empty-note', text: `Not seen in ${prevLabel(p)}: it is new, was switched off, or had another address.` }));
+  }
+  const cats = p.categories.filter((c) => c.snooping && Math.abs(c.deltaPerDay) >= 0.5);
+  const perDay = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
+  return h('section', {}, h('h3', { text: title }),
+    h('dl', { class: 'stats' },
+      stat('Snooping a day', `${fmt(p.perDay)} → ${fmt(p.nowPerDay)}`),
+      stat('Change', trend(p)),
+      stat('Grade', gradeShift(p.grade, d.grade))),
+    cats.length ? h('ul', { class: 'deltas', 'aria-label': 'Change by category, lookups a day' }, cats.map((c) => h('li', {},
+      h('span', { class: 'pill ' + catClass(c.id), text: c.label }),
+      h('span', { class: 'num ' + (c.deltaPerDay < 0 ? 'better' : 'worse'), text: `${perDay(c.deltaPerDay)} a day` })))) : null,
+    stoppedList(p.stopped, 10),
+    p.started.length ? h('ul', { class: 'stopped started', 'aria-label': 'New heartbeats' }, p.started.map((b) => h('li', {},
+      icon('pulse'), h('span', {}, 'New: ', h('code', { text: b.domain }), ` ${b.categoryLabel.toLowerCase()} heartbeat, ${every(b.everySeconds)}`)))) : null,
+    p.partial ? h('p', { class: 'since-note', text: `Only ${Math.round(p.dataDays * 10) / 10} of those days have data; rates are per day of data.` }) : null);
 }
 
 // unclassified lists domains the knowledge base can't explain yet and offers a

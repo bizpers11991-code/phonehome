@@ -276,3 +276,78 @@ func TestHomeStampUsesHomeGrade(t *testing.T) {
 		t.Errorf("empty home stamp = %q, want ?", got)
 	}
 }
+
+func TestSinceBlock(t *testing.T) {
+	d := Device(fixedTV(), Options{Now: printed})
+	checkGrid(t, d)
+	s := d.plain()
+	for _, want := range []string{
+		"SINCE LAST WEEK",
+		"SNOOPING PER DAY ............  1,402 → 547",
+		"  CHANGE ..........................  ↓ 61%",
+		"GRADE .............................  F → D",
+		"HEARTBEATS STOPPED",
+		"  › acr-eu-prd.samsungcloudsolution.com",
+		"  › log-ingestion.samsungacr.com",
+	} {
+		if !strings.Contains(s, want) {
+			t.Errorf("receipt lacks %q\n%s", want, s)
+		}
+	}
+	// The block sits between the totals and the stamp.
+	if a, b, c := strings.Index(s, "TOTAL CALLS HOME"), strings.Index(s, "SINCE LAST WEEK"), strings.Index(s, "GRADE: "); a > b || b > c {
+		t.Errorf("block out of place:\n%s", s)
+	}
+
+	h := Home(fixedHome(), Options{Now: printed})
+	checkGrid(t, h)
+	hs := h.plain()
+	for _, want := range []string{"SINCE LAST WEEK", "HOME GRADE ........................  F → D", "  › acr-eu-prd.samsungcloudsolution.com"} {
+		if !strings.Contains(hs, want) {
+			t.Errorf("home receipt lacks %q\n%s", want, hs)
+		}
+	}
+
+	// No comparison, no block.
+	if strings.Contains(Device(samsungTV(), Options{Now: printed}).plain(), "SINCE") ||
+		strings.Contains(Home(home(), Options{Now: printed}).plain(), "SINCE") {
+		t.Error("receipt without a comparison prints one")
+	}
+}
+
+func TestSinceBlockVariants(t *testing.T) {
+	r := fixedTV()
+	r.Previous.Partial, r.Previous.Days = true, 4.25
+	s := Device(r, Options{Now: printed}).plain()
+	if !strings.Contains(s, "(ONLY 4.2 OF THOSE 7 DAYS HAVE DATA)") {
+		t.Errorf("partial comparison not flagged:\n%s", s)
+	}
+
+	r = fixedTV()
+	r.Previous = &model.Comparison{Period: r.Period.Previous(), NowPerDay: r.PerDay}
+	s = Device(r, Options{Now: printed}).plain()
+	if !strings.Contains(s, "NOT SEEN IN THE PERIOD BEFORE") || strings.Contains(s, "CHANGE") {
+		t.Errorf("new device:\n%s", s)
+	}
+
+	for days, want := range map[int]string{1: "SINCE YESTERDAY", 7: "SINCE LAST WEEK", 30: "VS THE 30 DAYS BEFORE"} {
+		p := model.Period{From: printed.Add(-time.Duration(days) * 24 * time.Hour), To: printed}
+		if got := sinceTitle(p); got != want {
+			t.Errorf("sinceTitle(%d days) = %q, want %q", days, got, want)
+		}
+	}
+	for _, c := range []struct {
+		c    model.Comparison
+		want string
+	}{
+		{model.Comparison{Seen: true, PerDay: 100, NowPerDay: 8}, "↓ 92%"},
+		{model.Comparison{Seen: true, PerDay: 100, NowPerDay: 150}, "↑ 50%"},
+		{model.Comparison{Seen: true, PerDay: 100, NowPerDay: 100.2}, "NO CHANGE"},
+		{model.Comparison{Seen: true, PerDay: 0, NowPerDay: 0}, "NO CHANGE"},
+		{model.Comparison{Seen: true, PerDay: 0, NowPerDay: 3}, "UP FROM NONE"},
+	} {
+		if got := change(c.c); got != c.want {
+			t.Errorf("change(%+v) = %q, want %q", c.c, got, c.want)
+		}
+	}
+}

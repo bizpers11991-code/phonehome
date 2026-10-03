@@ -6,6 +6,10 @@
 // published research and community blocklists (see domains.go) so the
 // classifier has something realistic to chew on. Anything built from this
 // data must be labelled as demo data (model.HomeReport.Demo).
+//
+// The household has a plot: partway through, it turns off the Living Room
+// TV's content recognition (ACROff), so comparing the last week with the
+// one before shows what a fix looks like in the numbers.
 package demo
 
 import (
@@ -89,7 +93,17 @@ type beat struct {
 	always  bool
 	blocked bool
 	doh     bool // also emit an outbound TCP/443 flow to Google Public DNS
+	// offLast, when set, stops the beat this long before the end of the
+	// household's history: a setting was switched off.
+	offLast time.Duration
 }
+
+// ACROff is how long before the end of its history the demo household turned
+// off the Living Room TV's content recognition (Samsung's Viewing
+// Information Services). It lies inside the week before the last one, so
+// "this week vs last week" shows the ACR heartbeats stopping, while the
+// 30-day view still has three weeks of them.
+const ACROff = 9*24*time.Hour + 5*time.Hour
 
 type gen struct {
 	from, to time.Time
@@ -147,7 +161,11 @@ func (g *gen) device(s spec) {
 
 	for _, b := range s.beats {
 		t := g.from.Add(time.Duration(g.rng.Int64N(int64(b.every))))
-		for t.Before(g.to) {
+		stop := g.to
+		if b.offLast > 0 {
+			stop = g.to.Add(-b.offLast)
+		}
+		for t.Before(stop) {
 			if b.always || inUse(t) {
 				emit(t, b.name, b.blocked)
 				if b.doh {

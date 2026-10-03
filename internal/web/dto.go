@@ -24,6 +24,53 @@ type reportDTO struct {
 	Grade       string        `json:"grade"` // home grade: the worst device's; "" with no devices
 	Categories  []categoryDTO `json:"categories"`
 	Devices     []deviceDTO   `json:"devices"`
+	// Previous compares the home with the period of equal length before
+	// this one; omitted when there is nothing honest to compare with.
+	Previous *homeCompareDTO `json:"previous,omitempty"`
+}
+
+// compareDTO sets a period beside the one before it (model.Comparison).
+// Change is the relative change in snooping per day (-0.92 = 92% fewer),
+// null when there is no meaningful ratio (not seen before, or up from none).
+type compareDTO struct {
+	From       string           `json:"from"`
+	To         string           `json:"to"`
+	Days       float64          `json:"days"`     // length of the previous period
+	DataDays   float64          `json:"dataDays"` // days of it with data
+	Partial    bool             `json:"partial"`
+	Seen       bool             `json:"seen"`
+	Total      int              `json:"total"`
+	Snooping   int              `json:"snooping"`
+	PerDay     float64          `json:"perDay"`
+	NowPerDay  float64          `json:"nowPerDay"`
+	Change     *float64         `json:"change"`
+	Grade      string           `json:"grade"`
+	Categories []categoryChange `json:"categories"`
+	Stopped    []heartbeatDTO   `json:"stopped"`
+	Started    []heartbeatDTO   `json:"started"`
+}
+
+// categoryChange is one category before and the change in lookups per day.
+type categoryChange struct {
+	ID          model.Category `json:"id"`
+	Label       string         `json:"label"`
+	Snooping    bool           `json:"snooping"`
+	Before      int            `json:"before"`
+	DeltaPerDay float64        `json:"deltaPerDay"`
+}
+
+type homeCompareDTO struct {
+	compareDTO
+	Devices int       `json:"devices"` // active in the previous period
+	Gone    []goneDTO `json:"gone"`
+}
+
+// goneDTO is a device active in the previous period but not in this one.
+type goneDTO struct {
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Grade  string  `json:"grade"`
+	PerDay float64 `json:"perDay"`
 }
 
 // categoryDTO describes a category and, where it appears, how many lookups
@@ -68,6 +115,9 @@ type deviceDTO struct {
 	// SuggestURL opens a prefilled GitHub issue for the unknown domains;
 	// empty for demo data or when nothing can be shared. See suggestURL.
 	SuggestURL string `json:"suggestUrl,omitempty"`
+	// Previous compares the device with the period before; omitted when
+	// the home has no comparison.
+	Previous *compareDTO `json:"previous,omitempty"`
 }
 
 // quietDTO is the quiet-hours window; StartHour/EndHour are local hours
@@ -220,6 +270,49 @@ func newReportDTO(r model.HomeReport) reportDTO {
 		}
 		out.Devices = append(out.Devices, dd)
 	}
+	if pc := r.Previous; pc != nil {
+		h := &homeCompareDTO{compareDTO: newCompareDTO(pc.Comparison), Devices: pc.Devices, Gone: make([]goneDTO, 0, len(pc.Gone))}
+		for _, g := range pc.Gone {
+			h.Gone = append(h.Gone, goneDTO{ID: g.Device.ID, Name: g.Device.DisplayName(), Grade: g.Grade, PerDay: g.PerDay})
+		}
+		out.Previous = h
+	}
+	return out
+}
+
+func newCompareDTO(c model.Comparison) compareDTO {
+	out := compareDTO{
+		From: stamp(c.Period.From), To: stamp(c.Period.To), Days: c.Period.Days(),
+		DataDays: c.Days, Partial: c.Partial, Seen: c.Seen,
+		Total: c.Total, Snooping: c.Snooping, PerDay: c.PerDay, NowPerDay: c.NowPerDay,
+		Grade:      c.Grade,
+		Categories: []categoryChange{},
+		Stopped:    newHeartbeats(c.Stopped),
+		Started:    newHeartbeats(c.Started),
+	}
+	if ch, ok := c.Change(); ok {
+		out.Change = &ch
+	}
+	for _, cat := range model.Categories() {
+		before, delta := c.ByCategory[cat], c.CategoryDelta[cat]
+		if before == 0 && delta == 0 {
+			continue
+		}
+		out.Categories = append(out.Categories, categoryChange{
+			ID: cat, Label: cat.Label(), Snooping: cat.Snooping(), Before: before, DeltaPerDay: delta,
+		})
+	}
+	return out
+}
+
+func newHeartbeats(hs []model.Heartbeat) []heartbeatDTO {
+	out := make([]heartbeatDTO, 0, len(hs))
+	for _, h := range hs {
+		out = append(out, heartbeatDTO{
+			Domain: h.Domain, Category: h.Category, CategoryLabel: h.Category.Label(), Snooping: h.Category.Snooping(),
+			Count: h.Count, EverySeconds: h.Every.Seconds(), Jitter: h.Jitter,
+		})
+	}
 	return out
 }
 
@@ -283,11 +376,10 @@ func newDeviceDTO(r model.DeviceReport) deviceDTO {
 	for _, c := range r.Companies {
 		out.Companies = append(out.Companies, companyDTO{ID: c.ID, Name: c.Name, Country: c.Country, Count: c.Count})
 	}
-	for _, h := range r.Heartbeats {
-		out.Heartbeats = append(out.Heartbeats, heartbeatDTO{
-			Domain: h.Domain, Category: h.Category, CategoryLabel: h.Category.Label(), Snooping: h.Category.Snooping(),
-			Count: h.Count, EverySeconds: h.Every.Seconds(), Jitter: h.Jitter,
-		})
+	out.Heartbeats = newHeartbeats(r.Heartbeats)
+	if r.Previous != nil {
+		c := newCompareDTO(*r.Previous)
+		out.Previous = &c
 	}
 	for _, b := range r.Bypasses {
 		out.Bypasses = append(out.Bypasses, bypassDTO(b))

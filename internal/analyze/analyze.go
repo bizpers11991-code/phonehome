@@ -182,6 +182,9 @@ type analysis struct {
 	// first is the earliest lookup in the period: rates are per day of data,
 	// so a fresh install viewing "30 days" is not graded on 2 days' traffic.
 	first time.Time
+	// noFixes skips looking up fixes: the previous period of a comparison
+	// only needs its figures and grades.
+	noFixes bool
 }
 
 // normAddr strips IPv6 zones and IPv4-in-IPv6 mapping so the same host always
@@ -450,11 +453,13 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 	r.Bypasses = bypasses(d.bypass)
 	r.Device.Kind = InferKind(r.Device, hints)
 
-	ids := make([]string, len(r.Companies))
-	for i, cs := range r.Companies {
-		ids[i] = cs.ID
+	if !a.noFixes {
+		ids := make([]string, len(r.Companies))
+		for i, cs := range r.Companies {
+			ids[i] = cs.ID
+		}
+		r.Fixes = relevantFixes(a.c.FixesFor(r.Device, ids), r)
 	}
-	r.Fixes = relevantFixes(a.c.FixesFor(r.Device, ids), r)
 	r.Grade = Grade(r)
 	return r
 }
