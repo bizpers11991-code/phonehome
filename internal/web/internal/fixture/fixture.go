@@ -304,8 +304,13 @@ func build(d dev, p model.Period, days float64) model.DeviceReport {
 			r.Snooping += n
 		}
 		c := companies[dm.company]
-		r.TopDomains = append(r.TopDomains, model.DomainStat{Domain: dm.name, Count: n, Blocked: blocked,
-			Category: dm.cat, CompanyID: c.ID, CompanyName: c.Name, Purpose: dm.purpose})
+		ds := model.DomainStat{Domain: dm.name, Count: n, Blocked: blocked,
+			Category: dm.cat, CompanyID: c.ID, CompanyName: c.Name, Purpose: dm.purpose,
+			First: p.From.Add(time.Hour), Last: p.To.Add(-time.Hour)}
+		if dm.cat != model.CatUnknown {
+			ds.Rule, ds.Confidence = dm.name, "medium" // no evidence links: the fixture is made up
+		}
+		r.TopDomains = append(r.TopDomains, ds)
 		if c.ID != "" {
 			byCompany[c.ID] += n
 		}
@@ -315,6 +320,7 @@ func build(d dev, p model.Period, days float64) model.DeviceReport {
 		}
 	}
 	slices.SortStableFunc(r.TopDomains, func(a, b model.DomainStat) int { return cmp.Compare(b.Count, a.Count) })
+	r.Domains = r.TopDomains
 	for id, n := range byCompany {
 		c := companies[id]
 		r.Companies = append(r.Companies, model.CompanyStat{ID: id, Name: c.Name, Country: c.Country, Count: n})
