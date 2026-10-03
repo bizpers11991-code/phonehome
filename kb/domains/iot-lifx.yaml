@@ -2,7 +2,7 @@ company: lifx
 rules:
   - pattern: api.lifx.com
     category: essential
-    purpose: "LIFX cloud API for scenes and remote control of LIFX lights."
+    purpose: "LIFX cloud API, used by Home Assistant to list and activate LIFX scenes."
     confidence: medium
     kind_hint: plug
     evidence:
