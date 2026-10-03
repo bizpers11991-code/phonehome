@@ -364,3 +364,27 @@ func TestAPIErrors(t *testing.T) {
 		t.Fatal("expected error for cancelled context")
 	}
 }
+
+// TestAPIPaginationMovingTime: with distinct timestamps, a second page must
+// continue from the same from as the first, or it skips a page of rows.
+func TestAPIPaginationMovingTime(t *testing.T) {
+	const t0 = 1727870000.0
+	var rows []apiQuery
+	for i := range int64(300) {
+		rows = append(rows, q(i+1, t0+float64(i), "A", "FORWARDED", fmt.Sprintf("d%d.example", i+1), "192.168.1.20"))
+	}
+	_, a := newFakeFTL(t, rows)
+	a.now = func() time.Time { return time.Unix(int64(t0)+3600, 0) }
+	got, cur, err := a.FetchDNS(context.Background(), "1@1727870000", 150)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, g := range got {
+		if want := fmt.Sprintf("d%d.example", i+2); g.Domain != want {
+			t.Fatalf("query %d is %s, want %s", i, g.Domain, want)
+		}
+	}
+	if len(got) != 150 || cur != "151@1727870150" {
+		t.Fatalf("got %d queries, cursor %q", len(got), cur)
+	}
+}

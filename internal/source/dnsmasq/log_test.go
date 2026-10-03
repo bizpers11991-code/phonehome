@@ -331,3 +331,34 @@ func TestParseMessage(t *testing.T) {
 		}
 	}
 }
+
+// TestCNAMEVerdicts: a CNAME block lands on the query whose chain was
+// inspected, not on a sibling query for the same name (A and AAAA at
+// once), and also when the chain came from the cache, which logs no
+// verdict line for the query's own name.
+func TestCNAMEVerdicts(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "pihole.log")
+	l := newTestLog(path)
+	const p = "Oct  2 14:10:00 dnsmasq[9]: "
+	appendFile(t, path, p+"query[A] m.example from 192.168.1.21\n"+
+		p+"query[AAAA] m.example from 192.168.1.21\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply tracker.example is blocked during CNAME inspection\n"+
+		p+"gravity blocked m.example is 0.0.0.0\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply tracker.example is blocked during CNAME inspection\n"+
+		p+"gravity blocked m.example is ::\n"+
+		p+"query[A] www.example from 192.168.1.22\n"+
+		p+"cached www.example is <CNAME>\n"+
+		p+"cached tracker.example is 192.0.2.1\n"+
+		p+"reply tracker.example is blocked during CNAME inspection\n"+
+		p+"query[A] ok.example from 192.168.1.22\n"+
+		p+"reply ok.example is 192.0.2.2\n")
+	got, _ := drain(t, l, "", 10)
+	equal(t, got, []string{
+		"14:10:00 m.example A 192.168.1.21 true",
+		"14:10:00 m.example AAAA 192.168.1.21 true",
+		"14:10:00 www.example A 192.168.1.22 true",
+		"14:10:00 ok.example A 192.168.1.22 false",
+	})
+}
