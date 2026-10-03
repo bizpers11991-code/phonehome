@@ -453,7 +453,7 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 	fmt.Fprintln(w)
 	for _, d := range r.Devices {
 		fmt.Fprintf(w, "%s  %-28s %8s lookups  %7s snooping/day  (%s)\n",
-			gradeOrDash(d.Grade), d.Device.DisplayName(), thousands(d.Total), thousands(int(d.PerDay)), d.Device.Kind)
+			gradeOrDash(d.Grade), d.Device.DisplayName(), thousands(d.Total), thousands(round(d.PerDay)), d.Device.Kind)
 		if c := d.Previous; c != nil {
 			if !c.Seen {
 				fmt.Fprintf(w, "     new: not seen in the %s\n", since)

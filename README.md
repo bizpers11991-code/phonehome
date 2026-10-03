@@ -9,9 +9,9 @@ and tells you, in plain English, what your smart TV, speakers, cameras and robot
 vacuum send home: to whom, how often, and whether it happens while you sleep.
 Then it hands you a receipt.
 
-<img src="docs/img/receipt-tv.png" width="340" alt="A Privacy Receipt for a Samsung smart TV: 13,100 content-recognition lookups in a week, one every minute around the clock, grade F">&nbsp;&nbsp;<img src="docs/img/receipt-home.png" width="340" alt="A Privacy Receipt for a whole home with ten devices">
+<img src="docs/img/receipt-tv.png" width="340" alt="A Privacy Receipt for a Samsung smart TV over 30 days: 38,914 content-recognition lookups, a heartbeat every minute around the clock, grade F">&nbsp;&nbsp;<img src="docs/img/receipt-tv-since.png" width="340" alt="The same TV's receipt for the week after Viewing Information Services was turned off: content-recognition heartbeats stopped, 1,966 to 541 snooping lookups a day, grade F to D">
 
-<sub>Receipts from the built-in demo household. The numbers are synthetic, which is why they are stamped DEMO DATA.<br>Yours will be real.</sub>
+<sub>The same TV before and after one setting was switched off. Receipts from the built-in demo household: the numbers are synthetic, which is why they are stamped DEMO DATA.<br>Yours will be real.</sub>
 
 </div>
 
@@ -39,8 +39,9 @@ Open <http://localhost:8099>.
 | **Heartbeats** | Devices that call a server on a clock, every 60 seconds, around the clock, whether anyone is using them or not. |
 | **While you slept** | How much each device talked between 01:00 and 06:00 (you can set the window). |
 | **DNS bypass** | Devices that can, or do, route around your Pi-hole with DNS-over-HTTPS, DNS-over-TLS or a hard-coded resolver. |
-| **Who gets your data** | Every lookup is classified by a [knowledge base](kb/) of **540 rules across 114 companies**. Each rule cites its evidence and states a confidence level. |
-| **What to do about it** | 34 researched, step-by-step fixes, such as *Settings › General & Privacy › Terms & Privacy › Viewing Information Services → Off*. Each fix is shown only for the devices it applies to. |
+| **Who gets your data** | Every lookup is classified by a [knowledge base](kb/) of **715 rules across 138 companies**. Each rule cites its evidence and states a confidence level. |
+| **What to do about it** | 41 researched, step-by-step fixes, such as *Settings › General & Privacy › Terms & Privacy › Viewing Information Services → Off*. Each fix is shown only for the devices it applies to. |
+| **Since you fixed it** | Every report is compared with the period before it: grade F → D, ↓ 73% a day, which heartbeats stopped. Fix a setting, then come back next week for the second receipt. |
 
 Every device gets a grade from A to F based on how much of its traffic is
 about you rather than for you. [The rules are short and public.](docs/grading.md)
@@ -55,6 +56,10 @@ about you rather than for you. [The rules are short and public.](docs/grading.md
 | Receipt | Phone |
 |---|---|
 | ![The receipt dialog](docs/img/dashboard-receipt.png) | <img src="docs/img/dashboard-mobile.png" width="300" alt="Dashboard on a phone"> |
+
+| Whole-home receipt |
+|---|
+| <img src="docs/img/receipt-home.png" width="340" alt="A Privacy Receipt for a whole home with ten devices"> |
 
 </details>
 
