@@ -44,3 +44,17 @@ rules:
     kind_hint: camera
     evidence:
       - https://community.arlo.com/t5/Arlo/Internet-Connection-through-proxy-OR-firewall/td-p/1201096
+  - pattern: mqtt-cluster.arloxcld.com
+    category: essential
+    purpose: "Arlo's event stream (MQTT) for motion, doorbell and status updates; the app stops getting live events if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/twrecked/pyaarlo/blob/06affa48a5585650845eaae07a1ef15f4c0ee731/pyaarlo/constant.py#L5
+  - pattern: my.arlo.com
+    category: essential
+    purpose: "Arlo web app; integrations send its origin when calling Arlo's API."
+    confidence: low
+    kind_hint: camera
+    evidence:
+      - https://github.com/twrecked/pyaarlo/blob/06affa48a5585650845eaae07a1ef15f4c0ee731/pyaarlo/constant.py#L3

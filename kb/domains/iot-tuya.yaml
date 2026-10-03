@@ -84,3 +84,52 @@ rules:
     confidence: high
     evidence:
       - https://developer.tuya.com/en/docs/iot/MQTT-protocol?id=Kb65nphxrj8f1
+  - pattern: openapi.tuyaus.com
+    category: essential
+    purpose: "Tuya's cloud API for its western US data centre, used by integrations to list and control devices."
+    confidence: medium
+    evidence:
+      - https://github.com/jasonacox/tinytuya/blob/a555057b080c1d3632e1c03e693b1f869ca85219/tinytuya/Cloud.py#L135
+  - pattern: openapi-ueaz.tuyaus.com
+    category: essential
+    purpose: "Tuya's cloud API for its eastern US data centre, used by integrations to list and control devices."
+    confidence: medium
+    evidence:
+      - https://github.com/jasonacox/tinytuya/blob/a555057b080c1d3632e1c03e693b1f869ca85219/tinytuya/Cloud.py#L137
+  - pattern: openapi.tuyaeu.com
+    category: essential
+    purpose: "Tuya's cloud API for its central European data centre, used by integrations to list and control devices."
+    confidence: medium
+    evidence:
+      - https://github.com/jasonacox/tinytuya/blob/a555057b080c1d3632e1c03e693b1f869ca85219/tinytuya/Cloud.py#L139
+  - pattern: openapi-weaz.tuyaeu.com
+    category: essential
+    purpose: "Tuya's cloud API for its western European data centre, used by integrations to list and control devices."
+    confidence: medium
+    evidence:
+      - https://github.com/jasonacox/tinytuya/blob/a555057b080c1d3632e1c03e693b1f869ca85219/tinytuya/Cloud.py#L141
+  - pattern: openapi.tuyain.com
+    category: essential
+    purpose: "Tuya's cloud API for its Indian data centre, used by integrations to list and control devices."
+    confidence: medium
+    evidence:
+      - https://github.com/jasonacox/tinytuya/blob/a555057b080c1d3632e1c03e693b1f869ca85219/tinytuya/Cloud.py#L143
+  - pattern: openapi.tuyacn.com
+    category: essential
+    purpose: "Tuya's cloud API for its Chinese data centre, used by integrations to list and control devices."
+    confidence: medium
+    evidence:
+      - https://github.com/jasonacox/tinytuya/blob/a555057b080c1d3632e1c03e693b1f869ca85219/tinytuya/Cloud.py#L133
+  - pattern: openapi-sg.iotbing.com
+    category: essential
+    purpose: "Tuya's cloud API for its Singapore data centre, used by integrations to list and control devices."
+    confidence: medium
+    evidence:
+      - https://github.com/jasonacox/tinytuya/blob/a555057b080c1d3632e1c03e693b1f869ca85219/tinytuya/Cloud.py#L145
+  - pattern: apigw.iotbing.com
+    category: essential
+    purpose: "Tuya Smart Life sign-in (QR code) used by Home Assistant's Tuya integration; it cannot connect if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/tuya/tuya-device-sharing-sdk/blob/170cfd9ee7aefb48c14e27d9ee4a45c6bc6b15c4/tuya_sharing/user.py#L9
+      - https://github.com/tuya/tuya-device-sharing-sdk/blob/170cfd9ee7aefb48c14e27d9ee4a45c6bc6b15c4/tuya_sharing/user.py#L19

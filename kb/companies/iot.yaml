@@ -98,3 +98,35 @@ companies:
     name: Netatmo (Legrand)
     country: FR
     url: https://www.netatmo.com
+  - id: assa-abloy
+    name: ASSA ABLOY (August, Yale)
+    country: SE
+    url: https://www.assaabloy.com
+  - id: solaredge
+    name: SolarEdge Technologies
+    country: IL
+    url: https://www.solaredge.com
+  - id: enphase
+    name: Enphase Energy
+    country: US
+    url: https://enphase.com
+  - id: miele
+    name: Miele
+    country: DE
+    url: https://www.miele.com
+  - id: bsh
+    name: BSH Home Appliances (Bosch, Siemens; Home Connect)
+    country: DE
+    url: https://www.home-connect.com
+  - id: switchbot
+    name: SwitchBot (Woan Technology)
+    country: CN
+    url: https://www.switch-bot.com
+  - id: nuki
+    name: Nuki Home Solutions
+    country: AT
+    url: https://nuki.io
+  - id: lifx
+    name: LIFX (Feit Electric)
+    country: US
+    url: https://www.lifx.com

@@ -1,0 +1,16 @@
+company: miele
+rules:
+  - pattern: api.mcs3.miele.com
+    category: essential
+    purpose: "Miele's cloud API for connected appliances (Miele@home); remote status and control stop if blocked."
+    confidence: medium
+    kind_hint: appliance
+    evidence:
+      - https://github.com/astrandb/pymiele/blob/f75639b080ac90bf1c828639a535cf39c17a4368/pymiele/const.py#L5
+      - https://github.com/astrandb/pymiele/blob/f75639b080ac90bf1c828639a535cf39c17a4368/pymiele/const.py#L7
+  - pattern: auth.domestic.miele-iot.com
+    category: essential
+    purpose: "Miele account sign-in for the Miele cloud API."
+    confidence: medium
+    evidence:
+      - https://github.com/astrandb/pymiele/blob/f75639b080ac90bf1c828639a535cf39c17a4368/pymiele/const.py#L12

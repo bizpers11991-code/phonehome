@@ -1,0 +1,8 @@
+company: solaredge
+rules:
+  - pattern: monitoringapi.solaredge.com
+    category: essential
+    purpose: "SolarEdge monitoring API that reports solar production; dashboards and integrations stop updating if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/bdraco/aiosolaredge/blob/ae3ab6929429719ed17c2541564625cbf8d91d04/src/aiosolaredge/solaredge.py#L10

@@ -1,0 +1,15 @@
+company: enphase
+rules:
+  - pattern: enlighten.enphaseenergy.com
+    category: essential
+    purpose: "Enphase Enlighten account sign-in, needed to get access to an IQ Gateway."
+    confidence: medium
+    evidence:
+      - https://github.com/pyenphase/pyenphase/blob/a95a16dbbac4577b03e6b31cbcb301f7b2292144/src/pyenphase/auth.py#L71
+  - pattern: entrez.enphaseenergy.com
+    category: essential
+    purpose: "Issues the token needed to read an Enphase IQ Gateway locally; new tokens fail if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/pyenphase/pyenphase/blob/a95a16dbbac4577b03e6b31cbcb301f7b2292144/src/pyenphase/auth.py#L72
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/enphase_envoy/const.py#L29
