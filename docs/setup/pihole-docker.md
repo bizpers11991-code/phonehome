@@ -76,15 +76,22 @@ file. Check the number on your host:
 stat -c %g ./etc-pihole/pihole-FTL.db
 ```
 
-Without the right group, phonehome cannot read the database, skips it during
-auto-detection and the dashboard says there is no source.
+Without the right group, phonehome cannot read the database. The log and
+the dashboard then say so:
+
+```
+level=WARN msg="source found but not readable" type=pihole-db path=/etc/pihole/pihole-FTL.db err="permission denied" hint="Pi-hole v6 lets only its group read the database; run phonehome with the file's group (GID 1000), …"
+```
+
+The GID in the message is the file's actual group. Add it with `group_add`
+and recreate the container (`docker compose up -d`).
 
 ## Why `condition: service_healthy`
 
-phonehome looks for `pihole-FTL.db` once, at startup. On the very first
-start the file does not exist until Pi-hole is up. Waiting for Pi-hole's
-built-in health check avoids that race. If your compose file cannot use it,
-restart phonehome once after Pi-hole's first start.
+On the very first start `pihole-FTL.db` does not exist until Pi-hole is
+up. Waiting for Pi-hole's built-in health check means phonehome finds it
+straight away. Without it nothing breaks: while it has no DNS source,
+phonehome looks for the database again every minute.
 
 ## Checks
 

@@ -19,6 +19,9 @@ services:
       # - /opt/AdGuardHome/data:/opt/AdGuardHome/data:ro
     environment:
       TZ: Etc/UTC # set to your zone so "overnight" means your night
+      # The image sets GOMEMLIMIT=128MiB so reports fit next to Pi-hole on a
+      # small Pi; raise it (or set "off") on a machine with RAM to spare.
+      # GOMEMLIMIT: 256MiB
     # Pi-hole's database is readable by the pihole group only. If the
     # dashboard says no source was found, run phonehome with that group's GID
     # (1000 in the official pihole/pihole image):

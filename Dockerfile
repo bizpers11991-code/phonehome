@@ -15,8 +15,11 @@ RUN GOARM="${TARGETVARIANT#v}" CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/phonehome /usr/local/bin/phonehome
 COPY --from=build --chown=65532:65532 /out/data /data
+# GOMEMLIMIT keeps the 30-day report near 128 MiB on a Pi (docs/performance.md);
+# override it with -e GOMEMLIMIT=... (e.g. "off" on a big machine).
 ENV PHONEHOME_DB=/data/phonehome.db \
-    PHONEHOME_LISTEN=:8099
+    PHONEHOME_LISTEN=:8099 \
+    GOMEMLIMIT=128MiB
 EXPOSE 8099
 VOLUME /data
 ENTRYPOINT ["/usr/local/bin/phonehome"]

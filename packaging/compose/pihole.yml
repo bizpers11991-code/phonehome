@@ -29,8 +29,8 @@ services:
     image: ghcr.io/bizpers11991-code/phonehome:latest
     container_name: phonehome
     restart: unless-stopped
-    # Sources are auto-detected once, at startup, so wait until Pi-hole has
-    # created its database.
+    # Wait until Pi-hole has created its database so phonehome finds it at
+    # once (without this it looks again every minute until it does).
     depends_on:
       pihole:
         condition: service_healthy

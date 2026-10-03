@@ -70,8 +70,10 @@ Two things in that file are deliberate:
   AdGuard's folder is mounted read-only.
 - **The source is configured explicitly** (via the inline `configs:` block,
   which needs Docker Compose 2.23 or newer). AdGuard only creates the file
-  after its first batch of lookups. Auto-detection runs once at startup and
-  would miss it; an explicitly configured file is retried every poll. Until
+  after its first batch of lookups, and only at the path phonehome is told
+  about: auto-detection (which keeps looking every minute until it finds a
+  DNS source) only knows the bare-metal and snap paths. An explicitly
+  configured file is retried every poll. Until
   it exists, the dashboard shows `no query log at … (is querylog.file_enabled
   on?)`.
 
