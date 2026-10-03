@@ -33,7 +33,8 @@ hour; events held back by the limit are sent once the hour allows.
 **Delivery** is at most once. If a target is down, that notification is
 logged as failed and not retried, so a broken target cannot flood you
 later. What phonehome remembers between checks lives in its own database,
-so a restart neither repeats nor loses alerts.
+and is saved before a notification goes out, so a restart neither repeats
+nor loses alerts (and if the database cannot be written, nothing is sent).
 
 ## Configuration
 
@@ -51,7 +52,7 @@ alerts:
   ntfy:
     url: https://ntfy.sh/a-long-random-topic-name   # the topic's full address
     token_file: /etc/phonehome/ntfy-token           # or token:, or username: + password(_file):
-    # priority: high                                # ntfy's 1–5 or min/low/default/high/urgent
+    # priority: high                                # ntfy's 1–5 or min/low/default/high/max/urgent
 
   gotify:
     url: https://gotify.lan
@@ -90,8 +91,9 @@ Kitchen plug started contacting metrics.example.com every 60s (Telemetry).
 Kitchen plug: Looked up dns.google, an encrypted-DNS service it can use to skip your DNS filter.
 ```
 
-ntfy gets them as an HTTP POST to the topic URL (body: the lines; headers:
-`Title`, `Tags: phonehome`, and `Priority` if set). Gotify gets
+ntfy gets them as an HTTP POST to the topic URL (body: the lines, cut to
+ntfy's 4,096-byte message limit; headers: `Title`, `Tags: phonehome`, and
+`Priority` if set). Gotify gets
 `POST /message` with the `X-Gotify-Key` header and a JSON body
 `{"title", "message"}`, plus `"priority"` if you set one (otherwise the
 Gotify application's default applies).
@@ -146,8 +148,10 @@ Home Assistant then shows one device per phonehome device, each with a
 "Privacy grade" sensor. A check publishes only what changed since the last
 one (plus everything once an hour, in case the broker lost its retained
 messages), and connects to the broker only when there is something to send.
-When a device drops out of the week, its retained grade is cleared, so the
-sensor reads "unknown" rather than an old grade. Retained messages stay on your broker until you
+When a device drops out of the week, its retained grade becomes `None`,
+which Home Assistant shows as "unknown", rather than an old grade;
+phonehome remembers which devices it published, so this also happens when
+the device left while phonehome was restarting. Retained messages stay on your broker until you
 clear them; to remove a device's sensor, publish an empty retained message
 to its config topic.
 
