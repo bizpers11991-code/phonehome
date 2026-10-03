@@ -24,6 +24,14 @@
 - **Device names over the Pi-hole API.** `pihole-api` sources now also read
   the devices Pi-hole knows (MAC, maker, addresses and host names) from
   `/api/network/devices`, so they are no longer bare IP addresses.
+### Knowledge base
+- 715 → 784 rules and 138 → 146 companies, mined from the open-source
+  clients that talk to each vendor's cloud (Home Assistant integrations and
+  the libraries behind them). Every new rule links to the exact line of
+  code that names the host. New: August/Yale (ASSA ABLOY), LG ThinQ,
+  Home Connect (Bosch/Siemens), Miele, SolarEdge, Enphase, SwitchBot, Nuki
+  and LIFX. More hosts for Ring, ecobee, Tuya, Xiaomi, Wyze, tado,
+  SmartThings, eufy, Govee, Meross, Tapo, Arlo and Netatmo.
 
 ## v0.2.0
 

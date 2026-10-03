@@ -21,3 +21,26 @@ rules:
     confidence: medium
     evidence:
       - https://github.com/tchellomello/python-ring-doorbell/issues/160
+  - pattern: api.prod.signalling.ring.devices.a2z.com
+    category: essential
+    purpose: "WebRTC signalling for Ring live view; the app and integrations cannot start live video if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/python-ring-doorbell/python-ring-doorbell/blob/486193a80e7c924a0ab14b04d47305e1b36e419e/ring_doorbell/const.py#L119
+      - https://github.com/python-ring-doorbell/python-ring-doorbell/blob/486193a80e7c924a0ab14b04d47305e1b36e419e/ring_doorbell/webrtcstream.py#L149
+  - pattern: prd-api-us.prd.rings.solutions
+    category: essential
+    purpose: "Ring app API that issues live-view streaming tickets; live view fails if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/python-ring-doorbell/python-ring-doorbell/blob/486193a80e7c924a0ab14b04d47305e1b36e419e/ring_doorbell/const.py#L69
+      - https://github.com/python-ring-doorbell/python-ring-doorbell/blob/486193a80e7c924a0ab14b04d47305e1b36e419e/ring_doorbell/webrtcstream.py#L141
+  - pattern: app.ring.com
+    category: essential
+    purpose: "Ring web app API, used for live-streaming requests by integrations."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/python-ring-doorbell/python-ring-doorbell/blob/486193a80e7c924a0ab14b04d47305e1b36e419e/ring_doorbell/doorbot.py#L293

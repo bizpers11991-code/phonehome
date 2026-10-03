@@ -7,3 +7,10 @@ rules:
     kind_hint: plug
     evidence:
       - https://github.com/wez/govee2mqtt/blob/main/src/undoc_api.rs
+  - pattern: developer-api.govee.com
+    category: essential
+    purpose: "Govee's public cloud API, used by integrations to list and control Govee lights."
+    confidence: medium
+    kind_hint: plug
+    evidence:
+      - https://github.com/LaggAt/python-govee-api/blob/350b5156d0330baa75a5c820c46a8db6a2483e5d/govee_api_laggat/api.py#L14

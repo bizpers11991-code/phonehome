@@ -62,3 +62,9 @@ rules:
     kind_hint: camera
     evidence:
       - https://community.tp-link.com/en/home/forum/topic/578442
+  - pattern: wap.tplinkcloud.com
+    category: essential
+    purpose: "TP-Link cloud API that lists the Tapo devices on your account."
+    confidence: medium
+    evidence:
+      - https://github.com/petretiandrea/plugp100/blob/cc6cb807683a7497fbfe88a0502c2ae84836f4ad/plugp100/api/discovery/cloud_client.py#L11

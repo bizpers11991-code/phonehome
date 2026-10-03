@@ -1,0 +1,9 @@
+company: nuki
+rules:
+  - pattern: api.nuki.io
+    category: essential
+    purpose: "Nuki web API, also used to discover Nuki bridges on your network."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://github.com/pschmitt/pynuki/blob/81147c70a209ba82dd0475b2af3f0ec54bb310b0/pynuki/bridge.py#L52

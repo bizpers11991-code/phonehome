@@ -19,3 +19,36 @@ rules:
     confidence: low
     evidence:
       - https://psytester.github.io/tado_smart_radiator_thermostat/
+  - pattern: my.tado.com
+    category: essential
+    purpose: "tado's main API for homes, zones and devices; remote control stops if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/wmalgadey/PyTado/blob/9fa653687e298b6b19793ab5468d21d55b710621/PyTado/http.py#L39
+  - pattern: hops.tado.com
+    category: essential
+    purpose: "tado's API for tado X devices; they cannot be controlled remotely if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/wmalgadey/PyTado/blob/9fa653687e298b6b19793ab5468d21d55b710621/PyTado/http.py#L40
+      - https://github.com/wmalgadey/PyTado/blob/9fa653687e298b6b19793ab5468d21d55b710621/PyTado/interface/api/hops_tado.py#L28
+  - pattern: login.tado.com
+    category: essential
+    purpose: "tado account sign-in; logging in fails if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/wmalgadey/PyTado/blob/9fa653687e298b6b19793ab5468d21d55b710621/PyTado/http.py#L485
+  - pattern: energy-insights.tado.com
+    category: essential
+    purpose: "tado Energy IQ: energy tariffs and meter readings."
+    confidence: medium
+    evidence:
+      - https://github.com/wmalgadey/PyTado/blob/9fa653687e298b6b19793ab5468d21d55b710621/PyTado/http.py#L42
+      - https://github.com/wmalgadey/PyTado/blob/9fa653687e298b6b19793ab5468d21d55b710621/PyTado/interface/api/base_tado.py#L499
+  - pattern: minder.tado.com
+    category: essential
+    purpose: "tado API that reports how long the heating ran."
+    confidence: medium
+    evidence:
+      - https://github.com/wmalgadey/PyTado/blob/9fa653687e298b6b19793ab5468d21d55b710621/PyTado/http.py#L45
+      - https://github.com/wmalgadey/PyTado/blob/9fa653687e298b6b19793ab5468d21d55b710621/PyTado/interface/api/base_tado.py#L306

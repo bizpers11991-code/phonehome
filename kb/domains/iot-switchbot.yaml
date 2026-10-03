@@ -1,0 +1,16 @@
+company: switchbot
+rules:
+  - pattern: switchbot.net
+    category: essential
+    purpose: "SwitchBot app's account and device API (taken from the SwitchBot Android app's configuration)."
+    confidence: medium
+    evidence:
+      - https://github.com/Danielhiversen/pySwitchbot/blob/821488700d56a5d783fa32e7cf8d7fca78e36ab1/switchbot/api_config.py#L5
+      - https://github.com/Danielhiversen/pySwitchbot/blob/821488700d56a5d783fa32e7cf8d7fca78e36ab1/switchbot/devices/device.py#L435
+  - pattern: api.switch-bot.com
+    category: essential
+    purpose: "SwitchBot's public cloud API, used by integrations to control devices through a SwitchBot hub."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://github.com/SeraphicCorp/py-switchbot-api/blob/6bb31fea64ff705bd377cdaed498ba8fb82d3664/switchbot_api/__init__.py#L147

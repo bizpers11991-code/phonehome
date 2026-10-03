@@ -6,3 +6,15 @@ rules:
     confidence: medium
     evidence:
       - https://documents.alpinehomeair.com/product/emssi%20wifi.pdf
+  - pattern: api.ecobee.com
+    category: essential
+    purpose: "ecobee's API for reading and changing thermostat settings remotely; integrations stop working if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/nkgilley/python-ecobee-api/blob/8970ace3b4ca6a346f6687b014ecbf77d0fa860c/pyecobee/const.py#L26
+  - pattern: auth.ecobee.com
+    category: essential
+    purpose: "ecobee account sign-in; integrations cannot log in if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/nkgilley/python-ecobee-api/blob/8970ace3b4ca6a346f6687b014ecbf77d0fa860c/pyecobee/const.py#L27

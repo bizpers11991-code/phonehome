@@ -1,0 +1,9 @@
+company: bsh
+rules:
+  - pattern: api.home-connect.com
+    category: essential
+    purpose: "Home Connect API for Bosch, Siemens, Neff and Gaggenau appliances; remote status and control stop if blocked."
+    confidence: medium
+    kind_hint: appliance
+    evidence:
+      - https://github.com/MartinHjelmare/aiohomeconnect/blob/d08ac4814d6b471b0bfe59b4e97feea0d0fdab66/src/aiohomeconnect/const.py#L5
