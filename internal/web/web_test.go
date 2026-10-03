@@ -563,3 +563,37 @@ func TestUnknownAndSuggestLink(t *testing.T) {
 		}
 	}
 }
+
+func TestMetricsEndpoint(t *testing.T) {
+	f := &fake{status: model.Status{Version: "v1"}}
+	if w := get(t, newServer(f, web.Options{}), "/metrics"); w.Code != http.StatusNotFound {
+		t.Fatalf("metrics off by default: status %d", w.Code)
+	}
+
+	h := newServer(f, web.Options{Metrics: true, Username: "u", Password: "p"})
+	if w := get(t, h, "/metrics"); w.Code != http.StatusUnauthorized {
+		t.Fatalf("metrics without credentials: status %d", w.Code)
+	}
+	scrape := func(target string) *httptest.ResponseRecorder {
+		r := httptest.NewRequest(http.MethodGet, target, nil)
+		r.SetBasicAuth("u", "p")
+		return do(t, h, r)
+	}
+	w := scrape("/metrics")
+	if w.Code != http.StatusOK || !strings.HasPrefix(w.Header().Get("Content-Type"), "text/plain; version=0.0.4") ||
+		!strings.Contains(w.Body.String(), `phonehome_info{version="v1"} 1`) {
+		t.Fatalf("metrics: %d %q\n%s", w.Code, w.Header().Get("Content-Type"), w.Body)
+	}
+	if got := f.period.To.Sub(f.period.From); got != 7*24*time.Hour {
+		t.Errorf("default window %v, want 7 days", got)
+	}
+	// Scrapes within a minute reuse the report; another window does not.
+	scrape("/metrics")
+	scrape("/metrics?days=1")
+	if f.reported != 2 {
+		t.Errorf("built %d reports, want 2", f.reported)
+	}
+	if w := scrape("/metrics?days=2"); w.Code != http.StatusBadRequest {
+		t.Errorf("days=2: status %d", w.Code)
+	}
+}

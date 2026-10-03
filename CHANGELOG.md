@@ -32,6 +32,13 @@
   Home Connect (Bosch/Siemens), Miele, SolarEdge, Enphase, SwitchBot, Nuki
   and LIFX. More hosts for Ring, ecobee, Tuya, Xiaomi, Wyze, tado,
   SmartThings, eufy, Govee, Meross, Tapo, Arlo and Netatmo.
+### New
+- **Prometheus metrics.** With `metrics: true`, `/metrics` serves per-device
+  grades, snooping per day, lookups by category, quiet-hours lookups,
+  heartbeats and DNS-bypass findings, home totals and the health of each
+  source, behind the dashboard's basic auth. Off by default.
+  [docs/integrations.md](docs/integrations.md) lists every series and shows
+  Prometheus, Grafana and Home Assistant set-ups.
 
 ## v0.2.0
 
