@@ -231,4 +231,9 @@ Routes: `GET /` (embedded SPA), `GET /api/report?days=7`, `GET /api/status`,
   deletes in 5000-row transactions so ingestion is never blocked for long.
   Measured sizes and timings are in `docs/performance.md`.
 - `demo`: deterministic synthetic household (seeded), clearly labelled.
+- `alert`: opt-in notifications (`alerts:` in the config). An `Engine`
+  checks the 7-day report every interval, compares it with a snapshot kept
+  in the store (`alert_state`), and sends new events to webhook, ntfy,
+  Gotify and MQTT targets (a minimal MQTT 3.1.1 client, with Home Assistant
+  discovery). Nothing runs unless a target is configured. docs/alerts.md.
 - CLI: `phonehome serve | ingest --once | report | receipt | unknown | demo | kb lint | version`.

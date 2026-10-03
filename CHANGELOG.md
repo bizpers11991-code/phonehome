@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### New
+- **Alerts to your own services.** phonehome can notify a webhook, ntfy,
+  Gotify or an MQTT broker when a new device appears, a grade gets worse, a
+  device starts a snooping heartbeat or starts bypassing DNS. Off unless a
+  target is configured; de-duplicated, rate-limited and remembered across
+  restarts. MQTT also keeps a Home Assistant grade sensor per device via MQTT
+  discovery. Exactly what is sent: [docs/alerts.md](docs/alerts.md).
+
 ## v0.2.0
 
 ### New

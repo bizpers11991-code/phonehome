@@ -30,6 +30,27 @@ auth:
   password: ""
   password_file: ""
 
+# Notifications to services you run: a new device, a worse grade, a new
+# snooping heartbeat, DNS bypass. Off unless a target is set; phonehome then
+# contacts only that target. Every option and exactly what is sent:
+# docs/alerts.md.
+alerts: {}
+#  events: [new_device, grade_worse, heartbeat, bypass]
+#  interval: 5m
+#  max_per_hour: 6
+#  webhook:
+#    url: https://automation.lan/hooks/phonehome
+#  ntfy:
+#    url: https://ntfy.sh/a-long-random-topic-name
+#    token_file: /etc/phonehome/ntfy-token
+#  gotify:
+#    url: https://gotify.lan
+#    token_file: /etc/phonehome/gotify-app-token
+#  mqtt:
+#    broker: mqtt://192.168.1.2:1883
+#    username: phonehome
+#    password_file: /etc/phonehome/mqtt-password
+
 # Where to read from. Leave empty (or delete) to auto-detect Pi-hole,
 # AdGuard Home, dnsmasq/OpenWrt leases and conntrack at their usual paths.
 # Each source gets a name (default: its type); keep names stable, they track
