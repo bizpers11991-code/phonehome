@@ -563,3 +563,51 @@ func TestUnknownAndSuggestLink(t *testing.T) {
 		}
 	}
 }
+
+// domainsBackend reports one device with two domains.
+type domainsBackend struct{ fake }
+
+func (b *domainsBackend) Report(_ context.Context, p model.Period) (model.HomeReport, error) {
+	first := time.Date(2026, 10, 1, 8, 0, 0, 0, time.UTC)
+	return model.HomeReport{Period: p, Devices: []model.DeviceReport{{
+		Device: model.Device{ID: "mac:aa:bb:cc:00:11:22", Label: "TV"},
+		Domains: []model.DomainStat{
+			{Domain: "acr.example", Count: 40, Category: model.CatACR, CompanyName: "Example TV", Purpose: "Content recognition.",
+				Rule: "acr.example", Confidence: "high", Evidence: []string{"https://example.org/paper"}, First: first, Last: first.Add(time.Hour)},
+			{Domain: "mystery.example", Count: 3, Category: model.CatUnknown, First: first, Last: first},
+		},
+	}}}, nil
+}
+
+func TestDomainsEndpoint(t *testing.T) {
+	h := newServer(&domainsBackend{}, web.Options{})
+	w := get(t, h, "/api/devices/"+url.PathEscape("mac:aa:bb:cc:00:11:22")+"/domains?days=1")
+	if w.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", w.Code, w.Body)
+	}
+	var got struct {
+		ID, Name string
+		Domains  []map[string]any
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Name != "TV" || len(got.Domains) != 2 {
+		t.Fatalf("%+v", got)
+	}
+	d := got.Domains[0]
+	if d["domain"] != "acr.example" || d["rule"] != "acr.example" || d["confidence"] != "high" ||
+		d["firstSeen"] != "2026-10-01T08:00:00Z" || d["lastSeen"] != "2026-10-01T09:00:00Z" ||
+		d["categoryLabel"] != "Content recognition" || len(d["evidence"].([]any)) != 1 {
+		t.Errorf("first domain %v", d)
+	}
+	if u := got.Domains[1]; u["rule"] != "" || u["confidence"] != "" || len(u["evidence"].([]any)) != 0 {
+		t.Errorf("unclassified domain %v", u)
+	}
+	if w := get(t, h, "/api/devices/mac:00:00:00:00:00:01/domains"); w.Code != http.StatusNotFound {
+		t.Errorf("unknown device: status %d", w.Code)
+	}
+	if w := get(t, h, "/api/devices/x/domains?days=3"); w.Code != http.StatusBadRequest {
+		t.Errorf("days=3: status %d", w.Code)
+	}
+}

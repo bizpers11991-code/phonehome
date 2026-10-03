@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Dashboard
+- **Five languages.** English, German, French, Spanish and Dutch, chosen from
+  the browser's languages or the new selector. The non-English texts are
+  machine-translated; corrections welcome. Knowledge-base texts and the
+  receipt stay English.
+- **Every domain, sortable and filterable.** A device's details list every
+  domain it looked up, with company, category, lookups, blocks, first and
+  last seen, and the rule's confidence and evidence links.
+- **Export.** The report (CSV, one row per device, or JSON) and a device's
+  domain table, generated in the browser.
+- **Accessibility.** Arrow keys move between device cards; dialogs keep focus
+  inside and return it on close; light-mode colours now meet WCAG AA
+  contrast, checked by a test for light and dark.
+
 ## v0.2.0
 
 ### New

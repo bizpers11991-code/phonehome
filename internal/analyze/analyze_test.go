@@ -288,6 +288,13 @@ func TestAggregates(t *testing.T) {
 	if b := d.TopDomains[1]; b.Domain != "ads.samsung.example" || b.Blocked != 4 {
 		t.Errorf("TopDomains[1] = %+v", b)
 	}
+	// Domains holds every domain, TopDomains its start.
+	if len(d.Domains) <= len(d.TopDomains) || d.Domains[0].Domain != top.Domain || d.Domains[24].Domain != d.TopDomains[24].Domain {
+		t.Errorf("Domains: %d entries, starting %v", len(d.Domains), d.Domains[0])
+	}
+	if top.First.IsZero() || top.Last.Before(top.First) || top.First.Before(week.From) {
+		t.Errorf("TopDomains[0] seen %v – %v", top.First, top.Last)
+	}
 	// Ties at count 1 are ordered by name: u00 sorts before video.netflix.
 	if got := d.TopDomains[4].Domain; got != "u00.example" {
 		t.Errorf("TopDomains[4] = %q, want u00.example", got)
