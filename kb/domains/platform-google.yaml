@@ -37,6 +37,7 @@ rules:
       - https://github.com/chromium/chromium/blob/a503bcd2433058f2aa728d4676f22f655ce56768/extensions/common/extension_urls.cc
       - https://github.com/chromium/chromium/blob/a503bcd2433058f2aa728d4676f22f655ce56768/chromecast/crash/linux/minidump_uploader.cc
       - https://github.com/chromium/chromium/blob/a503bcd2433058f2aa728d4676f22f655ce56768/chromecast/browser/android/apk/src/org/chromium/chromecast/shell/CastCrashUploader.java
+      - https://support.google.com/chrome/a/answer/6334001
 
   # --- Essential: time ------------------------------------------------------
   - pattern: time.google.com
@@ -305,6 +306,7 @@ rules:
     confidence: high
     evidence:
       - https://github.com/firebase/firebase-android-sdk/blob/e51192421f7e05225acd3a568bd30f1e06b8e69d/transport/transport-backend-cct/src/main/java/com/google/android/datatransport/cct/CCTDestination.java
+      - https://github.com/firebase/firebase-ios-sdk/issues/5837
   - pattern: crashlytics.com
     category: telemetry
     purpose: Firebase Crashlytics crash reporting and its settings, built into many TV and phone apps.
