@@ -20,10 +20,11 @@ import (
 type app struct {
 	store *store.Store
 	kb    *kb.KB
-	opts  analyze.Options
 	demo  bool
+	setup *setupState // nil: nothing to say about sources (demo, tests)
 
 	mu    sync.Mutex
+	opts  analyze.Options // replaced when serve re-detects sources
 	cache map[model.Period]cached
 }
 
@@ -47,6 +48,7 @@ func (a *app) Report(ctx context.Context, p model.Period) (model.HomeReport, err
 
 	a.mu.Lock()
 	c, ok := a.cache[p]
+	opts := a.opts
 	a.mu.Unlock()
 	if ok && time.Since(c.at) < reportTTL {
 		return c.report, nil
@@ -64,7 +66,7 @@ func (a *app) Report(ctx context.Context, p model.Period) (model.HomeReport, err
 	if err != nil {
 		return model.HomeReport{}, err
 	}
-	r := analyze.Analyze(a.kb, p, devs, qs, fl, a.opts)
+	r := analyze.Analyze(a.kb, p, devs, qs, fl, opts)
 	r.Demo = a.demo
 
 	a.mu.Lock()
@@ -82,7 +84,17 @@ func (a *app) Status(ctx context.Context) (model.Status, error) {
 	st, err := a.store.Status(ctx)
 	st.Version = version
 	st.Demo = a.demo
+	st.Setup = a.setup.get()
 	return st, err
+}
+
+// setOptions replaces the analysis options, e.g. when serve starts reading
+// a source on this machine, and drops cached reports.
+func (a *app) setOptions(o analyze.Options) {
+	a.mu.Lock()
+	a.opts = o
+	clear(a.cache)
+	a.mu.Unlock()
 }
 
 func (a *app) SetLabel(ctx context.Context, deviceID, label string) error {
@@ -121,8 +133,11 @@ func (a *app) Receipt(ctx context.Context, p model.Period, deviceID, format stri
 }
 
 func (a *app) location() *time.Location {
-	if a.opts.Location != nil {
-		return a.opts.Location
+	a.mu.Lock()
+	loc := a.opts.Location
+	a.mu.Unlock()
+	if loc != nil {
+		return loc
 	}
 	return time.Local
 }

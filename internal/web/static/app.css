@@ -477,6 +477,27 @@ td.muted { color: var(--ink-3); }
   border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; font-size: 0.9375rem;
 }
 .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+/* What auto-detection found, or the sources that have not delivered yet. */
+.setup { display: grid; gap: 14px; padding-top: 24px; border-top: 1px solid var(--line); }
+.setup h2 { font-size: 1.25rem; font-weight: 650; letter-spacing: -0.01em; }
+.setup h3 { font-size: 0.9375rem; font-weight: 650; margin-bottom: 6px; }
+.setup-note { color: var(--ink-2); max-width: 46em; }
+.setup code { font: 0.8125rem var(--mono); background: var(--sunken); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+.problems { display: grid; gap: 10px; }
+.problems .callout { font-size: 0.9375rem; }
+.problems .callout > div { display: grid; gap: 6px; min-width: 0; }
+.problems .callout code { background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.callout.optional { background: var(--info-bg); border-color: var(--info-line); color: var(--ink); }
+.callout.optional .ico { color: var(--accent); }
+.optional-problems summary { cursor: pointer; color: var(--ink-2); font-size: 0.9375rem; margin-bottom: 10px; }
+.guides { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.9375rem; }
+.guides a { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); text-underline-offset: 3px; }
+.guides .ico { width: 14px; height: 14px; }
+.callout .guides a { color: inherit; font-weight: 600; }
+.src-list { display: grid; gap: 10px; }
+.src-list li { display: grid; gap: 8px; }
+.src-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.src-meta { color: var(--ink-3); font-size: 0.875rem; }
 .snippet { position: relative; margin-top: 12px; }
 .snippet p { margin-bottom: 10px; font-size: 0.9375rem; }
 pre {

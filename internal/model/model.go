@@ -287,4 +287,29 @@ type Status struct {
 	Devices int
 	Oldest  time.Time // oldest DNS record stored
 	Newest  time.Time
+	Setup   Setup // how sources were chosen; zero for demo data
+}
+
+// Setup is how the running instance chose its sources, so first-run
+// screens can say what was found and what could not be read.
+type Setup struct {
+	AutoDetect bool          // no sources configured; phonehome looks for well-known files
+	CheckedAt  time.Time     // last auto-detection run
+	Sources    []SetupSource // sources in use, configured or detected
+	Problems   []SetupProblem
+}
+
+// SetupSource is one source phonehome reads.
+type SetupSource struct {
+	Type     string // config source type, e.g. "pihole-db"
+	Location string // file path or URL
+}
+
+// SetupProblem is a well-known file auto-detection found but could not use.
+type SetupProblem struct {
+	Type     string
+	Path     string
+	Problem  string // e.g. "permission denied"
+	Hint     string // how to fix it
+	Optional bool   // the source only adds detail; lookups come from elsewhere
 }

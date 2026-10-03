@@ -39,8 +39,10 @@ import (
 var logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 
 // loadConfig finds and validates the configuration. A missing file is fine:
-// defaults plus auto-detected sources get most Pi-hole users going.
-func loadConfig(path string) (*config.Config, error) {
+// defaults plus auto-detected sources get most Pi-hole users going. The
+// detection is returned (and logged) when sources were auto-detected; it is
+// nil when the config lists them.
+func loadConfig(path string) (*config.Config, *config.Detection, error) {
 	explicit := path != ""
 	if !explicit {
 		path = os.Getenv("PHONEHOME_CONFIG")
@@ -61,20 +63,21 @@ func loadConfig(path string) (*config.Config, error) {
 		// The Docker image always passes --config; an absent file there just
 		// means "use defaults".
 		if !errors.Is(err, fs.ErrNotExist) {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 	cfg.ApplyEnv(os.Getenv)
+	var det *config.Detection
 	if len(cfg.Sources) == 0 {
-		cfg.Sources = config.AutoDetect(config.Readable)
-		for _, s := range cfg.Sources {
-			logger.Info("auto-detected source", "type", s.Type, "path", s.Path)
-		}
+		d := config.Detect(config.Check)
+		det = &d
+		cfg.Sources = d.Sources
+		logDetection(logger, config.Detection{}, d)
 	}
 	if err := cfg.Validate(); err != nil {
-		return nil, fmt.Errorf("config:\n%w", err)
+		return nil, nil, fmt.Errorf("config:\n%w", err)
 	}
-	return cfg, nil
+	return cfg, det, nil
 }
 
 // sources turns config entries into readers. The returned closer releases
@@ -87,9 +90,14 @@ type sources struct {
 	local   bool // a source reads files on this machine (so this host is likely the resolver)
 }
 
-func buildSources(cfg *config.Config) (*sources, error) {
+func buildSources(list []config.Source) (_ *sources, err error) {
 	s := &sources{}
-	for _, c := range cfg.Sources {
+	defer func() {
+		if err != nil {
+			s.Close()
+		}
+	}()
+	for _, c := range list {
 		switch c.Type {
 		case config.TypePiholeDB:
 			db, err := pihole.NewDB(c.Path, pihole.WithName(c.Name))
@@ -184,39 +192,36 @@ func cmdServe(ctx context.Context, args []string) error {
 	if err := fl.Parse(args); err != nil {
 		return errUsage
 	}
-	cfg, err := loadConfig(*cfgPath)
+	cfg, det, err := loadConfig(*cfgPath)
 	if err != nil {
 		return err
 	}
-	if len(cfg.Sources) == 0 {
-		logger.Warn("no sources configured or detected; the dashboard will explain how to add one")
-	}
-	srcs, err := buildSources(cfg)
+	pw, err := cfg.Auth.Secret()
 	if err != nil {
 		return err
 	}
-	defer srcs.Close()
 	st, err := openStore(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	defer st.Close()
-	opts, err := analyzeOptions(cfg, srcs.local)
-	if err != nil {
+
+	setup := &setupState{}
+	setup.set(newSetup(cfg.Sources, det, time.Now()))
+	a := newApp(st, kb.Default(), analyze.Options{}, false)
+	a.setup = setup
+	g := &ingester{cfg: cfg, st: st, app: a, log: logger}
+	if err := g.start(ctx, cfg.Sources); err != nil {
 		return err
 	}
-
-	runner := &ingest.Runner{
-		Store: st, DNS: srcs.dns, Flows: srcs.flows, Devices: srcs.devices,
-		Retention: cfg.Retention(), Logger: logger,
+	defer g.halt()
+	if det != nil && !det.HasDNS() {
+		logger.Warn("no DNS source found yet; looking again every minute. The dashboard shows what was found and how to fix it",
+			"every", redetectEvery)
+		go g.watchSources(ctx, redetectEvery, *det, func() config.Detection { return config.Detect(config.Check) }, setup)
 	}
-	go runner.Run(ctx, cfg.Interval)
 
-	pw, err := cfg.Auth.Secret()
-	if err != nil {
-		return err
-	}
-	h := web.New(newApp(st, kb.Default(), opts, false), web.Options{
+	h := web.New(a, web.Options{
 		Username: cfg.Auth.Username, Password: pw, Logger: logger,
 	})
 	return listenAndServe(ctx, cfg.Listen, h)
@@ -298,11 +303,14 @@ func cmdIngest(ctx context.Context, args []string) error {
 	if err := fl.Parse(args); err != nil {
 		return errUsage
 	}
-	cfg, err := loadConfig(*cfgPath)
+	cfg, det, err := loadConfig(*cfgPath)
 	if err != nil {
 		return err
 	}
-	srcs, err := buildSources(cfg)
+	if det != nil && !det.HasDNS() {
+		logger.Warn("no DNS source configured or found; see https://github.com/bizpers11991-code/phonehome/tree/main/docs/setup")
+	}
+	srcs, err := buildSources(cfg.Sources)
 	if err != nil {
 		return err
 	}
@@ -333,7 +341,7 @@ func reportApp(ctx context.Context, cfgPath string, useDemo bool) (*app, func(),
 		}
 		return newApp(st, kb.Default(), analyze.DefaultOptions(), true), func() { st.Close() }, nil
 	}
-	cfg, err := loadConfig(cfgPath)
+	cfg, det, err := loadConfig(cfgPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -350,7 +358,10 @@ func reportApp(ctx context.Context, cfgPath string, useDemo bool) (*app, func(),
 		st.Close()
 		return nil, nil, err
 	}
-	return newApp(st, kb.Default(), opts, false), func() { st.Close() }, nil
+	a := newApp(st, kb.Default(), opts, false)
+	a.setup = &setupState{}
+	a.setup.set(newSetup(cfg.Sources, det, time.Now()))
+	return a, func() { st.Close() }, nil
 }
 
 func cmdReport(ctx context.Context, args []string) error {
@@ -371,7 +382,44 @@ func cmdReport(ctx context.Context, args []string) error {
 		return err
 	}
 	printReport(os.Stdout, r, *days)
+	printSetup(os.Stdout, a.setup.get(), r.Total == 0)
 	return nil
+}
+
+// printSetup explains, after a report, why sources may be missing: files
+// auto-detection found but could not read, with how to fix each. Optional
+// sources (leases, conntrack) are only mentioned when the report is empty,
+// so that a working Pi-hole setup is not nagged on every run.
+func printSetup(w io.Writer, s model.Setup, empty bool) {
+	var lines []string
+	for _, p := range s.Problems {
+		if p.Optional && !empty {
+			continue
+		}
+		note := ""
+		if p.Optional {
+			note = " (optional)"
+		}
+		lines = append(lines, fmt.Sprintf("  ! found %s%s but %s:\n    %s", p.Path, note, p.Problem, p.Hint))
+	}
+	dns := false
+	for _, src := range s.Sources {
+		dns = dns || config.IsDNSType(src.Type)
+	}
+	if empty && !dns {
+		lines = append(lines, "  No DNS source is in use yet. Setup guides:\n"+
+			"    https://github.com/bizpers11991-code/phonehome/tree/main/docs/setup")
+	}
+	if len(lines) == 0 {
+		return
+	}
+	if !empty { // an empty report already ends with a blank line
+		fmt.Fprintln(w)
+	}
+	fmt.Fprintln(w, "Setup:")
+	for _, l := range lines {
+		fmt.Fprintln(w, l)
+	}
 }
 
 func printReport(w io.Writer, r model.HomeReport, days int) {

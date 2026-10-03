@@ -358,6 +358,45 @@ func TestStatusHealth(t *testing.T) {
 	}
 }
 
+// TestStatusSetup pins the first-run fields the dashboard's setup panel reads.
+func TestStatusSetup(t *testing.T) {
+	f := &fake{status: model.Status{Setup: model.Setup{
+		AutoDetect: true, CheckedAt: now,
+		Problems: []model.SetupProblem{{
+			Type: "pihole-db", Path: "/etc/pihole/pihole-FTL.db", Problem: "permission denied", Hint: "add the group",
+		}},
+	}}}
+	var got struct {
+		Health string
+		Setup  struct {
+			AutoDetect bool
+			CheckedAt  string
+			Sources    []struct{ Type, Location string }
+			Problems   []struct {
+				Type, Path, Problem, Hint string
+				Optional                  bool
+			}
+		}
+	}
+	w := get(t, newServer(f, web.Options{}), "/api/status")
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	s := got.Setup
+	if !s.AutoDetect || s.CheckedAt == "" || s.Sources == nil || len(s.Problems) != 1 || got.Health != "stale" {
+		t.Fatalf("status = %s", w.Body)
+	}
+	if p := s.Problems[0]; p.Path != "/etc/pihole/pihole-FTL.db" || p.Problem != "permission denied" || p.Hint != "add the group" {
+		t.Errorf("problem = %+v", p)
+	}
+
+	// The frontend relies on both lists being arrays, never null.
+	w = get(t, newServer(&fake{}, web.Options{}), "/api/status")
+	if !strings.Contains(w.Body.String(), `"sources":[],"problems":[]`) {
+		t.Errorf("empty setup = %s", w.Body)
+	}
+}
+
 // TestReportJSON pins the wire format the frontend relies on.
 func TestReportJSON(t *testing.T) {
 	b := fixture.New(now)

@@ -171,49 +171,151 @@ func TestSecret(t *testing.T) {
 	}
 }
 
-func TestAutoDetect(t *testing.T) {
+func TestDetect(t *testing.T) {
 	present := map[string]bool{
 		"/etc/pihole/pihole-FTL.db":                         true,
 		"/var/snap/adguard-home/current/data/querylog.json": true,
+		"/var/log/dnsmasq.log":                              true, // Pi-hole found: not read twice
 		"/var/lib/misc/dnsmasq.leases":                      true,
 		"/tmp/dhcp.leases":                                  true, // lower priority, skipped
 	}
-	got := AutoDetect(func(p string) bool { return present[p] })
+	got := Detect(probeMap(present, nil))
 	want := []Source{
 		{Type: TypePiholeDB, Name: TypePiholeDB, Path: "/etc/pihole/pihole-FTL.db"},
 		{Type: TypeAdGuardQueryLog, Name: TypeAdGuardQueryLog, Path: "/var/snap/adguard-home/current/data/querylog.json"},
 		{Type: TypeLeases, Name: TypeLeases, Path: "/var/lib/misc/dnsmasq.leases"},
 	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("AutoDetect = %+v\nwant %+v", got, want)
+	if !reflect.DeepEqual(got.Sources, want) || len(got.Problems) != 0 {
+		t.Errorf("Detect = %+v\nwant %+v", got, want)
+	}
+	if !got.HasDNS() {
+		t.Error("HasDNS = false with a Pi-hole database")
 	}
 	c := Default()
-	c.Sources = got
+	c.Sources = got.Sources
 	if err := c.Validate(); err != nil {
 		t.Errorf("auto-detected sources do not validate: %v", err)
 	}
 
-	if got := AutoDetect(func(string) bool { return false }); len(got) != 0 {
+	if got := Detect(probeMap(nil, nil)); len(got.Sources) != 0 || len(got.Problems) != 0 || got.HasDNS() {
 		t.Errorf("nothing present: got %+v", got)
 	}
-	got = AutoDetect(func(p string) bool { return p == DefaultConntrackPath })
-	if len(got) != 1 || got[0].Type != TypeConntrack {
+	got = Detect(probeMap(map[string]bool{DefaultConntrackPath: true}, nil))
+	if len(got.Sources) != 1 || got.Sources[0].Type != TypeConntrack || got.HasDNS() {
 		t.Errorf("conntrack only: got %+v", got)
+	}
+	got = Detect(probeMap(map[string]bool{"/var/log/dnsmasq.log": true}, nil))
+	if len(got.Sources) != 1 || got.Sources[0].Type != TypeDnsmasqLog || !got.HasDNS() {
+		t.Errorf("dnsmasq log only: got %+v", got)
 	}
 }
 
-func TestReadable(t *testing.T) {
+func TestDetectProblems(t *testing.T) {
+	denied := func(gid int, group string, mode fs.FileMode) error {
+		return &UnreadableError{GID: gid, Group: group, Mode: mode, Err: fs.ErrPermission}
+	}
+	got := Detect(probeMap(
+		map[string]bool{"/var/lib/AdGuardHome/data/querylog.json": true},
+		map[string]error{
+			"/etc/pihole/pihole-FTL.db":           denied(1000, "", 0o640),
+			"/opt/AdGuardHome/data/querylog.json": denied(0, "root", 0o600), // another path is readable
+			"/etc/pihole/dhcp.leases":             denied(999, "pihole", 0o640),
+			DefaultConntrackPath:                  denied(0, "root", 0o440),
+		}))
+	if len(got.Sources) != 1 || got.Sources[0].Type != TypeAdGuardQueryLog {
+		t.Fatalf("sources = %+v", got.Sources)
+	}
+	if len(got.Problems) != 3 {
+		t.Fatalf("problems = %+v", got.Problems)
+	}
+	pi := got.Problems[0]
+	if pi.Type != TypePiholeDB || pi.Err != "permission denied" || pi.Optional {
+		t.Errorf("pihole problem = %+v", pi)
+	}
+	for _, want := range []string{"GID 1000", `group_add: ["1000"]`, "SupplementaryGroups=pihole"} {
+		if !strings.Contains(pi.String(), want) {
+			t.Errorf("pihole hint %q lacks %q", pi, want)
+		}
+	}
+	if !strings.HasPrefix(pi.String(), "found /etc/pihole/pihole-FTL.db but permission denied: ") {
+		t.Errorf("String = %q", pi)
+	}
+	if l := got.Problems[1]; l.Type != TypeLeases || !l.Optional || !strings.Contains(l.Hint, "SupplementaryGroups=pihole") {
+		t.Errorf("leases problem = %+v", l)
+	}
+	if c := got.Problems[2]; c.Type != TypeConntrack || !c.Optional || !strings.Contains(c.Hint, "optional") {
+		t.Errorf("conntrack problem = %+v", c)
+	}
+
+	// AdGuard's root-only log, no Pi-hole: the dnsmasq log is tried too.
+	got = Detect(probeMap(nil, map[string]error{
+		"/opt/AdGuardHome/data/querylog.json": denied(0, "root", 0o600),
+		"/var/log/dnsmasq.log":                denied(4, "adm", 0o640),
+	}))
+	if len(got.Sources) != 0 || len(got.Problems) != 2 || got.HasDNS() {
+		t.Fatalf("got %+v", got)
+	}
+	if h := got.Problems[0].Hint; !strings.Contains(h, `user: "0:0"`) || !strings.Contains(h, "cap_drop") {
+		t.Errorf("adguard hint = %q", h)
+	}
+	if h := got.Problems[1].Hint; !strings.Contains(h, "GID 4") || !strings.Contains(h, "SupplementaryGroups=adm") {
+		t.Errorf("dnsmasq hint = %q", h)
+	}
+
+	// Docker turns a bind-mounted file that did not exist into a directory.
+	got = Detect(probeMap(nil, map[string]error{
+		"/etc/pihole/pihole-FTL.db": &UnreadableError{GID: -1, Mode: fs.ModeDir, Err: errNotRegular},
+	}))
+	if len(got.Problems) != 1 || !strings.Contains(got.Problems[0].Err, "directory") || !strings.Contains(got.Problems[0].Hint, "bind mount") {
+		t.Errorf("directory: %+v", got.Problems)
+	}
+}
+
+// probeMap fakes the filesystem: readable paths, paths failing with an
+// error, and everything else missing.
+func probeMap(readable map[string]bool, errs map[string]error) func(string) error {
+	return func(p string) error {
+		if readable[p] {
+			return nil
+		}
+		if err := errs[p]; err != nil {
+			return err
+		}
+		return fs.ErrNotExist
+	}
+}
+
+func TestCheck(t *testing.T) {
 	dir := t.TempDir()
 	f := filepath.Join(dir, "f")
 	writeFile(t, f, "x")
-	if !Readable(f) {
-		t.Error("regular file should be readable")
+	if err := Check(f); err != nil || !Readable(f) {
+		t.Errorf("regular file: %v", err)
 	}
-	if Readable(dir) {
-		t.Error("directory should not count")
+	var ue *UnreadableError
+	if err := Check(dir); !errors.As(err, &ue) || !errors.Is(err, errNotRegular) || Readable(dir) {
+		t.Errorf("directory: %v", err)
 	}
-	if Readable(filepath.Join(dir, "missing")) {
-		t.Error("missing file should not count")
+	if err := Check(filepath.Join(dir, "missing")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("missing file: %v", err)
+	}
+
+	if os.Geteuid() == 0 {
+		t.Skip("root reads files regardless of their mode")
+	}
+	if err := os.Chmod(f, 0); err != nil {
+		t.Fatal(err)
+	}
+	err := Check(f)
+	if !errors.As(err, &ue) || !errors.Is(err, fs.ErrPermission) {
+		t.Fatalf("mode 000: %v", err)
+	}
+	if ue.GID < 0 {
+		t.Errorf("GID unknown for a file we own")
+	}
+	p := Detect(func(string) error { return err }).Problems[0]
+	if p.Err != "permission denied" {
+		t.Errorf("problem = %+v", p)
 	}
 }
 
