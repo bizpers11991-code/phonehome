@@ -3,11 +3,14 @@ package alert
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -72,14 +75,16 @@ func sentence(e Event) string {
 	return n + ": " + e.Kind
 }
 
+// every words an interval like the dashboard does: seconds below 90 s,
+// minutes below 90 min, else hours.
 func every(d time.Duration) string {
-	switch {
-	case d >= time.Hour:
-		return fmt.Sprintf("%.0fh", d.Hours())
-	case d >= time.Minute:
+	switch s := d.Seconds(); {
+	case s < 90:
+		return fmt.Sprintf("%.0fs", s)
+	case s < 5400:
 		return fmt.Sprintf("%.0fm", d.Minutes())
 	}
-	return fmt.Sprintf("%.0fs", d.Seconds())
+	return fmt.Sprintf("%.0fh", d.Hours())
 }
 
 // payload is the JSON a webhook or the MQTT alert topic receives. Every
@@ -147,8 +152,8 @@ type httpTarget struct {
 	client *http.Client
 }
 
-func (t httpTarget) post(ctx context.Context, url string, body []byte, header http.Header) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+func (t httpTarget) post(ctx context.Context, target string, body []byte, header http.Header) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, target, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -161,7 +166,12 @@ func (t httpTarget) post(ctx context.Context, url string, body []byte, header ht
 	}
 	resp, err := c.Do(req)
 	if err != nil {
-		return err
+		// Leave the URL out: an ntfy topic name is as good as a password.
+		var ue *url.Error
+		if errors.As(err, &ue) {
+			err = ue.Err
+		}
+		return fmt.Errorf("%s: %w", t.name, err)
 	}
 	defer resp.Body.Close()
 	io.Copy(io.Discard, io.LimitReader(resp.Body, 64<<10))
@@ -211,9 +221,7 @@ func (n *Ntfy) Notify(ctx context.Context, b Batch) error {
 	case n.Token != "":
 		h.Set("Authorization", "Bearer "+n.Token)
 	case n.Username != "":
-		req, _ := http.NewRequest(http.MethodPost, n.URL, nil)
-		req.SetBasicAuth(n.Username, n.Password)
-		h.Set("Authorization", req.Header.Get("Authorization"))
+		h.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(n.Username+":"+n.Password)))
 	}
 	return httpTarget{"ntfy", n.Client}.post(ctx, n.URL, []byte(body), h)
 }

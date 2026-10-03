@@ -120,6 +120,9 @@ type state struct {
 }
 
 type deviceState struct {
+	// Pending marks a device known when the baseline was taken but quiet
+	// that week: its state is learnt, silently, when it is next active.
+	Pending    bool     `json:"pending,omitempty"`
 	Grade      string   `json:"grade"`
 	Heartbeats []string `json:"heartbeats"` // snooping heartbeat domains
 	Bypasses   []string `json:"bypasses"`   // kind|evidence
@@ -151,7 +154,7 @@ func (e *Engine) Check(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("alerts: report: %w", err)
 	}
-	st, err := e.load(ctx)
+	st, raw, err := e.load(ctx)
 	if err != nil {
 		return err
 	}
@@ -167,17 +170,28 @@ func (e *Engine) Check(ctx context.Context) error {
 		// "new" later.
 		return nil
 	}
-	next := map[string]*deviceState{}
-	for id, d := range st.Devices {
-		next[id] = d // devices not seen this week keep what we knew
-	}
-	if baseline && e.Devices != nil {
-		known, err := e.Devices(ctx)
+	var known map[string]bool // every device phonehome knows; nil: unknown
+	if e.Devices != nil {
+		ds, err := e.Devices(ctx)
 		if err != nil {
 			return fmt.Errorf("alerts: devices: %w", err)
 		}
-		for _, d := range known {
-			next[d.ID] = &deviceState{} // known, state still to be learnt
+		known = map[string]bool{}
+		for _, d := range ds {
+			known[d.ID] = true
+		}
+	}
+	next := map[string]*deviceState{}
+	for id, d := range st.Devices {
+		// Devices not seen this week keep what we knew, unless phonehome
+		// no longer knows them at all.
+		if known == nil || known[id] {
+			next[id] = d
+		}
+	}
+	if baseline {
+		for id := range known {
+			next[id] = &deviceState{Pending: true}
 		}
 	}
 	var events []Event
@@ -204,7 +218,7 @@ func (e *Engine) Check(ctx context.Context) error {
 			add(NewDevice+":"+dev.ID, Event{Kind: NewDevice, Device: dev, Grade: d.Grade})
 			continue
 		}
-		if prev.Grade == "" {
+		if prev.Pending {
 			continue // known from the baseline, first seen active now: learn it
 		}
 		if worse(cur.Grade, prev.Grade) {
@@ -254,7 +268,7 @@ func (e *Engine) Check(ctx context.Context) error {
 		}
 	}
 	st.Devices = next
-	return e.save(ctx, st)
+	return e.save(ctx, st, raw)
 }
 
 func snapshot(d model.DeviceReport) *deviceState {
@@ -292,11 +306,12 @@ func worse(now, before string) bool {
 	return ok1 && ok2 && n > b
 }
 
-func (e *Engine) load(ctx context.Context) (*state, error) {
+// load returns the stored state and its JSON as stored.
+func (e *Engine) load(ctx context.Context) (*state, string, error) {
 	st := &state{}
 	raw, err := e.Store.AlertState(ctx, stateKey)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if raw != "" {
 		if err := json.Unmarshal([]byte(raw), st); err != nil {
@@ -309,13 +324,18 @@ func (e *Engine) load(ctx context.Context) (*state, error) {
 	if st.Sent == nil {
 		st.Sent = map[string]time.Time{}
 	}
-	return st, nil
+	return st, raw, nil
 }
 
-func (e *Engine) save(ctx context.Context, st *state) error {
+// save stores st unless it is what was loaded: most checks change nothing,
+// and the database need not be written every few minutes for that.
+func (e *Engine) save(ctx context.Context, st *state, raw string) error {
 	b, err := json.Marshal(st)
 	if err != nil {
 		return err
+	}
+	if string(b) == raw {
+		return nil
 	}
 	return e.Store.SetAlertState(ctx, stateKey, string(b))
 }

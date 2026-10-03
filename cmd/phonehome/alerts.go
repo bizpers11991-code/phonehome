@@ -15,9 +15,9 @@ func newAlerts(cfg config.Alerts, a *app, st *store.Store) (*alert.Engine, error
 	if !cfg.Enabled() {
 		return nil, nil
 	}
-	e := &alert.Engine{Report: a.Report, Store: st, Wants: cfg.Wants, MaxPerHour: cfg.MaxPerHour, Logger: logger}
-	if st != nil {
-		e.Devices = st.Devices
+	e := &alert.Engine{Report: a.Report, Wants: cfg.Wants, MaxPerHour: cfg.MaxPerHour, Logger: logger}
+	if st != nil { // a nil *store.Store must not become a non-nil interface
+		e.Store, e.Devices = st, st.Devices
 	}
 	if w := cfg.Webhook; w != nil {
 		e.Notifiers = append(e.Notifiers, &alert.Webhook{URL: w.URL, Headers: w.Headers})
