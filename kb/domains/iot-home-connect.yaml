@@ -2,7 +2,7 @@ company: bsh
 rules:
   - pattern: api.home-connect.com
     category: essential
-    purpose: "Home Connect API for Bosch, Siemens, Neff and Gaggenau appliances; remote status and control stop if blocked."
+    purpose: "Home Connect cloud API for connected home appliances; integrations lose remote status and control if blocked."
     confidence: medium
     kind_hint: appliance
     evidence:
