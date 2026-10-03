@@ -70,8 +70,11 @@ type entry struct {
 	QT     string    `json:"QT"`
 	IP     string    `json:"IP"`
 	Result struct {
-		IsFiltered bool   `json:"IsFiltered"`
-		Reason     reason `json:"Reason"`
+		IsFiltered       bool   `json:"IsFiltered"`
+		Reason           reason `json:"Reason"`
+		DNSRewriteResult *struct {
+			RCode int `json:"RCode"`
+		} `json:"DNSRewriteResult"`
 	} `json:"Result"`
 }
 
@@ -81,13 +84,16 @@ type reason int
 
 // Filtering reasons that mean the query was refused or sinkholed, from the
 // iota block in AdGuardHome/internal/filtering. SafeSearch (7) and the
-// rewrites (9–11) answer the query, so they are not blocks.
+// rewrites (9–11) answer the query, so they are not blocks, except a
+// $dnsrewrite rule that answers with an error code (11 with an RCode, as
+// in "||example.org^$dnsrewrite=REFUSED"), which is how such rules block.
 const (
 	filteredBlockList      reason = 3
 	filteredSafeBrowsing   reason = 4
 	filteredParental       reason = 5
 	filteredInvalid        reason = 6
 	filteredBlockedService reason = 8
+	rewrittenRule          reason = 11
 )
 
 var reasonNames = map[string]reason{
@@ -114,6 +120,8 @@ func (e *entry) blocked() bool {
 	switch e.Result.Reason {
 	case filteredBlockList, filteredSafeBrowsing, filteredParental, filteredInvalid, filteredBlockedService:
 		return e.Result.IsFiltered
+	case rewrittenRule:
+		return e.Result.DNSRewriteResult != nil && e.Result.DNSRewriteResult.RCode != 0
 	}
 	return false
 }

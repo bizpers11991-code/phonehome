@@ -96,6 +96,33 @@ func TestFormats(t *testing.T) {
 			"12:01:00.123456 connectivitycheck.gstatic.com A 192.168.1.60 false",
 			"14:02:00 device-metrics-us.amazon.com A 192.168.1.61 true",
 		},
+		// Pi-hole v6's pihole.log with misc.extraLogging, which writes
+		// log-queries=proto: "UDP <serial> <requestor>/<port> ...".
+		"pihole-v6-proto.log": {
+			"13:59:00 example.org A 192.168.1.20 false",
+			"13:59:01 example.org AAAA fd00::20 false",
+			"13:59:02 metrics.vendor.example A 192.168.1.21 true", // CNAME-blocked
+			"13:59:02 www.cdn-site.example HTTPS 192.168.1.22 false",
+			"13:59:03 ads.example.net A 192.168.1.23 true",
+			"13:59:03 deny.example A 192.168.1.23 true",
+			"13:59:03 tracker.metrics.example AAAA 192.168.1.23 true",
+			"13:59:04 use-application-dns.net A 192.168.1.24 true",
+			"13:59:04 flood.example A 192.168.1.25 true", // rate-limited
+			"13:59:05 upstream-blocked.example A 192.168.1.26 true",
+			"13:59:05 pi.hole A 192.168.1.26 false",
+			"13:59:06 slow.example A 192.168.1.27 false",
+			"13:59:06 busy.example A 192.168.1.27 true",
+			"13:59:08 signed.vendor.example A 192.168.1.28 true", // DNSSEC-validated, then CNAME-blocked
+		},
+		// Pi-hole v5's pihole.log: plain log-queries, v5's reason names.
+		"pihole-v5.log": {
+			"14:30:00 metrics.vendor.example A 192.168.1.21 true", // CNAME-blocked
+			"14:30:01 www.cdn-site.example A 192.168.1.22 false",
+			"14:30:02 deny.example A 192.168.1.23 true",
+			"14:30:02 ads.tracker.example A 192.168.1.23 true",
+			"14:30:03 mask.icloud.com A 192.168.1.24 true",
+			"14:30:03 cached.example A 192.168.1.24 false",
+		},
 	} {
 		t.Run(file, func(t *testing.T) {
 			path := filepath.Join("testdata", file)
@@ -137,7 +164,12 @@ func TestHoldBack(t *testing.T) {
 	got, cur = drain(t, l, cur, 10)
 	equal(t, got, []string{"14:10:00 ads.example.com A 192.168.1.20 true"})
 
+	// Forwarding settles nothing: Pi-hole may block on the reply.
 	appendFile(t, path, "om 192.168.1.20\nOct  2 14:10:01 dnsmasq[9]: forwarded half.example.com to 9.9.9.9\n")
+	got, cur = drain(t, l, cur, 10)
+	equal(t, got, nil)
+
+	appendFile(t, path, "Oct  2 14:10:01 dnsmasq[9]: reply half.example.com is 198.51.100.1\n")
 	got, _ = drain(t, l, cur, 10)
 	equal(t, got, []string{"14:10:01 half.example.com A 192.168.1.20 false"})
 }
@@ -266,4 +298,67 @@ func appendFile(t *testing.T, path, s string) {
 	if _, err := f.WriteString(s); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// TestParseMessage checks single lines as the reader passes them, newline
+// included, so a parsing mistake cannot hide behind the line after it.
+func TestParseMessage(t *testing.T) {
+	for _, tc := range []struct {
+		msg  string
+		want string // "serial name blocked cname", or "" when not parsed
+	}{
+		{"UDP 12 192.168.1.20/5353 query[A] a.example from 192.168.1.20\n", "12 a.example false false"},
+		{"TCP 13 fd00::20/40001 query[AAAA] a.example from fd00::20\n", "13 a.example false false"},
+		{"12 192.168.1.20/5353 reply a.example is 192.0.2.1 (DNSSEC signed)\n", "12 a.example false false"},
+		{"reply a.example is <CNAME>\n", " a.example false true"},
+		{"reply tracker.example is blocked during CNAME inspection\n", " tracker.example true false"},
+		{"gravity blocked (CNAME) a.example is 0.0.0.0\n", " a.example true false"},
+		{"Rate-limiting a.example is REFUSED (EDE: blocked)\n", " a.example true false"},
+		{"Pi-hole hostname pi.hole is 192.168.1.2\n", " pi.hole false false"},
+		{"config a.example is REFUSED (EDE: not ready)\n", " a.example false false"},
+		{"12 192.168.1.20/5353 validation a.example is SECURE\n", ""},
+		{"forwarded a.example to 127.0.0.1#5335\n", ""},
+		{"reply is truncated\n", ""},
+		{"214 dnssec-query[DS] example to 127.0.0.1#5335\n", ""},
+	} {
+		e, ok := parseMessage(tc.msg)
+		got := ""
+		if ok {
+			got = fmt.Sprintf("%s %s %t %t", e.serial, e.name, e.blocked, e.cname)
+		}
+		if got != tc.want {
+			t.Errorf("parseMessage(%q) = %q, want %q", tc.msg, got, tc.want)
+		}
+	}
+}
+
+// TestCNAMEVerdicts: a CNAME block lands on the query whose chain was
+// inspected, not on a sibling query for the same name (A and AAAA at
+// once), and also when the chain came from the cache, which logs no
+// verdict line for the query's own name.
+func TestCNAMEVerdicts(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "pihole.log")
+	l := newTestLog(path)
+	const p = "Oct  2 14:10:00 dnsmasq[9]: "
+	appendFile(t, path, p+"query[A] m.example from 192.168.1.21\n"+
+		p+"query[AAAA] m.example from 192.168.1.21\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply tracker.example is blocked during CNAME inspection\n"+
+		p+"gravity blocked m.example is 0.0.0.0\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply tracker.example is blocked during CNAME inspection\n"+
+		p+"gravity blocked m.example is ::\n"+
+		p+"query[A] www.example from 192.168.1.22\n"+
+		p+"cached www.example is <CNAME>\n"+
+		p+"cached tracker.example is 192.0.2.1\n"+
+		p+"reply tracker.example is blocked during CNAME inspection\n"+
+		p+"query[A] ok.example from 192.168.1.22\n"+
+		p+"reply ok.example is 192.0.2.2\n")
+	got, _ := drain(t, l, "", 10)
+	equal(t, got, []string{
+		"14:10:00 m.example A 192.168.1.21 true",
+		"14:10:00 m.example AAAA 192.168.1.21 true",
+		"14:10:00 www.example A 192.168.1.22 true",
+		"14:10:00 ok.example A 192.168.1.22 false",
+	})
 }

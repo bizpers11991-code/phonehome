@@ -6,6 +6,8 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -263,5 +265,65 @@ func assertDevice(t *testing.T, g, w model.Device) {
 	}
 	if !ok {
 		t.Errorf("device:\n got %+v\nwant %+v", g, w)
+	}
+}
+
+// TestDBUpstreamSchemas reads databases laid out exactly as FTL creates
+// them at each database version phonehome supports; the CREATE statements
+// in testdata/ftl-db-v*.sql are copied from FTL's own schema tests.
+// Version 9 is Pi-hole v5 before FTL v5.8, 12 the rest of v5, 21 FTL
+// v6.0 and 22 current v6. Versions 12 and up mix rows migrated from
+// version 9 (strings stored inline) with newer ones (ids into the *_by_id
+// tables), and the views over them changed from CASE to JOIN in 22.
+func TestDBUpstreamSchemas(t *testing.T) {
+	v5 := []model.DNSQuery{
+		{Time: time.Unix(1759402800, 0), ClientIP: netip.MustParseAddr("192.168.1.20"), Domain: "www.example.org", QType: "A"},
+		{Time: time.Unix(1759402801, 0), ClientIP: netip.MustParseAddr("fd00::20"), Domain: "www.example.org", QType: "AAAA"},                 // cached
+		{Time: time.Unix(1759402802, 0), ClientIP: netip.MustParseAddr("192.168.1.20"), Domain: "ads.example.net", QType: "A", Blocked: true}, // gravity
+		{Time: time.Unix(1759402803, 0), ClientIP: netip.MustParseAddr("192.168.1.21"), Domain: "metrics.vendor.example", QType: "A", Blocked: true},
+		{Time: time.Unix(1759402804, 0), ClientIP: netip.MustParseAddr("192.168.1.21"), Domain: "use-application-dns.net", QType: "A", Blocked: true},
+		{Time: time.Unix(1759402805, 0), ClientIP: netip.MustParseAddr("192.168.1.21"), Domain: "busy.example", QType: "A", Blocked: true},
+		{Time: time.Unix(1759402806, 0), ClientIP: netip.MustParseAddr("192.168.1.21"), Domain: "example.net", QType: "TYPE65"},
+		{Time: time.Unix(1759402807, 0), ClientIP: netip.MustParseAddr("192.168.1.21"), Domain: "stale.example", QType: "HTTPS"},
+		{Time: time.Unix(1759402808, 0), ClientIP: netip.MustParseAddr("192.168.1.21"), Domain: "upstream-blocked.example", QType: "A", Blocked: true},
+	}
+	// v6 stores fractions of a second.
+	v6 := slices.Clone(v5)
+	for i, frac := range map[int]time.Duration{3: 250e6, 4: 500e6, 5: 750e6, 6: 125e6, 7: 62.5e6, 8: 500e6} {
+		v6[i].Time = v6[i].Time.Add(frac)
+	}
+	v6 = append(v6, model.DNSQuery{Time: time.Unix(1759402809, 500e6), ClientIP: netip.MustParseAddr("fd00::20"),
+		Domain: "upstream-blocked.example", Blocked: true}) // EXTERNAL_BLOCKED_EDE15, type NONE
+	for file, want := range map[string][]model.DNSQuery{
+		"ftl-db-v9.sql": v5, "ftl-db-v12.sql": v5, "ftl-db-v21.sql": v6, "ftl-db-v22.sql": v6,
+	} {
+		t.Run(file, func(t *testing.T) {
+			schema, err := os.ReadFile(filepath.Join("testdata", file))
+			if err != nil {
+				t.Fatal(err)
+			}
+			path, _ := fixture(t, string(schema))
+			d := openDB(t, path)
+			got, cur, err := d.FetchDNS(context.Background(), "", 100)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for i := range want {
+				want[i].Source = "pihole"
+			}
+			assertQueries(t, got, want)
+			if wantCur := strconv.Itoa(len(want)); cur != wantCur {
+				t.Errorf("cursor = %q, want %q", cur, wantCur)
+			}
+
+			devs, err := d.Devices(context.Background())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(devs) != 2 || devs[0].ID != "ip:fd00::20" || devs[1].ID != "mac:aa:bb:cc:00:11:22" ||
+				devs[1].Hostname != "samsung-tv.lan" || len(devs[1].IPs) != 1 {
+				t.Errorf("devices = %+v", devs)
+			}
+		})
 	}
 }

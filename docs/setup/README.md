@@ -24,6 +24,44 @@ or send a pull request fixing the guide.
 Packages for Homebrew and the AUR are described in
 [packaging/README.md](../../packaging/README.md).
 
+## Supported versions
+
+Each reader is checked against the source code of the software it reads,
+with test fixtures built from what that code writes.
+
+| Source | Supported | Checked against |
+|---|---|---|
+| `pihole-db` | Pi-hole v5 and v6: FTL database versions 9 to 22 (tested: 9, 12, 21, 22) | FTL's own schema tests at v5.25.2, v6.0 and master (October 2026) |
+| `pihole-api` | Pi-hole v6 (FTL v6.0 and later) | FTL's `/api/queries` code at v6.0 and master |
+| `adguard-querylog` | AdGuard Home v0.107 query logs, including the older single-rule result format | AdGuard Home's own log writer (master after v0.107.79) |
+| `dnsmasq-log` | `log-queries`, `log-queries=extra` and `log-queries=proto`; Pi-hole v5 and v6 `pihole.log` | dnsmasq 2.93's `log_query()` and the copy inside Pi-hole FTL |
+
+What counts as **blocked**, per source:
+
+- **Pi-hole** (database and API): every status FTL itself calls blocked:
+  gravity, regex and exact denylist matches (also when found in a CNAME
+  chain), answers an upstream blocked, special domains such as
+  `use-application-dns.net`, and queries refused while gravity was busy.
+  The API reader waits until a query is 30 seconds old, because FTL can
+  still change a query to blocked when its reply arrives (CNAME inspection,
+  a blocking upstream). FTL waits just as long before saving to its database.
+- **AdGuard Home**: blocklists, blocked services, safe browsing, parental
+  control and invalid requests, plus `$dnsrewrite` rules that answer with
+  an error code such as `REFUSED` or `NXDOMAIN` (AdGuard Home's own
+  dashboard counts those as rewritten, so phonehome's blocked figure can be
+  a little higher). Safe search, rewrites and allowlisted queries are
+  answered, so they are not blocks.
+- **dnsmasq**: names dnsmasq answers from its own configuration with
+  `0.0.0.0`, `::`, `NXDOMAIN` or `NODATA` (the `address=/name/` lines
+  blocklists generate). In Pi-hole's `pihole.log`, every verdict Pi-hole
+  logs as blocked, including whole CNAME chains.
+
+**Rate limiting.** When Pi-hole rate-limits a client, FTL refuses the
+query without recording it, so it is missing from the database and the
+API. `pihole.log` does log it, and the `dnsmasq-log` reader counts it as a
+blocked lookup. The same home can therefore show more lookups for a
+flooding device when read from `pihole.log`.
+
 ## Configuration in one minute
 
 With no config file, phonehome looks for these files at startup and uses

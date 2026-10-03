@@ -24,6 +24,13 @@ import (
 // (API_QUERIES_MAX_ROWS).
 const maxPage = 10000
 
+// settle is how old a query must be before it is read. FTL keeps updating
+// a query's status after it arrives: a forwarded query becomes
+// GRAVITY_CNAME when the reply's CNAME chain hits a blocked name, or
+// EXTERNAL_BLOCKED_* when the upstream blocked it. FTL itself waits this
+// long (REPLY_TIMEOUT) before writing a query to its database.
+const settle = 30 * time.Second
+
 // API reads DNS lookups from the Pi-hole v6 REST API as a source.DNSSource.
 // Use it when phonehome cannot read pihole-FTL.db directly. It only sees
 // FTL's in-memory history (24 hours by default), so phonehome must poll at
@@ -34,6 +41,9 @@ const maxPage = 10000
 // renewed automatically when it expires, and Close ends it, because FTL only
 // allows a handful of concurrent sessions.
 //
+// Queries are read once they are 30 seconds old (by this machine's clock),
+// when FTL has settled whether they were blocked.
+//
 // The cursor is "<id>@<time>": the FTL id and Unix time of the last query
 // read. The API cannot filter by id, so the time is needed to ask only for
 // newer queries; the id then settles ties within the same instant.
@@ -42,6 +52,7 @@ type API struct {
 	password string
 	client   *http.Client
 	name     string
+	now      func() time.Time
 
 	mu  sync.Mutex
 	sid string
@@ -63,7 +74,7 @@ func NewAPI(baseURL, password string, client *http.Client, opts ...Option) (*API
 		client = &http.Client{Timeout: 30 * time.Second}
 	}
 	o := applyOptions("pihole-api", opts)
-	return &API{base: base, password: password, client: client, name: o.name}, nil
+	return &API{base: base, password: password, client: client, name: o.name, now: time.Now}, nil
 }
 
 // Name implements source.DNSSource.
@@ -82,7 +93,8 @@ type apiQuery struct {
 }
 
 // FetchDNS implements source.DNSSource. It asks FTL for queries at or after
-// the cursor's time, sorted oldest first, and drops the ones already seen.
+// the cursor's time and settled, sorted oldest first, and drops the ones
+// already seen.
 func (a *API) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DNSQuery, string, error) {
 	lastID, lastTime, err := parseAPICursor(cursor)
 	if err != nil {
@@ -96,7 +108,11 @@ func (a *API) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.D
 		out      []model.DNSQuery
 		consumed bool
 		page     = min(max(limit, 100), maxPage)
+		until    = strconv.FormatFloat(float64(a.now().Add(-settle).UnixMicro())/1e6, 'f', -1, 64)
 	)
+	// from stays fixed for every page: start counts rows from it, so moving
+	// it forward as rows are read would skip a page's worth.
+	from := strconv.FormatFloat(lastTime, 'f', -1, 64)
 	for start := 0; len(out) < limit; start += page {
 		q := url.Values{
 			"length":           {strconv.Itoa(page)},
@@ -104,9 +120,10 @@ func (a *API) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.D
 			"order[0][column]": {"0"},
 			"order[0][dir]":    {"asc"},
 			"columns[0][data]": {"time"},
+			"until":            {until},
 		}
 		if cursor != "" {
-			q.Set("from", strconv.FormatFloat(lastTime, 'f', -1, 64))
+			q.Set("from", from)
 		}
 		var resp struct {
 			Queries []apiQuery `json:"queries"`
@@ -297,4 +314,78 @@ func decode(resp *http.Response, v any) error {
 		return fmt.Errorf("pihole: %s %s: decode reply: %w", resp.Request.Method, resp.Request.URL.Path, err)
 	}
 	return nil
+}
+
+// maxNetworkDevices and maxNetworkAddresses lift /api/network/devices's
+// defaults (10 devices, 3 addresses each) so every device is listed.
+const (
+	maxNetworkDevices   = 10000
+	maxNetworkAddresses = 20
+)
+
+// apiNetworkDevice is a device in FTL's /api/network/devices reply, which
+// mirrors the database's network and network_addresses tables.
+type apiNetworkDevice struct {
+	HWAddr    string           `json:"hwaddr"`
+	FirstSeen float64          `json:"firstSeen"`
+	LastQuery float64          `json:"lastQuery"`
+	MACVendor string           `json:"macVendor"`
+	IPs       []apiNetworkAddr `json:"ips"`
+}
+
+type apiNetworkAddr struct {
+	IP       string  `json:"ip"`
+	Name     string  `json:"name"`
+	LastSeen float64 `json:"lastSeen"`
+}
+
+// Network returns a source.DeviceSource that lists the devices FTL knows
+// (MAC address, vendor, addresses and host names) through the API, as DB
+// does from the database's network table. Its name is the API source's
+// name plus "-devices", so it never shares the DNS reader's cursor key.
+func (a *API) Network() source.DeviceSource { return apiNetwork{a} }
+
+type apiNetwork struct{ a *API }
+
+func (n apiNetwork) Name() string { return n.a.name + "-devices" }
+
+// Devices implements source.DeviceSource.
+func (n apiNetwork) Devices(ctx context.Context) ([]model.Device, error) {
+	var resp struct {
+		Devices []apiNetworkDevice `json:"devices"`
+	}
+	q := url.Values{"max_devices": {strconv.Itoa(maxNetworkDevices)}, "max_addresses": {strconv.Itoa(maxNetworkAddresses)}}
+	if err := n.a.do(ctx, http.MethodGet, "/api/network/devices?"+q.Encode(), nil, &resp); err != nil {
+		return nil, err
+	}
+	var out []model.Device
+	for _, nd := range resp.Devices {
+		dev, ok := deviceFromHWAddr(nd.HWAddr)
+		if !ok {
+			continue
+		}
+		dev.Vendor = strings.TrimSpace(nd.MACVendor)
+		dev.FirstSeen = unixTime(nd.FirstSeen)
+		dev.LastSeen = unixTime(nd.LastQuery)
+		ips := nd.IPs
+		slices.SortStableFunc(ips, func(x, y apiNetworkAddr) int { return cmp.Compare(y.LastSeen, x.LastSeen) })
+		for _, ip := range ips {
+			addr, ok := parseAddr(ip.IP)
+			if !ok {
+				continue
+			}
+			if !slices.Contains(dev.IPs, addr) {
+				dev.IPs = append(dev.IPs, addr)
+			}
+			if dev.Hostname == "" {
+				dev.Hostname = strings.TrimSpace(ip.Name)
+			}
+			if t := unixTime(ip.LastSeen); t.After(dev.LastSeen) {
+				dev.LastSeen = t
+			}
+		}
+		out = append(out, *dev)
+	}
+	slices.SortFunc(out, func(x, y model.Device) int { return strings.Compare(x.ID, y.ID) })
+	return out, nil
 }

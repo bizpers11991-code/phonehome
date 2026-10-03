@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- **Readers checked against upstream source.** Each reader was compared
+  with the code of the software it reads, and the fixtures now come from
+  that code. Supported versions are listed in
+  [docs/setup/README.md](docs/setup/README.md#supported-versions). Fixes:
+  - `pihole.log` with Pi-hole's extra logging (`log-queries=proto`, lines
+    starting `UDP`/`TCP`) was not read at all.
+  - Lookups Pi-hole blocks because of their CNAME chain counted as not
+    blocked in `pihole.log`, and so did special domains such as
+    `use-application-dns.net`, rate-limited queries and queries refused
+    while gravity was busy.
+  - dnsmasq answers ending in `(DNSSEC signed)` were not recognised, and
+    DNSSEC `validation` lines were taken for answers, settling a query
+    before Pi-hole had decided whether to block it.
+  - The Pi-hole API reader could record a lookup before Pi-hole had
+    decided to block it (CNAME inspection, a blocking upstream). It now
+    waits until a lookup is 30 seconds old, as FTL does before saving.
+  - AdGuard Home `$dnsrewrite` rules that answer `REFUSED` or `NXDOMAIN`
+    now count as blocks.
+- **Device names over the Pi-hole API.** `pihole-api` sources now also read
+  the devices Pi-hole knows (MAC, maker, addresses and host names) from
+  `/api/network/devices`, so they are no longer bare IP addresses.
+
 ## v0.2.0
 
 ### New

@@ -66,6 +66,15 @@ func (f *fakeFTL) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		f.pages++
 		f.serveQueries(w, r)
+	case r.URL.Path == "/api/network/devices" && r.Method == http.MethodGet:
+		if !f.sids[r.Header.Get("X-FTL-SID")] {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if q := r.URL.Query(); q.Get("max_devices") != "10000" || q.Get("max_addresses") != "20" {
+			f.t.Errorf("network devices asked with %v; FTL's defaults list only 10 devices", q)
+		}
+		fmt.Fprint(w, networkReply)
 	default:
 		http.NotFound(w, r)
 	}
@@ -83,6 +92,15 @@ func (f *fakeFTL) serveQueries(w http.ResponseWriter, r *http.Request) {
 				f.t.Errorf("bad from %q", from)
 			}
 			if row.Time < ts {
+				continue
+			}
+		}
+		if until := q.Get("until"); until != "" { // FTL: timestamp < until
+			ts, err := strconv.ParseFloat(until, 64)
+			if err != nil {
+				f.t.Errorf("bad until %q", until)
+			}
+			if row.Time >= ts {
 				continue
 			}
 		}
@@ -118,6 +136,41 @@ func (f *fakeFTL) serveQueries(w http.ResponseWriter, r *http.Request) {
 		"queries": out, "cursor": len(f.queries), "recordsTotal": len(f.queries),
 		"recordsFiltered": len(f.queries), "draw": 0, "took": 0.003,
 	})
+}
+
+// networkReply has every field FTL's api/network.c writes per device.
+const networkReply = `{"devices":[` +
+	`{"id":3,"hwaddr":"AA:BB:CC:00:11:22","interface":"eth0","firstSeen":1759398000,"lastQuery":1759402800,"numQueries":7,"macVendor":"Samsung Electronics Co.,Ltd",` +
+	`"ips":[{"ip":"192.168.1.19","name":"old-name","lastSeen":1759000000,"nameUpdated":1759000000},` +
+	`{"ip":"192.168.1.20","name":"samsung-tv.lan","lastSeen":1759402900,"nameUpdated":1759402900}]},` +
+	`{"id":4,"hwaddr":"ip-fd00::20","interface":"N/A","firstSeen":1759398100,"lastQuery":1759402801,"numQueries":2,"macVendor":"",` +
+	`"ips":[{"ip":"fd00::20","name":"","lastSeen":1759402801,"nameUpdated":0}]},` +
+	`{"id":5,"hwaddr":"00:00:00:00:00:00","interface":"lo","firstSeen":0,"lastQuery":0,"numQueries":0,"macVendor":"","ips":[]}` +
+	`],"took":0.002}`
+
+func TestAPINetworkDevices(t *testing.T) {
+	_, a := newFakeFTL(t, nil)
+	n := a.Network()
+	if n.Name() != "pihole-api-devices" {
+		t.Errorf("name %q", n.Name())
+	}
+	got, err := n.Devices(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []model.Device{
+		{ID: "ip:fd00::20", IPs: []netip.Addr{netip.MustParseAddr("fd00::20")},
+			FirstSeen: time.Unix(1759398100, 0), LastSeen: time.Unix(1759402801, 0)},
+		{ID: "mac:aa:bb:cc:00:11:22", MAC: "aa:bb:cc:00:11:22", Vendor: "Samsung Electronics Co.,Ltd", Hostname: "samsung-tv.lan",
+			IPs:       []netip.Addr{netip.MustParseAddr("192.168.1.20"), netip.MustParseAddr("192.168.1.19")},
+			FirstSeen: time.Unix(1759398000, 0), LastSeen: time.Unix(1759402900, 0)},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %+v", got)
+	}
+	for i := range want {
+		assertDevice(t, got[i], want[i])
+	}
 }
 
 func newFakeFTL(t *testing.T, queries []apiQuery) (*fakeFTL, *API) {
@@ -187,6 +240,43 @@ func TestAPIFetch(t *testing.T) {
 	if f.logins != 1 || !slices.Equal(f.logouts, []string{"sid-1"}) {
 		t.Fatalf("logins %d, logouts %v: want one session, closed", f.logins, f.logouts)
 	}
+}
+
+// TestAPISettle checks that queries are read only once FTL has settled
+// their status: a forwarded query turns GRAVITY_CNAME when the reply's
+// CNAME chain hits a blocked name.
+func TestAPISettle(t *testing.T) {
+	const t0 = 1727870000.0
+	f, a := newFakeFTL(t, []apiQuery{
+		q(1, t0, "A", "FORWARDED", "a.example", "192.168.1.20"),
+		q(2, t0+20, "A", "FORWARDED", "metrics.vendor.example", "192.168.1.20"),
+		q(3, t0+21, "A", "NONE", "x.example", "192.168.1.20"),
+	})
+	now := time.Unix(t0+40, 0)
+	a.now = func() time.Time { return now }
+	ctx := context.Background()
+
+	got, cur, err := a.FetchDNS(ctx, "", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Domain != "a.example" || cur != "1@1727870000" {
+		t.Fatalf("got %+v, cursor %q: want only the settled query", got, cur)
+	}
+
+	f.mu.Lock()
+	f.queries[1].Status = "GRAVITY_CNAME"
+	f.queries[2].Type = "N/A"
+	f.mu.Unlock()
+	now = now.Add(15 * time.Second)
+	got, _, err = a.FetchDNS(ctx, cur, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertQueries(t, got, []model.DNSQuery{
+		{Time: unixTime(t0 + 20), ClientIP: netip.MustParseAddr("192.168.1.20"), Domain: "metrics.vendor.example", QType: "A", Blocked: true, Source: "pihole-api"},
+		{Time: unixTime(t0 + 21), ClientIP: netip.MustParseAddr("192.168.1.20"), Domain: "x.example", Source: "pihole-api"},
+	})
 }
 
 // TestAPIPagination puts more already-seen queries at the cursor's instant
@@ -272,5 +362,29 @@ func TestAPIErrors(t *testing.T) {
 	cancel()
 	if _, _, err := a.FetchDNS(cctx, "", 10); err == nil {
 		t.Fatal("expected error for cancelled context")
+	}
+}
+
+// TestAPIPaginationMovingTime: with distinct timestamps, a second page must
+// continue from the same from as the first, or it skips a page of rows.
+func TestAPIPaginationMovingTime(t *testing.T) {
+	const t0 = 1727870000.0
+	var rows []apiQuery
+	for i := range int64(300) {
+		rows = append(rows, q(i+1, t0+float64(i), "A", "FORWARDED", fmt.Sprintf("d%d.example", i+1), "192.168.1.20"))
+	}
+	_, a := newFakeFTL(t, rows)
+	a.now = func() time.Time { return time.Unix(int64(t0)+3600, 0) }
+	got, cur, err := a.FetchDNS(context.Background(), "1@1727870000", 150)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, g := range got {
+		if want := fmt.Sprintf("d%d.example", i+2); g.Domain != want {
+			t.Fatalf("query %d is %s, want %s", i, g.Domain, want)
+		}
+	}
+	if len(got) != 150 || cur != "151@1727870150" {
+		t.Fatalf("got %d queries, cursor %q", len(got), cur)
 	}
 }

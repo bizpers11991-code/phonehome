@@ -70,6 +70,15 @@ resolvers: ["192.168.1.2"]         # only matters with conntrack
 
 Then restart phonehome (`sudo systemctl restart phonehome`).
 
+phonehome also reads the devices Pi-hole knows (`/api/network/devices`:
+MAC address, maker, addresses and host names), so devices get their names
+rather than bare IP addresses. In the dashboard's footer this appears as a
+second source, `<name>-devices`.
+
+Lookups are read once they are 30 seconds old, so they reach the dashboard
+about half a minute late. Until then Pi-hole may still mark a lookup as
+blocked, for example when the reply's CNAME chain hits your blocklist.
+
 ### In Docker
 
 ```yaml
