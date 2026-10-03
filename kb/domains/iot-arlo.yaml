@@ -46,7 +46,7 @@ rules:
       - https://community.arlo.com/t5/Arlo/Internet-Connection-through-proxy-OR-firewall/td-p/1201096
   - pattern: mqtt-cluster.arloxcld.com
     category: essential
-    purpose: "Arlo's event stream (MQTT) for motion, doorbell and status updates; the app stops getting live events if blocked."
+    purpose: "Arlo's MQTT event stream for live device events (integrations can use server-sent events instead)."
     confidence: medium
     kind_hint: camera
     evidence:
