@@ -84,7 +84,9 @@ func TestVolumesAndBounds(t *testing.T) {
 }
 
 func TestTVOvernightCadence(t *testing.T) {
-	h := Generate(7, end, 7)
+	// 17 days end 9 days 5 hours after ACR goes off: the ACR runs from
+	// noon on day -17 to 07:00 on day -9, covering eight nights.
+	h := Generate(7, end, 17)
 	var tv model.Device
 	for _, d := range h.Devices {
 		if d.Label == "Living Room TV" {
@@ -103,8 +105,8 @@ func TestTVOvernightCadence(t *testing.T) {
 			overnight++
 		}
 	}
-	// One a minute, five hours a night, seven nights.
-	if want := 7 * 5 * 60; overnight < want*9/10 || overnight > want*11/10 {
+	// One a minute, five hours a night, eight nights.
+	if want := 8 * 5 * 60; overnight < want*9/10 || overnight > want*11/10 {
 		t.Errorf("overnight ACR lookups = %d, want ≈%d", overnight, want)
 	}
 	for i := 1; i < len(times); i++ {
@@ -120,6 +122,37 @@ func TestTVOvernightCadence(t *testing.T) {
 		if f.ClientIP != tv.IPs[0] || f.RemoteIP.String() != "8.8.8.8" || f.RemotePort != 443 {
 			t.Errorf("unexpected flow %+v", f)
 		}
+	}
+}
+
+// The household turns off the Living Room TV's ACR ACROff before the end:
+// every ACR hostname stops then, everything else carries on.
+func TestTVTurnsOffACR(t *testing.T) {
+	h := Generate(7, end, 30)
+	off := end.Add(-ACROff)
+	k := kb.Default()
+	var acrBefore, acrAfter, adsAfter int
+	for _, q := range h.DNS {
+		if q.ClientIP.String() != "192.168.1.20" {
+			continue
+		}
+		cat := k.Classify(q.Domain).Category
+		switch {
+		case cat == model.CatACR && q.Time.Before(off):
+			acrBefore++
+		case cat == model.CatACR:
+			acrAfter++
+		case cat == model.CatAds && !q.Time.Before(off):
+			adsAfter++
+		}
+	}
+	if acrBefore == 0 || acrAfter != 0 || adsAfter == 0 {
+		t.Errorf("ACR lookups before/after the switch = %d/%d, ads after = %d; want some/0/some", acrBefore, acrAfter, adsAfter)
+	}
+	// The switch lies in the week before last, so last week vs the one
+	// before tells the story.
+	if ACROff <= 7*24*time.Hour || ACROff >= 14*24*time.Hour {
+		t.Errorf("ACROff = %v, want inside the week before last", ACROff)
 	}
 }
 
@@ -148,7 +181,7 @@ var unclassifiedOnPurpose = []string{
 
 func TestDemoDomainsClassified(t *testing.T) {
 	k := kb.Default()
-	h := Generate(42, end, 7)
+	h := Generate(42, end, 14) // two weeks: the ACR hostnames stop in the last one
 	seen := map[string]bool{}
 	var unknown []string
 	for _, q := range h.DNS {

@@ -136,3 +136,57 @@ func home() model.HomeReport {
 	}
 	return r
 }
+
+// fixedTV is samsungTV a week after Viewing Information Services was turned
+// off: the ACR heartbeat is gone, the ads and the DNS bypass are not.
+func fixedTV() model.DeviceReport {
+	r := samsungTV()
+	r.Period = model.Period{From: printed.Add(-7 * 24 * time.Hour), To: printed}
+	r.ByCategory[model.CatACR] = 0
+	r.Snooping -= 9812
+	r.Total -= 9812
+	r.SnoopShare = float64(r.Snooping) / float64(r.Total)
+	r.PerDay = float64(r.Snooping) / r.Period.Days()
+	acr := r.Heartbeats[0]
+	r.Heartbeats = r.Heartbeats[1:]
+	r.Fixes = r.Fixes[1:]
+	r.Grade = "D"
+	r.Previous = &model.Comparison{
+		Period:     r.Period.Previous(),
+		Days:       r.Period.Days(),
+		Seen:       true,
+		Total:      14302,
+		Snooping:   13639,
+		PerDay:     1402.4,
+		NowPerDay:  r.PerDay,
+		Grade:      "F",
+		ByCategory: samsungTV().ByCategory,
+		Stopped:    []model.Heartbeat{acr, {Domain: "log-ingestion.samsungacr.com", Category: model.CatACR, Every: 5 * time.Minute}},
+	}
+	return r
+}
+
+// fixedHome is home() with the TV fixed and a comparison.
+func fixedHome() model.HomeReport {
+	r := home()
+	r.Period = model.Period{From: printed.Add(-7 * 24 * time.Hour), To: printed}
+	before := r.Snooping
+	r.Devices[0] = fixedTV()
+	r.Total -= 9812
+	r.Snooping -= 9812
+	r.ByCategory[model.CatACR] -= 9812
+	r.Grade = "D"
+	r.Previous = &model.HomeComparison{
+		Comparison: model.Comparison{
+			Period:    r.Period.Previous(),
+			Days:      r.Period.Days(),
+			Seen:      true,
+			Snooping:  before,
+			PerDay:    float64(before) / r.Period.Days(),
+			NowPerDay: float64(r.Snooping) / r.Period.Days(),
+			Grade:     "F",
+		},
+		Devices: len(r.Devices),
+	}
+	return r
+}

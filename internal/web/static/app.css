@@ -41,6 +41,8 @@
   --g-c: #b98007;
   --g-d: #d4621a;
   --g-f: #b42318;
+  --better: #1d6b47; /* text on --surface and --bg, contrast ≥ 4.5:1 */
+  --worse: #a8261b;
 
   --radius: 16px;
   --gutter: clamp(16px, 4vw, 40px);
@@ -82,6 +84,8 @@
     --g-c: #c99a22;
     --g-d: #df7a32;
     --g-f: #e0484f;
+    --better: #7cc9a2;
+    --worse: #f08a7e;
   }
 }
 
@@ -293,6 +297,37 @@ svg { flex: none; }
 .figure .share { color: var(--ink-3); font-size: 0.875rem; }
 .figure .share b { color: var(--ink); font-weight: 600; }
 .figure + .stack { margin-top: -6px; }
+
+/* Compared with the previous period. Direction is always spelled out with an
+   arrow and words; colour only reinforces it. */
+.since { font-size: 0.875rem; color: var(--ink-2); display: grid; gap: 6px; }
+.since p { line-height: 1.5; }
+.since .muted { color: var(--ink-3); }
+.figure + .since { margin-top: -8px; }
+.since-hero { margin-top: 18px; font-size: 1rem; }
+.since-note { color: var(--ink-3); font-size: 0.8125rem; }
+.trend { font-weight: 650; white-space: nowrap; }
+.trend.better, .num.better { color: var(--better); }
+.trend.worse, .num.worse { color: var(--worse); }
+.trend.same, .trend.new { color: var(--ink); }
+.grade-shift { white-space: nowrap; }
+.mini-grade {
+  display: inline-grid; place-items: center; min-width: 1.45em; height: 1.45em; padding: 0 2px;
+  border-radius: 5px; font-size: 0.8125rem; font-weight: 750; color: #fff; background: var(--g, var(--ink-3));
+}
+@media (prefers-color-scheme: dark) { .mini-grade { color: #111; } }
+.stopped { display: grid; gap: 4px; }
+.stopped li { display: flex; gap: 7px; align-items: baseline; }
+.stopped .ico { width: 14px; height: 14px; flex: none; color: var(--better); align-self: center; }
+.stopped.started .ico { color: var(--worse); }
+.stopped code { font-family: var(--mono); font-size: 0.8125rem; overflow-wrap: anywhere; }
+.stopped .muted { color: var(--ink-3); padding-left: 21px; }
+.stats .trend { font-size: inherit; }
+.stats .mini-grade { font-size: 1rem; }
+.deltas { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 14px 0 10px; font-size: 0.875rem; }
+.deltas li { display: inline-flex; gap: 8px; align-items: center; }
+.deltas .num { font-weight: 600; font-variant-numeric: tabular-nums; }
+section > .stopped { margin-top: 8px; font-size: 0.875rem; color: var(--ink-2); }
 
 .spark { display: block; width: 100%; height: 52px; }
 .spark .bar { fill: var(--spark); }

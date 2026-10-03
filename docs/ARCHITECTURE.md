@@ -161,6 +161,10 @@ type Classifier interface {
     FixesFor(d model.Device, companyIDs []string) []model.Fix
 }
 func Analyze(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQuery, fl []model.Flow, o Options) model.HomeReport
+// AnalyzeCompared also fills HomeReport.Previous / DeviceReport.Previous by
+// comparing p with p.Previous(); qs and fl cover both periods (one store
+// read), dataFrom is Status.Oldest. Rules: docs/grading.md.
+func AnalyzeCompared(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQuery, fl []model.Flow, o Options, dataFrom time.Time) model.HomeReport
 func InferKind(d model.Device, hints map[model.DeviceKind]int) model.DeviceKind
 func Grade(r model.DeviceReport) string
 func HomeGrade(devs []model.DeviceReport) string   // worst device grade; "" with no devices

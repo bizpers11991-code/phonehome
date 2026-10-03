@@ -58,15 +58,26 @@ func (a *app) Report(ctx context.Context, p model.Period) (model.HomeReport, err
 	if err != nil {
 		return model.HomeReport{}, err
 	}
-	qs, err := a.store.DNSBetween(ctx, p)
+	// When stored data reaches back before p, read the previous period too
+	// (in the same query) so the report can say what changed. See
+	// analyze.AnalyzeCompared for when a comparison is made.
+	st, err := a.store.Status(ctx)
 	if err != nil {
 		return model.HomeReport{}, err
 	}
-	fl, err := a.store.FlowsBetween(ctx, p)
+	read := p
+	if !st.Oldest.IsZero() && st.Oldest.Before(p.From) {
+		read.From = p.Previous().From
+	}
+	qs, err := a.store.DNSBetween(ctx, read)
 	if err != nil {
 		return model.HomeReport{}, err
 	}
-	r := analyze.Analyze(a.kb, p, devs, qs, fl, opts)
+	fl, err := a.store.FlowsBetween(ctx, read)
+	if err != nil {
+		return model.HomeReport{}, err
+	}
+	r := analyze.AnalyzeCompared(a.kb, p, devs, qs, fl, opts, st.Oldest)
 	r.Demo = a.demo
 
 	a.mu.Lock()

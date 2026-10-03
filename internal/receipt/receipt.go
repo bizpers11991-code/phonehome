@@ -335,6 +335,9 @@ func Device(r model.DeviceReport, o Options) Doc {
 	}
 
 	b.totals(r.Total, r.SnoopShare, r.PerDay)
+	if r.Previous != nil {
+		b.since(r.Previous, "GRADE", r.Grade, r.Previous.Stopped)
+	}
 	b.kind(Rule)
 	aside := []string{"PRIVACY GRADE", "A QUIET ... F LOUD", ""}
 	b.stamp(r.Grade, append(aside, verdicts[r.Grade]...))
@@ -416,12 +419,18 @@ func Home(r model.HomeReport, o Options) Doc {
 		share = float64(r.Snooping) / float64(r.Total)
 	}
 	perDay = float64(r.Snooping) / r.Period.Days()
+	if r.Previous != nil { // per day of data, so it matches the comparison below
+		perDay = r.Previous.NowPerDay
+	}
 	b.totals(r.Total, share, perDay)
 
 	if worst != nil {
 		g := fit(clean(worst.Grade), 1)
 		val := " (" + g + ")"
 		b.bold("WORST OFFENDER  " + fit(clean(worst.Device.DisplayName()), Cols-16-width(val)) + val)
+	}
+	if r.Previous != nil {
+		b.since(&r.Previous.Comparison, "HOME GRADE", r.Grade, homeStopped(r))
 	}
 	b.kind(Rule)
 	// The home grade is computed by analyze (HomeReport.Grade); the receipt
