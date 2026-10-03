@@ -24,7 +24,7 @@ A scrape job:
 # prometheus.yml
 scrape_configs:
   - job_name: phonehome
-    scrape_interval: 5m          # the figures change slowly; 1m is the most that helps
+    scrape_interval: 1m          # under 5m: Prometheus looks back only 5m for a sample
     metrics_path: /metrics
     params:
       days: ["7"]                # 1, 7 (default) or 30: the period the figures cover
