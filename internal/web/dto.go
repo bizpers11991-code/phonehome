@@ -141,6 +141,48 @@ type domainDTO struct {
 	Purpose       string         `json:"purpose"`
 }
 
+func newDomain(s model.DomainStat) domainDTO {
+	return domainDTO{
+		Domain: s.Domain, Count: s.Count, Blocked: s.Blocked,
+		Category: s.Category, CategoryLabel: s.Category.Label(), Snooping: s.Category.Snooping(),
+		CompanyID: s.CompanyID, CompanyName: s.CompanyName, Purpose: s.Purpose,
+	}
+}
+
+// domainsDTO is GET /api/devices/{id}/domains: every domain a device looked
+// up in the period, with the rule that classified it.
+type domainsDTO struct {
+	ID      string          `json:"id"`
+	Name    string          `json:"name"`
+	From    string          `json:"from"`
+	To      string          `json:"to"`
+	Demo    bool            `json:"demo"`
+	Domains []fullDomainDTO `json:"domains"`
+}
+
+type fullDomainDTO struct {
+	domainDTO
+	FirstSeen  string   `json:"firstSeen,omitempty"`
+	LastSeen   string   `json:"lastSeen,omitempty"`
+	Rule       string   `json:"rule"`       // the knowledge-base pattern, "" when unclassified
+	Confidence string   `json:"confidence"` // high, medium, low; "" when unclassified
+	Evidence   []string `json:"evidence"`
+}
+
+func newDomainsDTO(r model.HomeReport, d model.DeviceReport) domainsDTO {
+	out := domainsDTO{ID: d.Device.ID, Name: d.Device.DisplayName(), From: stamp(r.Period.From), To: stamp(r.Period.To),
+		Demo: r.Demo, Domains: []fullDomainDTO{}}
+	for _, s := range d.Domains {
+		ev := s.Evidence
+		if ev == nil {
+			ev = []string{}
+		}
+		out.Domains = append(out.Domains, fullDomainDTO{domainDTO: newDomain(s), FirstSeen: stamp(s.First), LastSeen: stamp(s.Last),
+			Rule: s.Rule, Confidence: s.Confidence, Evidence: ev})
+	}
+	return out
+}
+
 // unknownDTO is a domain the knowledge base does not cover yet.
 type unknownDTO struct {
 	Domain    string `json:"domain"`
@@ -362,11 +404,7 @@ func newDeviceDTO(r model.DeviceReport) deviceDTO {
 		}
 	}
 	for _, s := range r.TopDomains {
-		out.TopDomains = append(out.TopDomains, domainDTO{
-			Domain: s.Domain, Count: s.Count, Blocked: s.Blocked,
-			Category: s.Category, CategoryLabel: s.Category.Label(), Snooping: s.Category.Snooping(),
-			CompanyID: s.CompanyID, CompanyName: s.CompanyName, Purpose: s.Purpose,
-		})
+		out.TopDomains = append(out.TopDomains, newDomain(s))
 	}
 	for _, u := range r.Unknown {
 		out.Unknown = append(out.Unknown, unknownDTO{

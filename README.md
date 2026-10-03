@@ -165,6 +165,16 @@ Home Assistant. That is never more than the dashboard shows; exactly what is
 sent is in [docs/alerts.md](docs/alerts.md). If the target is outside your home (say the public
 ntfy.sh), that is the one thing that leaves it.
 
+## Languages
+
+The dashboard speaks English, German, French, Spanish and Dutch. It follows
+your browser's language, and the selector at the top changes it. The
+German, French, Spanish and Dutch texts were **machine-translated** and have
+not yet been reviewed by native speakers. Corrections are very welcome: they
+all live in one file, [`internal/web/static/i18n.js`](internal/web/static/i18n.js).
+Knowledge-base texts (what a domain is for, the step-by-step fixes) and the
+Privacy Receipt stay in English for now.
+
 ## Contribute what your devices do
 
 The knowledge base is plain YAML in [`kb/`](kb/), and it is the part that gets
