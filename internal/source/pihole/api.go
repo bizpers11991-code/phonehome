@@ -312,3 +312,77 @@ func decode(resp *http.Response, v any) error {
 	}
 	return nil
 }
+
+// maxNetworkDevices and maxNetworkAddresses lift /api/network/devices's
+// defaults (10 devices, 3 addresses each) so every device is listed.
+const (
+	maxNetworkDevices   = 10000
+	maxNetworkAddresses = 20
+)
+
+// apiNetworkDevice is a device in FTL's /api/network/devices reply, which
+// mirrors the database's network and network_addresses tables.
+type apiNetworkDevice struct {
+	HWAddr    string           `json:"hwaddr"`
+	FirstSeen float64          `json:"firstSeen"`
+	LastQuery float64          `json:"lastQuery"`
+	MACVendor string           `json:"macVendor"`
+	IPs       []apiNetworkAddr `json:"ips"`
+}
+
+type apiNetworkAddr struct {
+	IP       string  `json:"ip"`
+	Name     string  `json:"name"`
+	LastSeen float64 `json:"lastSeen"`
+}
+
+// Network returns a source.DeviceSource that lists the devices FTL knows
+// (MAC address, vendor, addresses and host names) through the API, as DB
+// does from the database's network table. Its name is the API source's
+// name plus "-devices", so it never shares the DNS reader's cursor key.
+func (a *API) Network() source.DeviceSource { return apiNetwork{a} }
+
+type apiNetwork struct{ a *API }
+
+func (n apiNetwork) Name() string { return n.a.name + "-devices" }
+
+// Devices implements source.DeviceSource.
+func (n apiNetwork) Devices(ctx context.Context) ([]model.Device, error) {
+	var resp struct {
+		Devices []apiNetworkDevice `json:"devices"`
+	}
+	q := url.Values{"max_devices": {strconv.Itoa(maxNetworkDevices)}, "max_addresses": {strconv.Itoa(maxNetworkAddresses)}}
+	if err := n.a.do(ctx, http.MethodGet, "/api/network/devices?"+q.Encode(), nil, &resp); err != nil {
+		return nil, err
+	}
+	var out []model.Device
+	for _, nd := range resp.Devices {
+		dev, ok := deviceFromHWAddr(nd.HWAddr)
+		if !ok {
+			continue
+		}
+		dev.Vendor = strings.TrimSpace(nd.MACVendor)
+		dev.FirstSeen = unixTime(nd.FirstSeen)
+		dev.LastSeen = unixTime(nd.LastQuery)
+		ips := nd.IPs
+		slices.SortStableFunc(ips, func(x, y apiNetworkAddr) int { return cmp.Compare(y.LastSeen, x.LastSeen) })
+		for _, ip := range ips {
+			addr, ok := parseAddr(ip.IP)
+			if !ok {
+				continue
+			}
+			if !slices.Contains(dev.IPs, addr) {
+				dev.IPs = append(dev.IPs, addr)
+			}
+			if dev.Hostname == "" {
+				dev.Hostname = strings.TrimSpace(ip.Name)
+			}
+			if t := unixTime(ip.LastSeen); t.After(dev.LastSeen) {
+				dev.LastSeen = t
+			}
+		}
+		out = append(out, *dev)
+	}
+	slices.SortFunc(out, func(x, y model.Device) int { return strings.Compare(x.ID, y.ID) })
+	return out, nil
+}

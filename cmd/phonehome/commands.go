@@ -117,7 +117,7 @@ func buildSources(list []config.Source) (_ *sources, err error) {
 			if err != nil {
 				return nil, err
 			}
-			s.dns = append(s.dns, api)
+			s.dns, s.devices = append(s.dns, api), append(s.devices, api.Network())
 			s.closers = append(s.closers, api)
 		case config.TypeAdGuardQueryLog:
 			s.dns = append(s.dns, adguard.NewQueryLog(c.Path, adguard.WithName(c.Name)))

@@ -104,7 +104,7 @@ phonehome reads:
 | Source | `type:` | Gives |
 |---|---|---|
 | Pi-hole v5/v6 database | `pihole-db` | DNS lookups + device names/MACs |
-| Pi-hole v6 API (another host) | `pihole-api` | DNS lookups |
+| Pi-hole v6 API (another host) | `pihole-api` | DNS lookups + device names/MACs |
 | AdGuard Home query log | `adguard-querylog` | DNS lookups |
 | dnsmasq `log-queries` (OpenWrt, plain dnsmasq) | `dnsmasq-log` | DNS lookups |
 | DHCP leases (dnsmasq, ISC dhcpd, odhcpd) | `leases` | Device names/MACs |

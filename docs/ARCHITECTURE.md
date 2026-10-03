@@ -123,7 +123,7 @@ func Lint(fsys fs.FS) []error               // all problems, for `phonehome kb l
 | package | type | reads |
 |---|---|---|
 | `source/pihole` | `DB` (DNSSource + DeviceSource) | `pihole-FTL.db` read-only: `queries` (v5 table / v6 view), `network` + `network_addresses` |
-| `source/pihole` | `API` (DNSSource) | Pi-hole v6 REST `/api/queries` with app password |
+| `source/pihole` | `API` (DNSSource; `Network()` is a DeviceSource) | Pi-hole v6 REST `/api/queries` and `/api/network/devices` with app password |
 | `source/adguard` | `QueryLog` (DNSSource) | AdGuard Home `querylog.json` + rotated `querylog.json.1` (JSON lines) |
 | `source/dnsmasq` | `Log` (DNSSource) | dnsmasq `log-queries` syslog lines (OpenWrt, plain dnsmasq) |
 | `source/leases` | `File` (DeviceSource) | dnsmasq / odhcpd / ISC dhcpd lease files |
