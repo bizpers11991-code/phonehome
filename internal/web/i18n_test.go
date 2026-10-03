@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	entryRe       = regexp.MustCompile(`'([\w.\-]+)':\s*(\{[^}]*\}|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")`)
+	entryRe       = regexp.MustCompile(`'([\w.\-]+)':\s*(\{(?:\s*\w+:\s*'(?:[^'\\]|\\.)*',?)+\s*\}|'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")`)
 	placeholderRe = regexp.MustCompile(`\{(\w+)\}`)
 	localeRe      = regexp.MustCompile(`(?m)^  ([a-z]{2}): \{$`)
 )

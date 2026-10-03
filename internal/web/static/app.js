@@ -588,11 +588,18 @@ function domainSection(d) {
   return sec;
 }
 
+// DOMAIN_PAGE is how many rows the domain table draws at a time; the
+// filter and the exports always cover every domain.
+const DOMAIN_PAGE = 500;
+
 function domainTable(d, res) {
   const all = res.domains;
   if (!all.length) return h('p', { class: 'empty-note', text: t('domains.none') });
-  const view = { key: 'count', dir: -1, filter: '' };
+  const view = { key: 'count', dir: -1, filter: '', limit: DOMAIN_PAGE };
   const tbody = h('tbody');
+  const more = h('button', { type: 'button', class: 'btn small', hidden: true,
+    onclick: () => { view.limit += DOMAIN_PAGE; draw(); } });
+  let typing;
   const count = h('p', { class: 'table-count', role: 'status', 'aria-live': 'polite' });
   const heads = DOMAIN_COLS.map((c) => {
     const btn = h('button', { type: 'button', class: 'sort', onclick: () => sortBy(c.key) }, t(c.label),
@@ -600,12 +607,17 @@ function domainTable(d, res) {
     return h('th', { scope: 'col', class: c.cls || null, 'data-key': c.key }, btn);
   });
   const filter = h('input', { type: 'search', id: 'domain-filter', placeholder: t('domains.placeholder'),
-    autocomplete: 'off', spellcheck: 'false', oninput: (e) => { view.filter = e.target.value.trim().toLowerCase(); draw(); } });
+    autocomplete: 'off', spellcheck: 'false', oninput: (e) => {
+      // A phone can have thousands of domains a month: wait for a pause in
+      // typing rather than redrawing on every key.
+      clearTimeout(typing);
+      typing = setTimeout(() => { view.filter = e.target.value.trim().toLowerCase(); view.limit = DOMAIN_PAGE; draw(); }, 150);
+    } });
 
   function value(row, c) {
     if (c.type === 'cat') return catLabel(row.category);
     if (c.type === 'conf') return CONF_RANK[row.confidence] ?? 0;
-    if (c.type === 'time') return row[c.key] || '';
+    if (c.type === 'time') return Date.parse(row[c.key]) || 0; // offsets differ across DST
     return row[c.key] ?? '';
   }
   function sortBy(key) {
@@ -628,10 +640,14 @@ function domainTable(d, res) {
       else th.removeAttribute('aria-sort');
       th.querySelector('.sort-mark').textContent = on ? (view.dir > 0 ? ' ▲' : ' ▼') : '';
     }
-    tbody.replaceChildren(...rows.map(domainRow));
-    count.textContent = rows.length === all.length
+    const shown = rows.slice(0, view.limit);
+    tbody.replaceChildren(...shown.map(domainRow));
+    const rest = rows.length - shown.length;
+    more.hidden = rest <= 0;
+    more.textContent = t('domains.more', { n: fmt(Math.min(rest, DOMAIN_PAGE)) });
+    count.textContent = shown.length === all.length
       ? t('domains.count', { n: fmt(all.length), count: all.length })
-      : (rows.length ? t('domains.shown', { shown: fmt(rows.length), total: fmt(all.length) }) : t('domains.noMatch'));
+      : (rows.length ? t('domains.shown', { shown: fmt(shown.length), total: fmt(all.length) }) : t('domains.noMatch'));
   }
   draw();
 
@@ -639,6 +655,7 @@ function domainTable(d, res) {
     h('div', { class: 'table-tools' },
       h('label', { for: 'domain-filter', class: 'visually-hidden', text: t('domains.filter') }), filter, count),
     h('div', { class: 'table-wrap' }, h('table', { class: 'domain-table' }, h('thead', {}, h('tr', {}, heads)), tbody)),
+    h('p', { class: 'table-more' }, more),
     h('p', { class: 'table-export' }, t('domains.export'), ' ',
       h('button', { type: 'button', class: 'btn small', onclick: () => exportDomains(d, res, 'csv') }, icon('download'), t('export.csv')),
       ' ',
@@ -716,9 +733,11 @@ function exportDomains(d, res, kind) {
     return;
   }
   download(base + '.csv', 'text/csv', csv(
-    ['domain', 'category', 'company', 'purpose', 'lookups', 'blocked', 'first_seen', 'last_seen', 'rule', 'confidence', 'evidence'],
+    ['domain', 'category', 'company', 'purpose', 'lookups', 'blocked', 'first_seen', 'last_seen', 'rule', 'rule_match', 'confidence', 'evidence'],
     res.domains.map((r) => [r.domain, r.category, r.companyName, r.purpose, r.count, r.blocked, r.firstSeen, r.lastSeen,
-      r.rule, r.confidence, r.evidence.join(' ')])));
+      // A rule "=host" matches only host; "host" matches its subdomains too.
+      r.rule.replace(/^=/, ''), r.rule ? (r.rule.startsWith('=') ? 'exact' : 'subdomains') : '',
+      r.confidence, r.evidence.join(' ')])));
 }
 
 // sinceDetails is the drawer's comparison with the previous period.
@@ -1125,7 +1144,12 @@ function init() {
   });
 
   for (const dlg of document.querySelectorAll('dialog')) {
-    dlg.addEventListener('close', () => { clearHash(); restoreFocus(); });
+    dlg.addEventListener('close', () => {
+      clearHash();
+      // Moving from one dialog to another, the old one's close event comes
+      // after the new one opened: keep the opener for when that one closes.
+      if (!document.querySelector('dialog[open]')) restoreFocus();
+    });
     dlg.addEventListener('keydown', trapFocus);
     dlg.addEventListener('click', (e) => {
       const r = dlg.getBoundingClientRect();
