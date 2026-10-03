@@ -16,8 +16,9 @@ phonehome contacts nothing but the targets you list.
 
 Every check (every 5 minutes by default) looks at the last 7 days, the
 dashboard's default view, so an alert's grade is the grade the dashboard
-shows. The very first check only records what is there: installing
-phonehome does not announce every device you own.
+shows. The very first check only records what is there, including every
+device phonehome already knows but that was quiet that week: turning
+alerts on does not announce every device you own.
 
 **No repeats.** The same alert (same device and the same grade, domain or
 finding) is not sent again within 24 hours, however often it flaps. A
