@@ -9,8 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -33,10 +35,18 @@ type MQTT struct {
 	TLS                *tls.Config
 	Dial               func(ctx context.Context, network, addr string) (net.Conn, error) // nil: net.Dialer
 
+	// Store, if set, remembers which devices have a retained grade, so
+	// that one which leaves the report while phonehome is restarting is
+	// still cleared.
+	Store Store
+
 	// What the last successful Publish sent, by device slug.
 	grades, configs map[string]string
 	refreshed       time.Time
+	loaded          bool
 }
+
+const mqttStateKey = "mqtt-devices"
 
 func (m *MQTT) Name() string { return "mqtt" }
 
@@ -50,14 +60,27 @@ func (m *MQTT) Notify(ctx context.Context, b Batch) error {
 // grade, retained, and its discovery config when Discovery is on, but only
 // what changed since the last successful publish, plus everything once an
 // hour so a broker that lost its retained messages recovers. A device that
-// drops out of the week's report has its retained grade cleared, so the
-// sensor reads "unknown" rather than a stale grade.
+// drops out of the week's report gets the retained grade "None", which
+// Home Assistant shows as "unknown", rather than keeping a stale grade.
 //
 // Publish is not safe for concurrent use; the Engine calls it from one
 // goroutine.
 func (m *MQTT) Publish(ctx context.Context, r model.HomeReport) error {
+	if !m.loaded && m.Store != nil {
+		raw, err := m.Store.AlertState(ctx, mqttStateKey)
+		if err != nil {
+			return err
+		}
+		var slugs []string
+		json.Unmarshal([]byte(raw), &slugs) // unreadable: nothing to clear
+		m.grades = map[string]string{}
+		for _, s := range slugs {
+			m.grades[s] = ""
+		}
+	}
+	m.loaded = true
 	now := time.Now()
-	full := m.grades == nil || now.Sub(m.refreshed) >= time.Hour
+	full := m.refreshed.IsZero() || now.Sub(m.refreshed) >= time.Hour
 	grades, configs := map[string]string{}, map[string]string{}
 	var msgs []message
 	for _, d := range r.Devices {
@@ -92,8 +115,9 @@ func (m *MQTT) Publish(ctx context.Context, r model.HomeReport) error {
 	}
 	for slug := range m.grades {
 		if _, ok := grades[slug]; !ok {
-			// An empty retained message removes the retained grade.
-			msgs = append(msgs, message{topic: m.stateTopic(slug), retain: true})
+			// Home Assistant reads the payload "None" as unknown; an empty
+			// one would show as a blank state.
+			msgs = append(msgs, message{topic: m.stateTopic(slug), payload: []byte("None"), retain: true})
 		}
 	}
 	if len(msgs) > 0 {
@@ -101,9 +125,20 @@ func (m *MQTT) Publish(ctx context.Context, r model.HomeReport) error {
 			return err // nothing remembered: the next check sends it all again
 		}
 	}
+	changed := len(grades) != len(m.grades)
+	for s := range grades {
+		if _, ok := m.grades[s]; !ok {
+			changed = true
+		}
+	}
 	m.grades, m.configs = grades, configs
 	if full {
 		m.refreshed = now
+	}
+	if changed && m.Store != nil {
+		slugs := slices.Sorted(maps.Keys(grades))
+		b, _ := json.Marshal(slugs)
+		return m.Store.SetAlertState(ctx, mqttStateKey, string(b))
 	}
 	return nil
 }

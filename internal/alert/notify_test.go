@@ -102,6 +102,21 @@ func TestNtfy(t *testing.T) {
 	b.Events[0].Kind = NewDevice
 }
 
+func TestNtfyLongBody(t *testing.T) {
+	srv, c := capture(t, http.StatusOK)
+	var evs []Event
+	for range 20 {
+		evs = append(evs, Event{Kind: Bypass, Device: Device{Name: "Plug"},
+			Finding: model.Bypass{Detail: strings.Repeat("Looked up a very long encrypted-DNS name. ", 6)}})
+	}
+	if err := (&Ntfy{URL: srv.URL + "/t"}).Notify(context.Background(), Batch{Events: evs}); err != nil {
+		t.Fatal(err)
+	}
+	if len(c.body) > ntfyMaxBody || !strings.HasSuffix(string(c.body), "\n…see the dashboard.") {
+		t.Fatalf("%d bytes, ends %q", len(c.body), c.body[len(c.body)-30:])
+	}
+}
+
 func TestGotify(t *testing.T) {
 	srv, c := capture(t, http.StatusOK)
 	g := &Gotify{URL: srv.URL + "/", Token: "AbCd", Priority: 5}
@@ -256,7 +271,7 @@ func TestMQTT(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(b.messages) != 2 || b.messages[0].topic != "phonehome/device/mac_01/grade" || string(b.messages[0].payload) != "B" ||
-		b.messages[1].topic != "phonehome/device/mac_aa_bb_cc_00_11_22/grade" || len(b.messages[1].payload) != 0 || !b.messages[1].retain {
+		b.messages[1].topic != "phonehome/device/mac_aa_bb_cc_00_11_22/grade" || string(b.messages[1].payload) != "None" || !b.messages[1].retain {
 		t.Fatalf("%+v", b.messages)
 	}
 
@@ -279,6 +294,30 @@ func TestMQTT(t *testing.T) {
 	<-b.done
 	if err == nil || !strings.Contains(err.Error(), "not authorised") {
 		t.Fatalf("refusal: %v", err)
+	}
+}
+
+// TestMQTTRemembers: a device that leaves the report while phonehome is
+// restarting still has its retained grade cleared.
+func TestMQTTRemembers(t *testing.T) {
+	b, st := &broker{}, &memStore{}
+	newMQTT := func() *MQTT { return &MQTT{Broker: "mqtt://b.lan", Topic: "phonehome", Dial: b.dial, Store: st} }
+	rep := model.HomeReport{Devices: []model.DeviceReport{{Device: model.Device{ID: "mac:01"}, Grade: "C"}}}
+	if err := newMQTT().Publish(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+	<-b.done
+	b.messages = nil
+	rep.Devices = []model.DeviceReport{{Device: model.Device{ID: "mac:02"}, Grade: "A"}}
+	if err := newMQTT().Publish(context.Background(), rep); err != nil { // after a restart
+		t.Fatal(err)
+	}
+	<-b.done
+	if len(b.messages) != 2 || b.messages[1].topic != "phonehome/device/mac_01/grade" || string(b.messages[1].payload) != "None" {
+		t.Fatalf("%+v", b.messages)
+	}
+	if st.m[mqttStateKey] != `["mac_02"]` {
+		t.Fatalf("remembered %s", st.m[mqttStateKey])
 	}
 }
 

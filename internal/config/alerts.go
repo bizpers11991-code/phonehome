@@ -128,6 +128,9 @@ func (a Alerts) validate() error {
 		if (n.Password != "" || n.PasswordFile != "") && n.Username == "" {
 			bad("ntfy: a password needs a username; or use an access token")
 		}
+		if n.Priority != "" && !slices.Contains(ntfyPriorities, strings.ToLower(n.Priority)) {
+			bad("ntfy.priority %q must be 1–5 or min, low, default, high, max or urgent", n.Priority)
+		}
 	}
 	if g := a.Gotify; g != nil {
 		if !httpURL(g.URL) {
@@ -160,17 +163,30 @@ func httpURL(s string) bool {
 	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
 }
 
+// ntfyPriorities are the values ntfy's Priority header accepts.
+var ntfyPriorities = []string{"1", "2", "3", "4", "5", "min", "low", "default", "high", "max", "urgent"}
+
 // Secret returns the ntfy token or password, reading the *_file settings.
 func (n Ntfy) Secret() (token, password string, err error) {
-	if token, err = secret(n.Token, n.TokenFile); err != nil {
+	if token, err = alertSecret(n.Token, n.TokenFile); err != nil {
 		return "", "", err
 	}
-	password, err = secret(n.Password, n.PasswordFile)
+	password, err = alertSecret(n.Password, n.PasswordFile)
 	return token, password, err
 }
 
 // Secret returns the Gotify application token, reading TokenFile if set.
-func (g Gotify) Secret() (string, error) { return secret(g.Token, g.TokenFile) }
+func (g Gotify) Secret() (string, error) { return alertSecret(g.Token, g.TokenFile) }
 
 // Secret returns the MQTT password, reading PasswordFile if set.
-func (m MQTT) Secret() (string, error) { return secret(m.Password, m.PasswordFile) }
+func (m MQTT) Secret() (string, error) { return alertSecret(m.Password, m.PasswordFile) }
+
+// alertSecret is secret, but an empty file is an error: it would otherwise
+// send alerts without the token or password, which the target refuses.
+func alertSecret(inline, file string) (string, error) {
+	s, err := secret(inline, file)
+	if err == nil && file != "" && s == "" {
+		err = fmt.Errorf("%s is empty", file)
+	}
+	return s, err
+}
