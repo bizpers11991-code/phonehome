@@ -256,6 +256,32 @@ func TestEngineKnownDevices(t *testing.T) {
 	}
 }
 
+type failingStore struct{ memStore }
+
+func (s *failingStore) SetAlertState(context.Context, string, string) error {
+	return errors.New("disk full")
+}
+
+// TestEngineSavesFirst: state is saved before a batch goes out, so a
+// database that cannot be written means no alerts, not the same alerts
+// on every check.
+func TestEngineSavesFirst(t *testing.T) {
+	h := &home{now: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC), devs: []model.DeviceReport{dev("mac:1", "TV", "B")}}
+	e, rec, st := newEngine(h)
+	check(t, e)
+	fs := &failingStore{}
+	fs.m = st.m
+	e.Store = fs
+	h.now = h.now.Add(5 * time.Minute)
+	h.devs = append(h.devs, dev("mac:2", "Plug", "A"))
+	if err := e.Check(context.Background()); err == nil {
+		t.Fatal("no error from a failing store")
+	}
+	if len(rec.batches) != 0 {
+		t.Fatal("sent alerts it could not record")
+	}
+}
+
 func TestText(t *testing.T) {
 	b := Batch{Demo: true, Events: []Event{{Kind: GradeWorse, Device: Device{Name: "TV"}, Grade: "D", Before: "B"}}}
 	title, body := Text(b)

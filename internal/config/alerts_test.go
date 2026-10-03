@@ -52,6 +52,7 @@ func TestAlertsConfigErrors(t *testing.T) {
 		"alerts:\n  ntfy: {url: https://ntfy.sh}\n":                          "topic's full address",
 		"alerts:\n  ntfy: {url: https://ntfy.sh/t, token: a, username: u}\n": "not both",
 		"alerts:\n  ntfy: {url: https://ntfy.sh/t, password: pw}\n":          "needs a username",
+		"alerts:\n  ntfy: {url: https://ntfy.sh/t, priority: hi}\n":          "ntfy.priority",
 		"alerts:\n  gotify: {url: https://g.lan}\n":                          "application token",
 		"alerts:\n  mqtt: {broker: http://b.lan}\n":                          "mqtt.broker",
 		"alerts:\n  mqtt: {broker: mqtt://b.lan, password: x}\n":             "needs a username",

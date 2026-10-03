@@ -222,9 +222,11 @@ func cmdServe(ctx context.Context, args []string) error {
 		go g.watchSources(ctx, redetectEvery, *det, func() config.Detection { return config.Detect(config.Check) }, setup)
 	}
 
-	if err := runAlerts(ctx, cfg.Alerts, a, st); err != nil {
+	waitAlerts, err := runAlerts(ctx, cfg.Alerts, a, st)
+	if err != nil {
 		return err
 	}
+	defer waitAlerts() // before the deferred st.Close
 
 	h := web.New(a, web.Options{
 		Username: cfg.Auth.Username, Password: pw, Logger: logger,

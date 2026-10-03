@@ -145,7 +145,7 @@ func (e *Engine) Run(ctx context.Context, interval time.Duration) {
 			return
 		case <-t.C:
 		}
-		if err := e.Check(ctx); err != nil && ctx.Err() == nil {
+		if err := e.Check(ctx); err != nil && !errors.Is(err, context.Canceled) {
 			e.log().Warn("alert check failed", "err", err)
 		}
 	}
@@ -250,23 +250,10 @@ func (e *Engine) Check(ctx context.Context) error {
 			e.log().Info("alerts held back by max_per_hour; they are sent when the hour allows", "events", len(events))
 			return nil
 		}
-		b := Batch{Time: now, Demo: rep.Demo, Events: events}
-		var errs []error
-		for _, n := range e.Notifiers {
-			if err := n.Notify(ctx, b); err != nil {
-				errs = append(errs, fmt.Errorf("%s: %w", n.Name(), err))
-			}
-		}
-		if err := errors.Join(errs...); err != nil {
-			// Delivery is at most once: a target that is down misses this
-			// batch rather than receiving it again and again.
-			e.log().Warn("alert delivery failed", "err", err)
-		}
 		for i := range events {
 			st.Sent[keys[i]] = now
 		}
 		st.Batches = append(st.Batches, now)
-		e.log().Info("alerts sent", "events", len(events), "targets", len(e.Notifiers))
 	} else if baseline {
 		e.log().Info("alerts: recorded a baseline of the devices seen this week; changes from now on are notified", "devices", len(rep.Devices))
 	}
@@ -276,7 +263,31 @@ func (e *Engine) Check(ctx context.Context) error {
 		}
 	}
 	st.Devices = next
-	return e.save(ctx, st, raw)
+	// Save before sending: delivery is at most once, so a batch is never
+	// sent again after a restart, or while the database cannot be written.
+	// The save outlives a shutdown that began during this check.
+	sctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+	defer cancel()
+	if err := e.save(sctx, st, raw); err != nil {
+		return fmt.Errorf("alerts: save state: %w", err)
+	}
+	if len(events) == 0 {
+		return nil
+	}
+	b := Batch{Time: now, Demo: rep.Demo, Events: events}
+	var errs []error
+	for _, n := range e.Notifiers {
+		if err := n.Notify(ctx, b); err != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", n.Name(), err))
+		}
+	}
+	if err := errors.Join(errs...); err != nil {
+		// A target that is down misses this batch rather than receiving it
+		// again and again.
+		e.log().Warn("alert delivery failed", "err", err)
+	}
+	e.log().Info("alerts sent", "events", len(events), "targets", len(e.Notifiers))
+	return nil
 }
 
 func snapshot(d model.DeviceReport) *deviceState {

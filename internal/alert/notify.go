@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
 )
@@ -210,8 +211,24 @@ type Ntfy struct {
 
 func (n *Ntfy) Name() string { return "ntfy" }
 
+// ntfyMaxBody is ntfy's message limit; a longer body arrives as a file
+// attachment instead of a notification.
+const ntfyMaxBody = 4096
+
 func (n *Ntfy) Notify(ctx context.Context, b Batch) error {
 	title, body := Text(b)
+	if len(body) > ntfyMaxBody {
+		// Keep whole lines that fit, then say there is more.
+		const more = "\n…see the dashboard."
+		cut := strings.LastIndexByte(body[:ntfyMaxBody-len(more)], '\n')
+		if cut < 0 {
+			cut = ntfyMaxBody - len(more)
+			for cut > 0 && !utf8.RuneStart(body[cut]) {
+				cut--
+			}
+		}
+		body = body[:cut] + more
+	}
 	// Device names may be non-ASCII; ntfy reads RFC 2047 encoded headers.
 	h := http.Header{"Title": {mime.BEncoding.Encode("UTF-8", title)}, "Tags": {"phonehome"}, "User-Agent": {"phonehome"}}
 	if n.Priority != "" {
