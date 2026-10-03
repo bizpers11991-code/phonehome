@@ -91,7 +91,10 @@ function setLang(lang) {
   try { localStorage.setItem('phonehome.lang', lang); } catch { /* private mode */ }
   formats();
   applyStatic();
-  if (state.report) render();
+  if (state.report) {
+    render();
+    route(); // an open dialog is drawn again in the new language
+  }
 }
 
 // ---------- DOM helpers (textContent only: domains and labels are untrusted) ----------
