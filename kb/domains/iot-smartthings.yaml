@@ -29,3 +29,17 @@ rules:
     kind_hint: hub
     evidence:
       - https://community.smartthings.com/t/smartthings-firewalling-serious-security-concerns/121724
+  - pattern: api.smartthings.com
+    category: essential
+    purpose: "SmartThings cloud API for devices, scenes and events; remote control stops if blocked."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://github.com/andrewsayre/pysmartthings/blob/d800cd231f12b09d2958afab557bae6588e3db53/src/pysmartthings/const.py#L5
+  - pattern: auth-global.api.smartthings.com
+    category: essential
+    purpose: "SmartThings account sign-in token service used by Home Assistant's SmartThings integration."
+    confidence: medium
+    kind_hint: hub
+    evidence:
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/smartthings/application_credentials.py#L33

@@ -354,3 +354,33 @@ func BenchmarkClassify(b *testing.B) {
 		k.Classify(domains[i%len(domains)])
 	}
 }
+
+// TestEmbeddedIntegrationHosts pins a sample of the rules mined from
+// open-source clients (Home Assistant integrations and the libraries
+// behind them), including regional hosts matched by a parent rule.
+func TestEmbeddedIntegrationHosts(t *testing.T) {
+	k := Default()
+	for host, want := range map[string]string{
+		"api-eic.lgthinq.com":             "lg",
+		"us.m.lgaccount.com":              "lg",
+		"api-production.august.com":       "assa-abloy",
+		"websocket.aaecosystem.com":       "assa-abloy",
+		"api.home-connect.com":            "bsh",
+		"api.mcs3.miele.com":              "miele",
+		"monitoringapi.solaredge.com":     "solaredge",
+		"entrez.enphaseenergy.com":        "enphase",
+		"api.switchbot.net":               "switchbot",
+		"api.nuki.io":                     "nuki",
+		"api.lifx.com":                    "lifx",
+		"openapi-weaz.tuyaeu.com":         "tuya",
+		"hms.api.wyze.com":                "wyze",
+		"auth-global.api.smartthings.com": "samsung",
+		"security-mqtt-eu.eufylife.com":   "eufy",
+		"hops.tado.com":                   "tado",
+	} {
+		c := k.Classify(host)
+		if c.Company == nil || c.Company.ID != want || c.Category != model.CatEssential {
+			t.Errorf("Classify(%s) = %+v, want essential from %s", host, c, want)
+		}
+	}
+}

@@ -1,0 +1,9 @@
+company: lifx
+rules:
+  - pattern: api.lifx.com
+    category: essential
+    purpose: "LIFX cloud API, used by Home Assistant to list and activate LIFX scenes."
+    confidence: medium
+    kind_hint: plug
+    evidence:
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/lifx_cloud/scene.py#L48

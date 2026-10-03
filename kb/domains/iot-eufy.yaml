@@ -29,3 +29,38 @@ rules:
     confidence: low
     evidence:
       - https://www.netify.ai/resources/domains/eufylife.com
+  - pattern: security-mqtt.eufylife.com
+    category: essential
+    purpose: "eufy Security push messages (MQTT) for the default, non-EU region; integrations stop getting live notifications if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/bropat/eufy-security-client/blob/3bfef130bdcbff8f2f68286a5f63ec7e48177202/src/mqtt/service.ts#L63
+  - pattern: security-mqtt-eu.eufylife.com
+    category: essential
+    purpose: "eufy Security push messages (MQTT) for the EU region; live notifications stop if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/bropat/eufy-security-client/blob/3bfef130bdcbff8f2f68286a5f63ec7e48177202/src/mqtt/service.ts#L70
+  - pattern: extend.eufylife.com
+    category: essential
+    purpose: "eufy service that says which regional eufy Security server an account uses."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/bropat/eufy-security-client/blob/3bfef130bdcbff8f2f68286a5f63ec7e48177202/src/http/api.ts#L90
+  - pattern: app-passport-eu-pr.eufy.com
+    category: essential
+    purpose: "Sign-in for eufy's newer EU app backend."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/bropat/eufy-security-client/blob/3bfef130bdcbff8f2f68286a5f63ec7e48177202/src/http/megaApi.ts#L131
+  - pattern: app-openapi-eu-pr.eufy.com
+    category: essential
+    purpose: "Key exchange for eufy's newer EU app backend; other calls to that backend are signed with keys from here."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/bropat/eufy-security-client/blob/3bfef130bdcbff8f2f68286a5f63ec7e48177202/src/http/megaApi.ts#L86

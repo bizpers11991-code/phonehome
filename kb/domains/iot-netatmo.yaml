@@ -13,3 +13,15 @@ rules:
     confidence: medium
     evidence:
       - https://helpcenter.netatmo.com/hc/en-us/articles/360021432071-Advanced-network-troubleshooting-guide
+  - pattern: api.netatmo.com
+    category: essential
+    purpose: "Netatmo's public API used by the app's integrations to read and control devices."
+    confidence: medium
+    evidence:
+      - https://github.com/jabesq-org/pyatmo/blob/02b92aea9784bac553a9d579d3cf069918d9c096/src/pyatmo/const.py#L23
+  - pattern: app.netatmo.net
+    category: essential
+    purpose: "Netatmo app API, which also serves commands such as the siren status."
+    confidence: medium
+    evidence:
+      - https://github.com/jabesq-org/pyatmo/blob/02b92aea9784bac553a9d579d3cf069918d9c096/src/pyatmo/const.py#L27

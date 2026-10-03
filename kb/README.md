@@ -51,7 +51,7 @@ than a bricked doorbell.
 | level    | requires |
 |----------|----------|
 | `high`   | A peer-reviewed measurement study, or the vendor's own documentation, that names this domain. |
-| `medium` | Several independent, reputable sources agree, or a well-maintained blocklist entry that explains *why* it is listed. |
+| `medium` | Several independent, reputable sources agree; or open-source client code (a Home Assistant integration, a client library) that hard-codes the host for a stated purpose; or a well-maintained blocklist entry that explains *why* it is listed. A blocklist entry alone is never more than `medium`. |
 | `low`    | A single community report (forum post, issue, one person's capture). |
 
 When in doubt, go lower. Confidence can be raised later; trust can't be
@@ -65,7 +65,13 @@ can read. Good sources, best first:
 1. Vendor documentation, privacy policies or support pages.
 2. Peer-reviewed papers and academic measurement studies.
 3. Reputable journalism that did its own testing.
-4. Your own packet or DNS capture. Link the PR or issue where you describe
+4. Open-source clients that talk to the vendor's cloud: Home Assistant
+   integrations, client libraries, Homebridge plugins. Link a permalink to
+   the exact line (`/blob/<commit>/path#L42`) where the host is defined or
+   used, so the link keeps pointing at what you read. Such code shows what
+   the *app or integration* calls; say so in the purpose rather than
+   claiming the device does it.
+5. Your own packet or DNS capture. Link the PR or issue where you describe
    the device, firmware version, what you did and what you saw.
 
 A blocklist that merely contains the domain is not evidence of what it does.
