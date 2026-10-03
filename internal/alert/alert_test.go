@@ -216,6 +216,29 @@ func TestEngineWaitsForData(t *testing.T) {
 	}
 }
 
+func TestEngineKnownDevices(t *testing.T) {
+	h := &home{now: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC), devs: []model.DeviceReport{dev("mac:1", "TV", "B")}}
+	e, rec, _ := newEngine(h)
+	e.Devices = func(context.Context) ([]model.Device, error) {
+		return []model.Device{{ID: "mac:1"}, {ID: "mac:9"}}, nil // mac:9 was quiet this week
+	}
+	check(t, e)
+	h.now = h.now.Add(5 * time.Minute)
+	quiet := dev("mac:9", "Old camera", "F")
+	quiet.Heartbeats = []model.Heartbeat{{Domain: "t.example", Category: model.CatTelemetry}}
+	h.devs = append(h.devs, quiet)
+	check(t, e) // it wakes up: not new, and its state is learnt silently
+	if len(rec.batches) != 0 {
+		t.Fatalf("sent %q", kinds(rec.batches[0]))
+	}
+	h.now = h.now.Add(5 * time.Minute)
+	h.devs[0] = dev("mac:1", "TV", "D")
+	check(t, e)
+	if len(rec.batches) != 1 || kinds(rec.batches[0]) != "grade_worse:TV" {
+		t.Fatalf("got %d batches", len(rec.batches))
+	}
+}
+
 func TestText(t *testing.T) {
 	b := Batch{Demo: true, Events: []Event{{Kind: GradeWorse, Device: Device{Name: "TV"}, Grade: "D", Before: "B"}}}
 	title, body := Text(b)
