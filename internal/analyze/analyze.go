@@ -131,6 +131,8 @@ type domainAcc struct {
 	count   int
 	blocked int
 	times   []int64 // unix nanoseconds, in input order
+	first   int64   // earliest and latest of times, kept as they are added
+	last    int64
 }
 
 type deviceAcc struct {
@@ -297,7 +299,14 @@ func (a *analysis) addQuery(q *model.DNSQuery) {
 		d.domains[info] = da
 	}
 	da.count++
-	da.times = append(da.times, q.Time.UnixNano())
+	ns := q.Time.UnixNano()
+	if da.count == 1 || ns < da.first {
+		da.first = ns
+	}
+	if da.count == 1 || ns > da.last {
+		da.last = ns
+	}
+	da.times = append(da.times, ns)
 	if q.Blocked {
 		d.blocked++
 		da.blocked++
@@ -399,8 +408,8 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 			Confidence: cls.Confidence,
 			Evidence:   cls.Evidence,
 		}
-		if len(da.times) > 0 {
-			ds.First, ds.Last = time.Unix(0, slices.Min(da.times)), time.Unix(0, slices.Max(da.times))
+		if da.count > 0 {
+			ds.First, ds.Last = time.Unix(0, da.first), time.Unix(0, da.last)
 		}
 		if co := cls.Company; co != nil && co.ID != "" {
 			ds.CompanyID, ds.CompanyName = co.ID, co.Name
