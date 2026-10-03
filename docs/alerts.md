@@ -84,7 +84,7 @@ finding, the public resolver the device connected to (`8.8.8.8:443`).
 Title: phonehome: 3 changes
 
 New device: Living room TV (tv), grade F.
-Kitchen plug started contacting metrics.example.com every 1m (Telemetry).
+Kitchen plug started contacting metrics.example.com every 60s (Telemetry).
 Kitchen plug: Looked up dns.google, an encrypted-DNS service it can use to skip your DNS filter.
 ```
 
@@ -124,8 +124,8 @@ Gotify application's default applies).
 The webhook request is a POST with `Content-Type: application/json`, plus
 any `headers:` you configured.
 
-**MQTT** also keeps a grade sensor per device: every check publishes each
-device's current grade (A–F), retained, to
+**MQTT** also keeps a grade sensor per device: each device's current grade
+(A–F) is published, retained, to
 `<topic>/device/<id>/grade`, where `<id>` is the device id with every
 character other than letters, digits, `_` and `-` replaced by `_`
 (`mac:aa:bb:…` becomes `mac_aa_bb_…`). With `discovery: true` (the default)
@@ -141,9 +141,14 @@ config to `<discovery_prefix>/sensor/phonehome/phonehome_<id>_grade/config`:
 ```
 
 Home Assistant then shows one device per phonehome device, each with a
-"Privacy grade" sensor. Retained messages stay on your broker until you
+"Privacy grade" sensor. A check publishes only what changed since the last
+one (plus everything once an hour, in case the broker lost its retained
+messages), and connects to the broker only when there is something to send.
+When a device drops out of the week, its retained grade is cleared, so the
+sensor reads "unknown" rather than an old grade. Retained messages stay on your broker until you
 clear them; to remove a device's sensor, publish an empty retained message
 to its config topic.
 
 phonehome speaks MQTT 3.1.1 itself (no library): it connects, publishes at
-QoS 0 and disconnects, once per check. It does not subscribe to anything.
+QoS 0 and disconnects, at most once per check for grades and once per
+alert. It does not subscribe to anything.
