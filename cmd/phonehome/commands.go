@@ -223,7 +223,7 @@ func cmdServe(ctx context.Context, args []string) error {
 	}
 
 	h := web.New(a, web.Options{
-		Username: cfg.Auth.Username, Password: pw, Logger: logger,
+		Username: cfg.Auth.Username, Password: pw, Logger: logger, Metrics: cfg.Metrics,
 	})
 	return listenAndServe(ctx, cfg.Listen, h)
 }
@@ -233,6 +233,7 @@ func cmdDemo(ctx context.Context, args []string) error {
 	listen := fl.String("listen", "127.0.0.1:8099", "address to serve on")
 	days := fl.Int("days", 30, "days of synthetic history")
 	seed := fl.Int64("seed", 7, "random seed for the synthetic household")
+	metrics := fl.Bool("metrics", false, "also serve /metrics for Prometheus")
 	if err := fl.Parse(args); err != nil {
 		return errUsage
 	}
@@ -241,7 +242,7 @@ func cmdDemo(ctx context.Context, args []string) error {
 		return err
 	}
 	defer st.Close()
-	h := web.New(newApp(st, kb.Default(), analyze.DefaultOptions(), true), web.Options{Logger: logger})
+	h := web.New(newApp(st, kb.Default(), analyze.DefaultOptions(), true), web.Options{Logger: logger, Metrics: *metrics})
 	fmt.Fprintf(os.Stderr, "phonehome demo: a synthetic household — not a measurement.\nOpen http://%s\n", displayAddr(*listen))
 	return listenAndServe(ctx, *listen, h)
 }
