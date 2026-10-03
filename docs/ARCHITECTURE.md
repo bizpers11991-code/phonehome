@@ -210,7 +210,9 @@ reports get no link.
 
 Routes: `GET /` (embedded SPA), `GET /api/report?days=7`, `GET /api/status`,
 `POST /api/devices/{id}/label`, `GET /receipt/home.svg|png?days=7`,
-`GET /receipt/{deviceID}.svg|png?days=7`, `GET /healthz`. Assets embedded with
+`GET /receipt/{deviceID}.svg|png?days=7`, `GET /healthz`, and with `metrics: true`
+`GET /metrics?days=7` (Prometheus text format, written by hand in
+`internal/web/metrics.go`; series listed in docs/integrations.md). Assets embedded with
 `go:embed`; no CDN, no external fonts (it runs on a LAN, often offline).
 
 ### `internal/config`, `internal/ingest`, `internal/demo`, `cmd/phonehome`

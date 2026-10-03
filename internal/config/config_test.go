@@ -325,3 +325,13 @@ func writeFile(t *testing.T, path, s string) {
 		t.Fatal(err)
 	}
 }
+
+func TestMetricsOption(t *testing.T) {
+	c, err := Parse([]byte("metrics: true\n"))
+	if err != nil || !c.Metrics {
+		t.Fatalf("metrics: true gave %+v, %v", c, err)
+	}
+	if c, err := Parse(nil); err != nil || c.Metrics {
+		t.Fatalf("metrics must be off by default: %+v, %v", c, err)
+	}
+}
