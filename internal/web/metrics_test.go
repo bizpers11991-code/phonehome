@@ -104,7 +104,7 @@ func TestWriteMetrics(t *testing.T) {
 		`phonehome_device_bypass_findings` + tv + `,confidence="low"}`:                         "0",
 		`phonehome_source_up{source="pihole",kind="dns"}`:                                      "1",
 		`phonehome_source_up{source="leases",kind="devices"}`:                                  "0",
-		`phonehome_source_records_total{source="pihole",kind="dns"}`:                           "1234",
+		`phonehome_source_records{source="pihole",kind="dns"}`:                                 "1234",
 		`phonehome_source_last_success_timestamp_seconds{source="pihole",kind="dns"}`:          "1.7909424e+09",
 	} {
 		if got[series] != want {

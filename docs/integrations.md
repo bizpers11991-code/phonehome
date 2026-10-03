@@ -68,7 +68,7 @@ Per source (labels `source`, `kind`):
 | Metric | Meaning |
 |---|---|
 | `phonehome_source_up` | 1 if the last ingestion run succeeded, 0 if it failed. |
-| `phonehome_source_records_total` | Records ingested since phonehome's database was created (a counter). |
+| `phonehome_source_records` | Records ingested since phonehome's database was created. For a device source (leases), the number of devices it listed last time, so this is a gauge, not a counter. |
 | `phonehome_source_last_run_timestamp_seconds` | When the source was last read. |
 | `phonehome_source_last_success_timestamp_seconds` | When it was last read without error. Absent if never. |
 
