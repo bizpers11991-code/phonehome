@@ -32,6 +32,10 @@ type MQTT struct {
 	Version            string // phonehome's version, for the discovery origin
 	TLS                *tls.Config
 	Dial               func(ctx context.Context, network, addr string) (net.Conn, error) // nil: net.Dialer
+
+	// What the last successful Publish sent, by device slug.
+	grades, configs map[string]string
+	refreshed       time.Time
 }
 
 func (m *MQTT) Name() string { return "mqtt" }
@@ -42,16 +46,26 @@ func (m *MQTT) Notify(ctx context.Context, b Batch) error {
 	return m.send(ctx, []message{{topic: m.Topic + "/alert", payload: JSON(b)}})
 }
 
-// Publish sends every device's current grade, retained, and its discovery
-// config when Discovery is on.
+// Publish keeps every device's grade sensor current: it sends a device's
+// grade, retained, and its discovery config when Discovery is on, but only
+// what changed since the last successful publish, plus everything once an
+// hour so a broker that lost its retained messages recovers. A device that
+// drops out of the week's report has its retained grade cleared, so the
+// sensor reads "unknown" rather than a stale grade.
+//
+// Publish is not safe for concurrent use; the Engine calls it from one
+// goroutine.
 func (m *MQTT) Publish(ctx context.Context, r model.HomeReport) error {
+	now := time.Now()
+	full := m.grades == nil || now.Sub(m.refreshed) >= time.Hour
+	grades, configs := map[string]string{}, map[string]string{}
 	var msgs []message
 	for _, d := range r.Devices {
 		if d.Grade == "" {
 			continue
 		}
 		slug := topicSlug(d.Device.ID)
-		state := fmt.Sprintf("%s/device/%s/grade", m.Topic, slug)
+		state := m.stateTopic(slug)
 		if m.Discovery {
 			cfg := discoveryConfig{
 				Name:     "Privacy grade",
@@ -66,14 +80,36 @@ func (m *MQTT) Publish(ctx context.Context, r model.HomeReport) error {
 				Origin: discoveryOrigin{Name: "phonehome", Version: m.Version, URL: "https://github.com/bizpers11991-code/phonehome"},
 			}
 			payload, _ := json.Marshal(cfg)
-			msgs = append(msgs, message{topic: fmt.Sprintf("%s/sensor/phonehome/%s/config", m.DiscoveryPrefix, cfg.UniqueID), payload: payload, retain: true})
+			configs[slug] = string(payload)
+			if full || m.configs[slug] != string(payload) {
+				msgs = append(msgs, message{topic: fmt.Sprintf("%s/sensor/phonehome/%s/config", m.DiscoveryPrefix, cfg.UniqueID), payload: payload, retain: true})
+			}
 		}
-		msgs = append(msgs, message{topic: state, payload: []byte(d.Grade), retain: true})
+		grades[slug] = d.Grade
+		if full || m.grades[slug] != d.Grade {
+			msgs = append(msgs, message{topic: state, payload: []byte(d.Grade), retain: true})
+		}
 	}
-	if len(msgs) == 0 {
-		return nil
+	for slug := range m.grades {
+		if _, ok := grades[slug]; !ok {
+			// An empty retained message removes the retained grade.
+			msgs = append(msgs, message{topic: m.stateTopic(slug), retain: true})
+		}
 	}
-	return m.send(ctx, msgs)
+	if len(msgs) > 0 {
+		if err := m.send(ctx, msgs); err != nil {
+			return err // nothing remembered: the next check sends it all again
+		}
+	}
+	m.grades, m.configs = grades, configs
+	if full {
+		m.refreshed = now
+	}
+	return nil
+}
+
+func (m *MQTT) stateTopic(slug string) string {
+	return fmt.Sprintf("%s/device/%s/grade", m.Topic, slug)
 }
 
 // discoveryConfig is a Home Assistant MQTT discovery payload for one
@@ -149,7 +185,7 @@ func (m *MQTT) send(ctx context.Context, msgs []message) error {
 	if err != nil {
 		return fmt.Errorf("mqtt: %w", err)
 	}
-	defer conn.Close()
+	defer func() { conn.Close() }() // the TLS conn, once it wraps this one
 	if dl, ok := ctx.Deadline(); ok {
 		conn.SetDeadline(dl)
 	}

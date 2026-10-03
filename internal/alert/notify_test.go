@@ -57,7 +57,7 @@ func TestWebhook(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := `{"source":"phonehome","time":"2026-10-02T12:00:00Z","demo":false,"title":"phonehome: 3 changes",` +
-		`"text":"New device: Küche TV (tv), grade F.\nPlug started contacting metrics.example every 1m (Telemetry).\nPlug: Looked up dns.google.",` +
+		`"text":"New device: Küche TV (tv), grade F.\nPlug started contacting metrics.example every 60s (Telemetry).\nPlug: Looked up dns.google.",` +
 		`"events":[{"type":"new_device","device":{"id":"mac:aa:bb:cc:00:11:22","name":"Küche TV","kind":"tv","vendor":"Samsung"},"grade":"F"},` +
 		`{"type":"heartbeat","device":{"id":"ip:192.168.1.9","name":"Plug","kind":"plug"},"domain":"metrics.example","category":"telemetry","everySeconds":60},` +
 		`{"type":"bypass","device":{"id":"ip:192.168.1.9","name":"Plug","kind":"plug"},"finding":{"kind":"doh-lookup","detail":"Looked up dns.google.","evidence":"dns.google","confidence":"medium"}}]}`
@@ -111,7 +111,7 @@ func TestGotify(t *testing.T) {
 	var body map[string]any
 	json.Unmarshal(c.body, &body)
 	if c.path != "/message" || c.header.Get("X-Gotify-Key") != "AbCd" || body["title"] != "phonehome: Plug started a heartbeat" ||
-		body["message"] != "Plug started contacting metrics.example every 1m (Telemetry)." || body["priority"] != 5.0 {
+		body["message"] != "Plug started contacting metrics.example every 60s (Telemetry)." || body["priority"] != 5.0 {
 		t.Fatalf("%s %v %s", c.path, c.header, c.body)
 	}
 	g.Priority = 0
@@ -234,6 +234,43 @@ func TestMQTT(t *testing.T) {
 		`"origin":{"name":"phonehome","sw_version":"v0.3.0","support_url":"https://github.com/bizpers11991-code/phonehome"}}`
 	if string(cfg.payload) != wantCfg {
 		t.Fatalf("discovery config\n%s\nwant\n%s", cfg.payload, wantCfg)
+	}
+
+	// Nothing changed: no connection at all.
+	before := b.done
+	if err := m.Publish(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+	if b.done != before {
+		t.Fatal("an unchanged report connected to the broker")
+	}
+
+	// A new grade goes out alone; a device gone from the week is cleared.
+	b.messages = nil
+	rep.Devices = []model.DeviceReport{{Device: model.Device{ID: "mac:01"}, Grade: "B"}}
+	m.Discovery = false
+	if err := m.Publish(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-b.done; err != nil {
+		t.Fatal(err)
+	}
+	if len(b.messages) != 2 || b.messages[0].topic != "phonehome/device/mac_01/grade" || string(b.messages[0].payload) != "B" ||
+		b.messages[1].topic != "phonehome/device/mac_aa_bb_cc_00_11_22/grade" || len(b.messages[1].payload) != 0 || !b.messages[1].retain {
+		t.Fatalf("%+v", b.messages)
+	}
+
+	// Once an hour everything is sent again.
+	b.messages = nil
+	m.refreshed = m.refreshed.Add(-time.Hour)
+	if err := m.Publish(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-b.done; err != nil {
+		t.Fatal(err)
+	}
+	if len(b.messages) != 1 || string(b.messages[0].payload) != "B" {
+		t.Fatalf("refresh %+v", b.messages)
 	}
 
 	// A refusal says why.

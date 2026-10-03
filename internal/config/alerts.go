@@ -125,6 +125,9 @@ func (a Alerts) validate() error {
 		if (n.Token != "" || n.TokenFile != "") && n.Username != "" {
 			bad("ntfy: use a token or a username and password, not both")
 		}
+		if (n.Password != "" || n.PasswordFile != "") && n.Username == "" {
+			bad("ntfy: a password needs a username; or use an access token")
+		}
 	}
 	if g := a.Gotify; g != nil {
 		if !httpURL(g.URL) {

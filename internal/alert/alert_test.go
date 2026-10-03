@@ -12,8 +12,9 @@ import (
 )
 
 type memStore struct {
-	mu sync.Mutex
-	m  map[string]string
+	mu     sync.Mutex
+	m      map[string]string
+	writes int
 }
 
 func (s *memStore) AlertState(_ context.Context, k string) (string, error) {
@@ -28,6 +29,7 @@ func (s *memStore) SetAlertState(_ context.Context, k, v string) error {
 	if s.m == nil {
 		s.m = map[string]string{}
 	}
+	s.writes++
 	s.m[k] = v
 	return nil
 }
@@ -85,7 +87,7 @@ func kinds(b Batch) string {
 
 func TestEngine(t *testing.T) {
 	h := &home{now: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC), devs: []model.DeviceReport{dev("mac:1", "TV", "B")}}
-	e, rec, _ := newEngine(h)
+	e, rec, st := newEngine(h)
 
 	check(t, e) // the first check records a baseline and says nothing
 	if len(rec.batches) != 0 {
@@ -112,11 +114,15 @@ func TestEngine(t *testing.T) {
 		t.Errorf("grade event %+v", ev)
 	}
 
-	// Nothing changed: nothing is sent.
+	// Nothing changed: nothing is sent, and nothing is written.
 	tick()
+	writes := st.writes
 	check(t, e)
 	if len(rec.batches) != 1 {
 		t.Fatalf("unchanged report sent a batch")
+	}
+	if st.writes != writes {
+		t.Fatalf("unchanged state written again")
 	}
 
 	// Better, then worse again within a day: the same alert is not repeated.
@@ -218,10 +224,9 @@ func TestEngineWaitsForData(t *testing.T) {
 
 func TestEngineKnownDevices(t *testing.T) {
 	h := &home{now: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC), devs: []model.DeviceReport{dev("mac:1", "TV", "B")}}
-	e, rec, _ := newEngine(h)
-	e.Devices = func(context.Context) ([]model.Device, error) {
-		return []model.Device{{ID: "mac:1"}, {ID: "mac:9"}}, nil // mac:9 was quiet this week
-	}
+	e, rec, st := newEngine(h)
+	known := []model.Device{{ID: "mac:1"}, {ID: "mac:9"}, {ID: "mac:8"}} // mac:9 and mac:8 were quiet this week
+	e.Devices = func(context.Context) ([]model.Device, error) { return known, nil }
 	check(t, e)
 	h.now = h.now.Add(5 * time.Minute)
 	quiet := dev("mac:9", "Old camera", "F")
@@ -236,6 +241,14 @@ func TestEngineKnownDevices(t *testing.T) {
 	check(t, e)
 	if len(rec.batches) != 1 || kinds(rec.batches[0]) != "grade_worse:TV" {
 		t.Fatalf("got %d batches", len(rec.batches))
+	}
+
+	// A device phonehome forgot is forgotten here too.
+	known = known[:2]
+	h.now = h.now.Add(5 * time.Minute)
+	check(t, e)
+	if strings.Contains(st.m[stateKey], "mac:8") || !strings.Contains(st.m[stateKey], "mac:9") {
+		t.Fatalf("state %s", st.m[stateKey])
 	}
 }
 
