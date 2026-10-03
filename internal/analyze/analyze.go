@@ -390,11 +390,17 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 			hints[cls.KindHint] += da.count
 		}
 		ds := model.DomainStat{
-			Domain:   info.name,
-			Count:    da.count,
-			Blocked:  da.blocked,
-			Category: cls.Category,
-			Purpose:  cls.Purpose,
+			Domain:     info.name,
+			Count:      da.count,
+			Blocked:    da.blocked,
+			Category:   cls.Category,
+			Purpose:    cls.Purpose,
+			Rule:       cls.Rule,
+			Confidence: cls.Confidence,
+			Evidence:   cls.Evidence,
+		}
+		if len(da.times) > 0 {
+			ds.First, ds.Last = time.Unix(0, slices.Min(da.times)), time.Unix(0, slices.Max(da.times))
 		}
 		if co := cls.Company; co != nil && co.ID != "" {
 			ds.CompanyID, ds.CompanyName = co.ID, co.Name
@@ -433,7 +439,8 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 	slices.SortFunc(domains, func(x, y model.DomainStat) int {
 		return cmp.Or(cmp.Compare(y.Count, x.Count), cmp.Compare(x.Domain, y.Domain))
 	})
-	r.TopDomains = domains[:min(len(domains), maxTopDomains)]
+	r.Domains = domains
+	r.TopDomains = domains[:min(len(domains), maxTopDomains):min(len(domains), maxTopDomains)]
 	sortHeartbeats(r.Heartbeats)
 	r.Unknown = topUnknown(r.Unknown)
 
