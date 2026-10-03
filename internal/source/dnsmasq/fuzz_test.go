@@ -8,9 +8,12 @@ import (
 	"time"
 )
 
+// testLogs are the testdata logs, each a corpus seed.
+var testLogs = []string{"syslog.log", "extra.log", "mixed.log", "ede.log", "pihole-v6-proto.log", "pihole-v5.log"}
+
 // seedLines adds every line of the testdata logs to f's corpus.
 func seedLines(f *testing.F) {
-	for _, name := range []string{"syslog.log", "extra.log", "mixed.log", "ede.log"} {
+	for _, name := range testLogs {
 		b, err := os.ReadFile(filepath.Join("testdata", name))
 		if err != nil {
 			f.Fatal(err)
@@ -43,7 +46,7 @@ func FuzzParseLine(f *testing.F) {
 // that the cursor always settles, no batch exceeds its limit, and reading in
 // batches gives the same lookups as reading everything at once.
 func FuzzFetchDNS(f *testing.F) {
-	for _, name := range []string{"syslog.log", "extra.log", "mixed.log", "ede.log"} {
+	for _, name := range testLogs {
 		b, err := os.ReadFile(filepath.Join("testdata", name))
 		if err != nil {
 			f.Fatal(err)

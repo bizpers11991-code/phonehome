@@ -1,0 +1,17 @@
+Oct  2 14:30:00 dnsmasq[455]: query[A] metrics.vendor.example from 192.168.1.21
+Oct  2 14:30:00 dnsmasq[455]: forwarded metrics.vendor.example to 9.9.9.9
+Oct  2 14:30:00 dnsmasq[455]: reply metrics.vendor.example is <CNAME>
+Oct  2 14:30:00 dnsmasq[455]: reply tracker.example is blocked during CNAME inspection
+Oct  2 14:30:00 dnsmasq[455]: gravity blocked metrics.vendor.example is 0.0.0.0
+Oct  2 14:30:01 dnsmasq[455]: query[A] www.cdn-site.example from 192.168.1.22
+Oct  2 14:30:01 dnsmasq[455]: forwarded www.cdn-site.example to 9.9.9.9
+Oct  2 14:30:01 dnsmasq[455]: reply www.cdn-site.example is <CNAME>
+Oct  2 14:30:01 dnsmasq[455]: reply edge.cdn.example is 203.0.113.80
+Oct  2 14:30:02 dnsmasq[455]: query[A] deny.example from 192.168.1.23
+Oct  2 14:30:02 dnsmasq[455]: exactly blacklisted deny.example is 0.0.0.0
+Oct  2 14:30:02 dnsmasq[455]: query[A] ads.tracker.example from 192.168.1.23
+Oct  2 14:30:02 dnsmasq[455]: regex blacklisted ads.tracker.example is 0.0.0.0
+Oct  2 14:30:03 dnsmasq[455]: query[A] mask.icloud.com from 192.168.1.24
+Oct  2 14:30:03 dnsmasq[455]: Apple iCloud Private Relay domain mask.icloud.com is NXDOMAIN
+Oct  2 14:30:03 dnsmasq[455]: query[A] cached.example from 192.168.1.24
+Oct  2 14:30:03 dnsmasq[455]: cached cached.example is 198.51.100.9

@@ -96,6 +96,32 @@ func TestFormats(t *testing.T) {
 			"12:01:00.123456 connectivitycheck.gstatic.com A 192.168.1.60 false",
 			"14:02:00 device-metrics-us.amazon.com A 192.168.1.61 true",
 		},
+		// Pi-hole v6's pihole.log with misc.extraLogging, which writes
+		// log-queries=proto: "UDP <serial> <requestor>/<port> ...".
+		"pihole-v6-proto.log": {
+			"13:59:00 example.org A 192.168.1.20 false",
+			"13:59:01 example.org AAAA fd00::20 false",
+			"13:59:02 metrics.vendor.example A 192.168.1.21 true", // CNAME-blocked
+			"13:59:02 www.cdn-site.example HTTPS 192.168.1.22 false",
+			"13:59:03 ads.example.net A 192.168.1.23 true",
+			"13:59:03 deny.example A 192.168.1.23 true",
+			"13:59:03 tracker.metrics.example AAAA 192.168.1.23 true",
+			"13:59:04 use-application-dns.net A 192.168.1.24 true",
+			"13:59:04 flood.example A 192.168.1.25 true", // rate-limited
+			"13:59:05 upstream-blocked.example A 192.168.1.26 true",
+			"13:59:05 pi.hole A 192.168.1.26 false",
+			"13:59:06 slow.example A 192.168.1.27 false",
+			"13:59:06 busy.example A 192.168.1.27 true",
+		},
+		// Pi-hole v5's pihole.log: plain log-queries, v5's reason names.
+		"pihole-v5.log": {
+			"14:30:00 metrics.vendor.example A 192.168.1.21 true", // CNAME-blocked
+			"14:30:01 www.cdn-site.example A 192.168.1.22 false",
+			"14:30:02 deny.example A 192.168.1.23 true",
+			"14:30:02 ads.tracker.example A 192.168.1.23 true",
+			"14:30:03 mask.icloud.com A 192.168.1.24 true",
+			"14:30:03 cached.example A 192.168.1.24 false",
+		},
 	} {
 		t.Run(file, func(t *testing.T) {
 			path := filepath.Join("testdata", file)
@@ -137,7 +163,12 @@ func TestHoldBack(t *testing.T) {
 	got, cur = drain(t, l, cur, 10)
 	equal(t, got, []string{"14:10:00 ads.example.com A 192.168.1.20 true"})
 
+	// Forwarding settles nothing: Pi-hole may block on the reply.
 	appendFile(t, path, "om 192.168.1.20\nOct  2 14:10:01 dnsmasq[9]: forwarded half.example.com to 9.9.9.9\n")
+	got, cur = drain(t, l, cur, 10)
+	equal(t, got, nil)
+
+	appendFile(t, path, "Oct  2 14:10:01 dnsmasq[9]: reply half.example.com is 198.51.100.1\n")
 	got, _ = drain(t, l, cur, 10)
 	equal(t, got, []string{"14:10:01 half.example.com A 192.168.1.20 false"})
 }

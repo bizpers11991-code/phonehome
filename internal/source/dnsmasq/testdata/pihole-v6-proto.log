@@ -1,0 +1,36 @@
+Oct  2 13:59:00 dnsmasq[812]: UDP 201 192.168.1.20/41234 query[A] example.org from 192.168.1.20
+Oct  2 13:59:00 dnsmasq[812]: UDP 201 192.168.1.20/41234 forwarded example.org to 127.0.0.1#5335
+Oct  2 13:59:00 dnsmasq[812]: UDP 201 192.168.1.20/41234 validation example.org is SECURE
+Oct  2 13:59:00 dnsmasq[812]: UDP 201 192.168.1.20/41234 reply example.org is 93.184.215.14 (DNSSEC signed)
+Oct  2 13:59:01 dnsmasq[812]: TCP 202 fd00::20/40001 query[AAAA] example.org from fd00::20
+Oct  2 13:59:01 dnsmasq[812]: TCP 202 fd00::20/40001 cached-stale example.org is 2606:2800:21f:cb07:6820:80da:af6b:8b2c
+Oct  2 13:59:02 dnsmasq[812]: UDP 203 192.168.1.21/5353 query[A] metrics.vendor.example from 192.168.1.21
+Oct  2 13:59:02 dnsmasq[812]: UDP 203 192.168.1.21/5353 forwarded metrics.vendor.example to 127.0.0.1#5335
+Oct  2 13:59:02 dnsmasq[812]: UDP 204 192.168.1.22/5353 query[HTTPS] www.cdn-site.example from 192.168.1.22
+Oct  2 13:59:02 dnsmasq[812]: UDP 203 192.168.1.21/5353 reply metrics.vendor.example is <CNAME>
+Oct  2 13:59:02 dnsmasq[812]: UDP 203 192.168.1.21/5353 reply tracker.example is blocked during CNAME inspection
+Oct  2 13:59:02 dnsmasq[812]: UDP 203 192.168.1.21/5353 gravity blocked metrics.vendor.example is 0.0.0.0
+Oct  2 13:59:02 dnsmasq[812]: UDP 204 192.168.1.22/5353 cached www.cdn-site.example is <CNAME>
+Oct  2 13:59:02 dnsmasq[812]: UDP 204 192.168.1.22/5353 cached edge.cdn.example is <HTTPS>
+Oct  2 13:59:03 dnsmasq[812]: UDP 205 192.168.1.23/5353 query[A] ads.example.net from 192.168.1.23
+Oct  2 13:59:03 dnsmasq[812]: UDP 205 192.168.1.23/5353 gravity blocked ads.example.net is 0.0.0.0
+Oct  2 13:59:03 dnsmasq[812]: UDP 206 192.168.1.23/5353 query[A] deny.example from 192.168.1.23
+Oct  2 13:59:03 dnsmasq[812]: UDP 206 192.168.1.23/5353 exactly denied deny.example is 0.0.0.0
+Oct  2 13:59:03 dnsmasq[812]: UDP 207 192.168.1.23/5353 query[AAAA] tracker.metrics.example from 192.168.1.23
+Oct  2 13:59:03 dnsmasq[812]: UDP 207 192.168.1.23/5353 regex denied tracker.metrics.example is ::
+Oct  2 13:59:04 dnsmasq[812]: UDP 208 192.168.1.24/5353 query[A] use-application-dns.net from 192.168.1.24
+Oct  2 13:59:04 dnsmasq[812]: UDP 208 192.168.1.24/5353 Mozilla canary domain use-application-dns.net is NXDOMAIN
+Oct  2 13:59:04 dnsmasq[812]: UDP 209 192.168.1.25/5353 query[A] flood.example from 192.168.1.25
+Oct  2 13:59:04 dnsmasq[812]: UDP 209 192.168.1.25/5353 Rate-limiting flood.example is REFUSED (EDE: blocked)
+Oct  2 13:59:05 dnsmasq[812]: UDP 210 192.168.1.26/5353 query[A] upstream-blocked.example from 192.168.1.26
+Oct  2 13:59:05 dnsmasq[812]: UDP 210 192.168.1.26/5353 forwarded upstream-blocked.example to 127.0.0.1#5335
+Oct  2 13:59:05 dnsmasq[812]: UDP 210 192.168.1.26/5353 blocked upstream with NULL address upstream-blocked.example is 0.0.0.0
+Oct  2 13:59:05 dnsmasq[812]: UDP 211 192.168.1.26/5353 query[A] pi.hole from 192.168.1.26
+Oct  2 13:59:05 dnsmasq[812]: UDP 211 192.168.1.26/5353 Pi-hole hostname pi.hole is 192.168.1.2
+Oct  2 13:59:06 dnsmasq[812]: UDP 212 192.168.1.27/5353 query[A] slow.example from 192.168.1.27
+Oct  2 13:59:06 dnsmasq[812]: UDP 212 192.168.1.27/5353 forwarded slow.example to 127.0.0.1#5335
+Oct  2 13:59:06 dnsmasq[812]: UDP 213 192.168.1.27/5353 query[A] busy.example from 192.168.1.27
+Oct  2 13:59:06 dnsmasq[812]: UDP 213 192.168.1.27/5353 to be refused (gravity database is not available) busy.example is REFUSED (EDE: blocked)
+Oct  2 13:59:06 dnsmasq[812]: UDP 212 192.168.1.27/5353 reply query is duplicate
+Oct  2 13:59:07 dnsmasq[812]: UDP 212 192.168.1.27/5353 reply slow.example is 198.51.100.7
+Oct  2 13:59:07 dnsmasq[812]: 214 dnssec-query[DS] example to 127.0.0.1#5335

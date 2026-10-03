@@ -30,6 +30,40 @@ var want = []string{
 	"log-config.samsungacr.com A 192.168.1.20 true",
 }
 
+// TestUpstreamFormat reads testdata/upstream/querylog.json. All but its
+// last line were written by AdGuard Home's own querylog code (newLogEntry
+// and flushLogBuffer at commit fe415923abb6, October 2026) from one
+// scenario each; the last is the older Rule/FilterID result format that
+// AdGuard Home still decodes. A query for the root (QH ".") is skipped.
+func TestUpstreamFormat(t *testing.T) {
+	l := NewQueryLog(filepath.Join("testdata", "upstream", "querylog.json"))
+	qs, _, err := l.FetchDNS(context.Background(), "", 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	equal(t, summary(qs), []string{
+		"www.example.org A 192.168.1.20 false",
+		"www.example.org AAAA fd00::20 false", // cached
+		"ads.example.net A 192.168.1.21 true",
+		"metrics.vendor.example A 192.168.1.21 true", // its CNAME target was blocked
+		"www.tiktok.com HTTPS 192.168.1.22 true",     // blocked service
+		"malware.example A 192.168.1.22 true",        // safe browsing
+		"adult.example A 192.168.1.22 true",          // parental control
+		"www.google.com A 192.168.1.22 false",        // safe search
+		"unifi.ui.com A 192.168.1.23 false",          // allowlisted
+		"nas.home A 192.168.1.23 false",              // DNS rewrite
+		"router.lan A 192.168.1.23 false",            // /etc/hosts
+		"telemetry.example.com A 192.168.1.24 true",  // $dnsrewrite=REFUSED
+		"beacon.example.com AAAA 192.168.1.24 true",  // $dnsrewrite=NXDOMAIN
+		"printer.example.com A 192.168.1.24 false",   // $dnsrewrite to an address
+		"example.net TYPE65534 192.168.1.25 false",   // a DoH client with a ClientID
+		"legacy.ads.example A 192.168.1.26 true",
+	})
+	if want := time.Date(2026, 10, 2, 11, 58, 1, 123456789, time.UTC); !qs[0].Time.Equal(want) {
+		t.Errorf("time = %v, want %v", qs[0].Time, want)
+	}
+}
+
 func summary(qs []model.DNSQuery) []string {
 	var out []string
 	for _, q := range qs {

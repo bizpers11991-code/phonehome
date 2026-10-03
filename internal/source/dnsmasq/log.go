@@ -22,6 +22,13 @@ import (
 // from config immediately, so a late answer came from upstream.
 const lookahead = 100
 
+// cnameHold is how many lines a query answered with a CNAME is held back,
+// at most. Pi-hole decides whether to block a CNAME chain only after
+// logging it ("reply a.example is <CNAME>", then the chain, then "gravity
+// blocked a.example is 0.0.0.0"), all while handling one reply, so the
+// hold also ends as soon as the next query is logged.
+const cnameHold = 16
+
 // Option configures a Log.
 type Option func(*Log)
 
@@ -174,6 +181,7 @@ type pending struct {
 	end      int64 // offset just past its line
 	line     int
 	answered bool
+	hold     int // answered with a CNAME: line number up to which to wait
 }
 
 type reader struct {
@@ -205,7 +213,7 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 	emit := func(all bool) {
 		for len(queue) > 0 && !r.full() {
 			p := queue[0]
-			if !all && !p.answered && lineNum-p.line < lookahead {
+			if !all && (!p.answered && lineNum-p.line < lookahead || p.answered && lineNum < p.hold) {
 				return
 			}
 			r.out = append(r.out, model.DNSQuery{
@@ -239,9 +247,12 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 		lineNum++
 		if e, ok := parseLine(string(line), r.loc, r.now); ok {
 			if e.query {
+				for i := range queue {
+					queue[i].hold = 0
+				}
 				queue = append(queue, pending{e: e, end: offset, line: lineNum})
 			} else {
-				answer(queue, e)
+				answer(queue, e, lineNum)
 			}
 		}
 		emit(false)
@@ -258,22 +269,35 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 	return done, nil
 }
 
-// answer settles the oldest unanswered query e refers to.
-func answer(queue []pending, e event) {
+// answer settles the oldest unanswered query e refers to. A blocking
+// verdict for a query already answered with a CNAME (and still held back)
+// overrides that answer.
+func answer(queue []pending, e event, lineNum int) {
+	matches := func(p *pending) bool {
+		if p.e.serial != "" && e.serial != "" {
+			return p.e.serial == e.serial
+		}
+		return p.e.key == e.key
+	}
 	for i := range queue {
 		p := &queue[i]
-		if p.answered {
-			continue
-		}
-		if p.e.serial != "" && e.serial != "" {
-			if p.e.serial != e.serial {
-				continue
-			}
-		} else if p.e.key != e.key {
+		if p.answered || !matches(p) {
 			continue
 		}
 		p.answered, p.e.blocked = true, e.blocked
+		if e.cname {
+			p.hold = lineNum + cnameHold
+		}
 		return
+	}
+	if !e.blocked {
+		return
+	}
+	for i := range queue {
+		if p := &queue[i]; p.hold > 0 && matches(p) {
+			p.e.blocked = true
+			return
+		}
 	}
 }
 

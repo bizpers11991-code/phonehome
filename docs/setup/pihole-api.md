@@ -70,6 +70,10 @@ resolvers: ["192.168.1.2"]         # only matters with conntrack
 
 Then restart phonehome (`sudo systemctl restart phonehome`).
 
+Lookups are read once they are 30 seconds old, so they reach the dashboard
+about half a minute late. Until then Pi-hole may still mark a lookup as
+blocked, for example when the reply's CNAME chain hits your blocklist.
+
 ### In Docker
 
 ```yaml
