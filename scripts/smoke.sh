@@ -4,6 +4,9 @@
 # 404s and CSRF rejections. Needs curl and jq. CI runs it; so can you:
 #
 #	sh scripts/smoke.sh
+
+# ok always succeeds, so "test && ok || fail" is a safe if-then-else here.
+# shellcheck disable=SC2015
 set -eu
 
 addr=127.0.0.1:${SMOKE_PORT:-18199}
