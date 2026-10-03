@@ -150,10 +150,18 @@ This matters, so here it is plainly:
 
 ## Privacy
 
-phonehome **talks to nothing but the sources you point it at**: no telemetry,
-no update checks, no fonts or scripts from a CDN, no accounts. Everything it knows ships inside
-the binary. The receipt footer says *"Nothing left this house to make this
-receipt"*, and that has to stay true.
+phonehome **talks to nothing but the sources you point it at and the alert
+targets you configure**: no telemetry, no update checks, no fonts or scripts
+from a CDN, no accounts. Everything it knows ships inside the binary. The
+receipt footer says *"Nothing left this house to make this receipt"*, and
+that has to stay true.
+
+[Alerts](docs/alerts.md) are off by default. If you configure a webhook,
+ntfy, Gotify or MQTT target, phonehome sends that target, and only that
+target, the alert itself: the device's name, kind and vendor, its grade,
+and the domain or finding that triggered it. That is never more than the
+dashboard shows. If the target is outside your home (say the public
+ntfy.sh), that is the one thing that leaves it.
 
 ## Contribute what your devices do
 
