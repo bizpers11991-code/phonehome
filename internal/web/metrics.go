@@ -115,7 +115,7 @@ func writeMetrics(rep model.HomeReport, st model.Status, days int) []byte {
 		devBeats   = g("phonehome_device_heartbeats", "Destinations the device contacted on a regular clock (heartbeats) in the period.")
 		devBypass  = g("phonehome_device_bypass_findings", "DNS-bypass findings for the device, by confidence.")
 		srcUp      = g("phonehome_source_up", "1 if the source's last ingestion run succeeded, 0 if it failed.")
-		srcRecords = &family{name: "phonehome_source_records_total", help: "Records ingested from the source since phonehome's database was created.", typ: "counter"}
+		srcRecords = g("phonehome_source_records", "Records ingested from the source since phonehome's database was created; for a device source, the devices it listed last time.")
 		srcLastRun = g("phonehome_source_last_run_timestamp_seconds", "When the source was last read.")
 		srcLastOK  = g("phonehome_source_last_success_timestamp_seconds", "When the source was last read without error. Absent if never.")
 	)
