@@ -142,17 +142,8 @@ func TestShortPeriod(t *testing.T) {
 // unsourced demo hostname shows up here. Remove a name from this list when a
 // rule with evidence lands for it.
 var unclassifiedOnPurpose = []string{
-	"api.github.com",
 	"dmls-na.amazon.com",
-	"edgeapi.slack.com",
-	"fonts.googleapis.com",
-	"github.com",
 	"unagi-na.amazon.com",
-	"weatherkit.apple.com",
-	"wss-primary.slack.com",
-	"www.google.com",
-	"www.googletagmanager.com",
-	"zoom.us",
 }
 
 func TestDemoDomainsClassified(t *testing.T) {

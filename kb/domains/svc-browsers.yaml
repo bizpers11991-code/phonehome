@@ -113,13 +113,6 @@ rules:
     confidence: high
     evidence:
       - https://support.google.com/chrome/a/answer/6334001
-  - pattern: clients2.google.com
-    company: google
-    category: essential
-    purpose: Google client services endpoint that Google lists as required for Chrome and ChromeOS.
-    confidence: high
-    evidence:
-      - https://support.google.com/chrome/a/answer/6334001
   - pattern: clients4.google.com
     company: google
     category: essential

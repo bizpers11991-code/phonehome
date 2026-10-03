@@ -27,15 +27,6 @@ rules:
     confidence: medium
     evidence:
       - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/hotjar.com.json
-  - pattern: firebaselogging-pa.googleapis.com
-    company: google
-    category: telemetry
-    purpose: Firebase SDK logging endpoint that apps contact even when analytics or crash reporting is switched off.
-    confidence: medium
-    evidence:
-      - https://www.netify.ai/resources/hostnames/firebaselogging-pa.googleapis.com
-      - https://github.com/firebase/firebase-ios-sdk/issues/5837
-      - https://github.com/nextcloud/ios/issues/1628
 
   # --- Social and ad pixels ---------------------------------------------------
   - pattern: ads.linkedin.com
