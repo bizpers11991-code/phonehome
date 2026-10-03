@@ -210,8 +210,13 @@ Routes: `GET /` (embedded SPA), `GET /api/report?days=7`, `GET /api/status`,
 `go:embed`; no CDN, no external fonts (it runs on a LAN, often offline).
 
 ### `internal/config`, `internal/ingest`, `internal/demo`, `cmd/phonehome`
-- `config`: YAML config file + defaults + `Validate()`; auto-detects
-  `/etc/pihole/pihole-FTL.db` and AdGuard paths when no sources are configured.
+- `config`: YAML config file + defaults + `Validate()`; `Detect` finds
+  `/etc/pihole/pihole-FTL.db`, AdGuard and dnsmasq paths when no sources are
+  configured, and reports files it found but cannot read (with a hint) as
+  `Problem`s. `serve` re-runs detection every minute until it has a DNS
+  source and shows the findings in `/api/status` (`setup`, from
+  `model.Status.Setup`), the dashboard's first-run panel and `phonehome
+  report`.
 - `ingest`: the loop. For each source: read cursor, fetch in batches, write,
   save cursor, record status. Survives source errors and backs off. A
   cursor a source rejects (`source.ErrBadCursor`) is reset and the source

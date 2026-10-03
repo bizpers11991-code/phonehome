@@ -38,8 +38,9 @@ access mode **Read Only**.
   `stat -c %g /mnt/user/appdata/pihole/pihole/pihole-FTL.db` in the Unraid
   terminal and use that.
 
-Start Pi-hole before phonehome (phonehome looks for the database once, at
-startup). In the logs you should see `auto-detected source type=pihole-db`.
+In the logs you should see `auto-detected source type=pihole-db`. If Pi-hole
+starts later, phonehome finds the database within a minute; if it says
+`permission denied`, the GID above is wrong.
 
 ## AdGuard Home
 
@@ -51,8 +52,8 @@ run as root, with no capabilities:
   **Read Only**. That container path is one phonehome auto-detects.
 - **Extra Parameters:** `--user 0:0 --cap-drop ALL --security-opt no-new-privileges`
 
-Restart phonehome once after AdGuard has written its first query log, or use
-a config file as described in [adguard-home.md](adguard-home.md#docker).
+phonehome finds the query log within a minute of AdGuard writing it, or
+use a config file as described in [adguard-home.md](adguard-home.md#docker).
 
 ## Pi-hole on another machine
 

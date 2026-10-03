@@ -26,13 +26,16 @@ Packages for Homebrew and the AUR are described in
 
 ## Configuration in one minute
 
-With no config file, phonehome looks for these files **once, at startup**,
-and uses every one it can read:
+With no config file, phonehome looks for these files at startup and uses
+every one it can read. Under `phonehome serve` it keeps looking, once a
+minute, until it has found a DNS source (Pi-hole, AdGuard Home or dnsmasq),
+so it does not matter which container starts first:
 
 | File | Source type |
 |---|---|
 | `/etc/pihole/pihole-FTL.db` | `pihole-db` |
 | `/opt/AdGuardHome/data/querylog.json`, `/var/lib/AdGuardHome/data/querylog.json`, `/var/snap/adguard-home/{current,common}/data/querylog.json` | `adguard-querylog` |
+| `/var/log/dnsmasq.log` (only when no Pi-hole or AdGuard Home file is found) | `dnsmasq-log` |
 | `/etc/pihole/dhcp.leases`, `/var/lib/misc/dnsmasq.leases`, `/tmp/dhcp.leases` | `leases` |
 | `/proc/net/nf_conntrack` | `conntrack` |
 
@@ -62,13 +65,30 @@ addresses automatically.
 
 ## When the dashboard stays empty
 
-- **"No sources" right after first start.** Auto-detection runs once, at
-  startup. If your DNS server had not created its files yet, restart
-  phonehome, or list the source in a config file (a listed file that does
-  not exist yet is retried on every poll).
-- **A source is not detected although the file exists.** phonehome could not
-  read it. Each guide explains the permissions involved; `phonehome ingest
-  --once` prints which sources it found.
+- **"phonehome hasn't found a DNS log yet".** None of the files above
+  exists where phonehome runs. In Docker, check the volume mounts; if your
+  DNS server simply has not created its files yet, wait: `serve` looks again
+  every minute and the dashboard updates on its own. Files elsewhere need a
+  config file (a listed file that does not exist yet is retried on every
+  poll).
+- **"Found … but permission denied".** The file is there but phonehome may
+  not read it. The dashboard, the log and `phonehome report` say which file
+  and what to do, for example:
+
+  ```
+  found /etc/pihole/pihole-FTL.db but permission denied: Pi-hole v6 lets only
+  its group read the database; run phonehome with the file's group (GID 1000),
+  e.g. Docker group_add: ["1000"] or systemd SupplementaryGroups=pihole
+  ```
+
+  Each guide explains the permissions involved. Once fixed, `serve` picks
+  the file up within a minute; no restart needed.
+- **"Found … but it is a directory or device, not a file".** Docker created
+  an empty directory because a bind-mounted file did not exist yet. Mount
+  the folder that contains the file instead.
+- **"Waiting for the first lookups".** phonehome reads the file but nothing
+  has arrived yet; the dashboard shows when each source was last checked,
+  and the error if one is failing.
 - **Lookups arrive late.** Pi-hole writes its database about once a minute,
   and AdGuard Home writes its query log in batches. phonehome polls every
   `interval:` (60 s by default).

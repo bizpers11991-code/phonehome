@@ -78,9 +78,15 @@ and allocates its result once; `InsertDNS` sends 64 rows per statement):
 - The 30-day report is the memory peak. It holds every lookup of the period
   in memory (~99 MiB live on 32-bit for 1.5M lookups) and peaks near 200 MiB
   with default GC settings. That fits in 512 MB next to Pi-hole, but not with
-  much to spare; running phonehome with `GOMEMLIMIT=128MiB` (an `Environment=`
-  line in the systemd unit) keeps the peak near that limit at the cost of
+  much to spare, so the systemd unit and the Docker image set
+  `GOMEMLIMIT=128MiB`, which keeps the peak near that limit at the cost of
   slower reports. The 1- and 7-day reports stay under 50 MiB.
+- `GOMEMLIMIT` is a soft limit and only an environment variable, so it is
+  easy to change: `systemctl edit phonehome` → `Environment=GOMEMLIMIT=512MiB`,
+  or `-e GOMEMLIMIT=512MiB` / `environment:` in Docker; `off` removes it. On a
+  64-bit machine a household this busy keeps ~150 MiB live during a 30-day
+  report, above the limit, so the collector runs more often (Go caps it at
+  about half the CPU); raise the limit there if reports feel slow.
 - Most of the remaining report memory is the `[]model.DNSQuery` itself
   (~68 bytes per lookup on 32-bit, ~104 on 64-bit). Shrinking it further
   would mean streaming lookups into `analyze` instead of materialising them,

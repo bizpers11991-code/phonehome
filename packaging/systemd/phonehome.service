@@ -8,6 +8,10 @@ Wants=network-online.target
 Type=simple
 ExecStart=/usr/local/bin/phonehome serve --config /etc/phonehome/phonehome.yaml
 Environment=PHONEHOME_DB=/var/lib/phonehome/phonehome.db
+# A soft memory limit for the Go runtime: the 30-day report then peaks near
+# 128 MiB on a Pi instead of ~200 MiB (docs/performance.md). Override with
+# `systemctl edit phonehome` → Environment=GOMEMLIMIT=256MiB (or "off").
+Environment=GOMEMLIMIT=128MiB
 Restart=on-failure
 RestartSec=10s
 

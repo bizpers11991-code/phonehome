@@ -82,7 +82,10 @@ to watch is RAM: a report loads the lookups for the period you view into
 memory. For scale, analysing one million lookups (a busy week for a large
 home) takes about 0.2 s and 56 MB of allocations on a desktop CPU in our
 benchmark; a Zero will be many times slower. Shorter retention and shorter
-report periods keep it light. Numbers from real Zeros are very welcome.
+report periods keep it light. The systemd unit and Docker image set
+`GOMEMLIMIT=128MiB`, which holds a 30-day report for a busy home near 128 MiB
+on 32-bit instead of ~200 MiB ([measurements](performance.md)); change it
+with the environment variable. Numbers from real Zeros are very welcome.
 
 ### How much does it store, and for how long?
 
@@ -109,6 +112,25 @@ to your DNS server, never scans or ARP-spoofs, and the systemd unit runs it
 sandboxed as a throwaway user. AdGuard Home is the exception on permissions:
 its query log is readable by root only, so the AdGuard guides run phonehome
 as root with every capability dropped ([why](setup/adguard-home.md)).
+
+### The dashboard says it found my DNS log but can't read it
+
+phonehome looks for Pi-hole, AdGuard Home and dnsmasq files in their usual
+places. When one exists but cannot be opened, the dashboard, the log
+(`source found but not readable`) and `phonehome report` say which file and
+how to fix it. Usually:
+
+- **Pi-hole v6**: `pihole-FTL.db` is readable by the `pihole` group only.
+  Docker: `group_add: ["1000"]` (the GID in the message); systemd:
+  `SupplementaryGroups=pihole`.
+- **AdGuard Home**: `querylog.json` is readable by root only; run phonehome
+  as root with every capability dropped, see
+  [the guide](setup/adguard-home.md).
+- **dnsmasq logs**: run phonehome with the log file's group.
+
+You do not need to restart: `phonehome serve` looks again every minute until
+it finds a DNS source. More in
+[setup/README.md](setup/README.md#when-the-dashboard-stays-empty).
 
 ### Why does a device show up as just an IP address?
 

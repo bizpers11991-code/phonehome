@@ -62,8 +62,10 @@ journalctl -u phonehome -f
 # … msg="auto-detected source" type=pihole-db path=/etc/pihole/pihole-FTL.db
 ```
 
-If `pihole-db` is not detected, check that the group can read the file:
-`ls -l /etc/pihole/pihole-FTL.db` should show group `pihole` with `r`.
+If phonehome cannot read the database, the log says
+`source found but not readable … err="permission denied"` with the group to
+add, and the dashboard shows the same. `ls -l /etc/pihole/pihole-FTL.db`
+should show group `pihole` with `r`.
 
 ## Configure
 
