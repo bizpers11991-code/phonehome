@@ -6,6 +6,6 @@ steps:
   - 'Ring app › Menu (☰) › Control Center › Video and Snapshot Storage › Video and Snapshot Storage Time'
   - 'Tap Edit next to each device and pick the shortest period you are comfortable with (as little as 1 day)'
   - 'Delete old recordings from History if you no longer need them'
-notes: 'Defaults are 30 to 60 days in the US and 180 days is possible. A shorter period only applies to videos recorded after the change, and the setting returns to the default if a device is reset.'
+notes: 'Changing it needs an active Ring subscription. Defaults are 30 days (4K devices) or 60 days (2K and 1080p) in the US, and up to 180 days is possible. A shorter period only applies to videos recorded after the change, and the setting returns to the default if a device is reset.'
 evidence:
   - https://ring.com/support/articles/1nce1/Understanding-and-Adjusting-Your-Video-Storage-Time

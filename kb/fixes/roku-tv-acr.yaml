@@ -1,12 +1,14 @@
 id: roku-tv-acr
-title: Turn off "Use info from TV inputs" (Roku TV's ACR)
+title: Turn off Automatic Content Recognition on a Roku TV
 vendors: [roku]
 kinds: [tv]
 when: [acr]
 steps:
   - 'Home › Settings › Privacy › Smart TV Experience'
-  - 'Highlight "Use info from TV inputs" and press OK to clear the checkbox'
-notes: 'Applies to Roku TV models from TCL, Hisense, Sharp, Philips, onn. and Roku itself. It stops Roku''s content recognition on antenna, cable box and HDMI inputs, and also disables "Auto Notifications"; it does not change what Roku logs about streaming channels.'
+  - 'Highlight "Automatic Content Recognition (ACR)" and press OK to clear the checkbox (older Roku OS versions label it "Use info from TV inputs")'
+  - 'Or on the web: my.roku.com › Privacy Settings › Smart TV Experience, toggle until it shows NO'
+notes: 'Applies to Roku TV models from TCL, Hisense, Sharp, Philips, onn. and Roku itself. It stops Roku''s content recognition on antenna, cable box and HDMI inputs and also disables the input notifications that depend on it ("More Ways to Watch" in Roku''s help); it does not change what Roku logs about streaming channels.'
 evidence:
+  - https://support.roku.com/en-us/article/using-more-ways-to-watch-on-your-roku-tv
   - https://www.howtogeek.com/your-roku-is-tracking-more-than-you-think-heres-how-to-limit-it/
   - https://www.consumerreports.org/electronics/privacy/how-to-turn-off-smart-tv-snooping-features-a4840102036/
