@@ -1,0 +1,13 @@
+id: ecovacs-data-authorization
+title: Stop Ecovacs using your DEEBOT's photos and voice to train its AI
+vendors: [ecovacs, deebot]
+kinds: [vacuum]
+steps:
+  - 'ECOVACS HOME app › Mine › Settings › Data Authorization › "Product Improvement Plan" and opt out (Ecovacs also lists robot Settings › Product Improvement Plan)'
+  - 'Robots with Live Picture: robot Settings › DEEBOT Advanced Settings › Live Picture › Off'
+  - 'Robots with a voice assistant: Settings › Privacy › Data Authorization Settings › "User Experience Improvement Plan for Voice Interaction System" and opt out'
+  - 'To stop personalised ads in the app, opt out of all recommended display in your account settings'
+notes: 'Ecovacs'' November 2025 policy says that in the Product Improvement Plan, Live Picture photos are used to train its object-recognition AI, and that voice-programme transcripts and recordings go to China for manual review. Both need your consent. The robot still needs Ecovacs'' cloud for app control.'
+evidence:
+  - https://gl-us-wap.ecovacs.com/content/agreementNewest/PRIVACY/DEFAULT/DEFAULT
+  - https://www.ecovacs.com/us/blog/robot-vacuum-privacy-concerns

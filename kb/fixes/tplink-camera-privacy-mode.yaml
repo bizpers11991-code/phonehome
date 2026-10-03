@@ -1,0 +1,11 @@
+id: tplink-camera-privacy-mode
+title: Use Privacy Mode on Tapo and Kasa cameras
+vendors: [tapo, kasa, tp-link, tplink]
+kinds: [camera]
+steps:
+  - 'Tapo or Kasa app › open the camera''s Live View › tap the Privacy Mode icon'
+  - 'Or: Live View › gear icon (Device Settings) › Privacy Mode › On'
+  - 'Some models, such as the Tapo C125 and C225, also have a physical privacy button on the camera'
+notes: 'TP-Link says that while Privacy Mode is on the camera neither streams nor records video or audio.'
+evidence:
+  - https://www.tp-link.com/us/support/faq/2791/

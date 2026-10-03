@@ -1,0 +1,12 @@
+id: tuya-smart-life-privacy
+title: Turn off personalisation and ad permissions in Smart Life / Tuya Smart
+vendors: [tuya, smartlife, smart life]
+kinds: [plug, hub, camera, appliance, vacuum]
+steps:
+  - 'Smart Life app: Me › Settings › Privacy Settings › Personalization › Off'
+  - 'Smart Life app: Me › Settings › Privacy Settings › Ad Preferences & Permissions › Third-Party Ad Management, and turn off ad attribution under Privacy Settings › Other Permissions'
+  - 'Tuya Smart app: Me › Settings › Privacy Settings, turn off "Personalized Recommendations" and "Service Maintenance & Improvement Activity"'
+notes: 'Smart Life is now run by Volcano Technology and Tuya Smart by Tuya; menu names come from each app''s privacy policy (September 2026). These switches cover recommendations, ads and analytics; plugs, bulbs and cameras still need Tuya''s cloud to work with the app.'
+evidence:
+  - https://developerapp.tuyaus.com/protocol/1a824d962b40000b?lang=en
+  - https://developerapp.tuyaus.com/protocol/1479c8096cc01001?lang=en

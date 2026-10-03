@@ -1,0 +1,15 @@
+id: blink-privacy-zones-storage
+title: Add Blink Privacy Zones and keep fewer clips in the cloud
+vendors: [blink]
+kinds: [camera]
+steps:
+  - 'Blink app › the camera''s More (…) › Device Settings › Motion Settings › Motion Zones › Privacy Zones; draw up to two areas the camera must not record, then Done'
+  - 'Settings › Device and System Settings › Cloud Clip Storage › Auto Delete After, and pick the shortest period (3, 7, 14 or 30 days; the default is 60 in the US)'
+  - 'Delete clips you no longer need: Clips › Edit › Select All › Delete'
+  - 'To keep clips at home, put a USB drive (up to 256 GB) in a Sync Module 2; with a subscription, the Storage Switcher moves recording to local storage'
+notes: 'Privacy Zones work on the Mini 2, Outdoor 4, Wired Floodlight, Video Doorbell and Indoor/Outdoor (3rd Gen). Without a subscription the Sync Module 2 saves clips straight to the drive; with one, clips go to the cloud and the drive only gets a daily backup unless you switch. Cameras still use Blink''s cloud for arming, alerts and live view.'
+evidence:
+  - https://support.blinkforhome.com/camera-settings/how-to-configure-privacy-zones
+  - https://support.blinkforhome.com/video-clips/how-do-i-delete-motion-clips
+  - https://support.blinkforhome.com/en_US/faq-sm/sync-module-2-faqs
+  - https://support.blinkforhome.com/en_GB/issues-with-the-blink-app/troubleshooting-motion-clips-saved-in-local-or-cloud-storage

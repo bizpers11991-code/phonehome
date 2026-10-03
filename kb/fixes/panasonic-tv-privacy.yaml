@@ -1,0 +1,14 @@
+id: panasonic-tv-privacy
+title: Stop Panasonic collecting TV usage data
+vendors: [panasonic]
+kinds: [tv]
+steps:
+  - 'My Home Screen TVs: press MENU › Network › "Terms of Service and Settings" (on some models: "my Home Cloud Settings" › "Notices")'
+  - 'Untick "I agree to the Terms & Conditions of Use and I have read and understood the Privacy Policy"'
+  - 'Panasonic TVs with Fire TV: Home › Settings › Preferences › Privacy Settings, turn off "Automatic Content Recognition" and the ads setting (Which? calls it "Internet-Based Ads", Amazon "Interest-based Ads"); the Fire TV fix covers the other switches'
+  - 'Panasonic Android TV / Google TV models: use the Google TV fixes instead'
+notes: 'Panasonic''s privacy policy (EU/Swiss version, April 2026) gives the untick step as the way to stop it collecting device, service and app usage data; Panasonic calls this deactivating its Services, so its online features may stop working. Panasonic says it does not collect what you do inside apps.'
+evidence:
+  - https://av.jpn.support.panasonic.com/support/share2/eww/en/tv/privacy_policy/english.pdf
+  - https://www.which.co.uk/news/article/how-to-stop-your-tv-spying-on-you-aM3mf4j04vU2
+  - https://www.amazon.com/gp/help/customer/display.html?nodeId=GQFYXZHZB2H629WN
