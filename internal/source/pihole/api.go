@@ -110,6 +110,9 @@ func (a *API) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.D
 		page     = min(max(limit, 100), maxPage)
 		until    = strconv.FormatFloat(float64(a.now().Add(-settle).UnixMicro())/1e6, 'f', -1, 64)
 	)
+	// from stays fixed for every page: start counts rows from it, so moving
+	// it forward as rows are read would skip a page's worth.
+	from := strconv.FormatFloat(lastTime, 'f', -1, 64)
 	for start := 0; len(out) < limit; start += page {
 		q := url.Values{
 			"length":           {strconv.Itoa(page)},
@@ -120,7 +123,7 @@ func (a *API) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.D
 			"until":            {until},
 		}
 		if cursor != "" {
-			q.Set("from", strconv.FormatFloat(lastTime, 'f', -1, 64))
+			q.Set("from", from)
 		}
 		var resp struct {
 			Queries []apiQuery `json:"queries"`

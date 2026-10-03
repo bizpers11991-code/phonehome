@@ -47,8 +47,10 @@ What counts as **blocked**, per source:
   a blocking upstream). FTL waits just as long before saving to its database.
 - **AdGuard Home**: blocklists, blocked services, safe browsing, parental
   control and invalid requests, plus `$dnsrewrite` rules that answer with
-  an error code such as `REFUSED` or `NXDOMAIN`. Safe search, rewrites and
-  allowlisted queries are answered, so they are not blocks.
+  an error code such as `REFUSED` or `NXDOMAIN` (AdGuard Home's own
+  dashboard counts those as rewritten, so phonehome's blocked figure can be
+  a little higher). Safe search, rewrites and allowlisted queries are
+  answered, so they are not blocks.
 - **dnsmasq**: names dnsmasq answers from its own configuration with
   `0.0.0.0`, `::`, `NXDOMAIN` or `NODATA` (the `address=/name/` lines
   blocklists generate). In Pi-hole's `pihole.log`, every verdict Pi-hole

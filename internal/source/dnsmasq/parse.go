@@ -21,6 +21,10 @@ type event struct {
 	key     string // what answers call it: name, or the address a PTR query asks about
 	blocked bool   // answers only
 	cname   bool   // answers only: "is <CNAME>", more of the chain follows
+	// cnameBlock: "blocked during CNAME inspection". It names the blocked
+	// name in the chain, not the query, so it belongs to the query whose
+	// CNAME answer is being held back.
+	cnameBlock bool
 }
 
 // programs are the syslog tags whose lines we read. Pi-hole's FTL embeds
@@ -112,8 +116,10 @@ func parseMessage(msg string) (event, bool) {
 	}
 	// Pi-hole blocks a whole CNAME chain when one of its names is on a
 	// list: "reply tracker.example is blocked during CNAME inspection".
+	cnameBlock := false
 	if n := len(f); n >= 7 && strings.Join(f[n-5:], " ") == "is blocked during CNAME inspection" {
 		f = append(f[:n-5:n-5], "is", "blocked")
+		cnameBlock = true
 	}
 	switch n := len(f); {
 	case n == 4 && strings.HasPrefix(f[0], "query[") && strings.HasSuffix(f[0], "]") && f[2] == "from":
@@ -133,6 +139,7 @@ func parseMessage(msg string) (event, bool) {
 		e.name = normalize(f[n-3])
 		e.blocked = isBlock(strings.Join(f[:n-3], " "), f[n-1])
 		e.cname = f[n-1] == "<CNAME>"
+		e.cnameBlock = cnameBlock
 	default:
 		return event{}, false
 	}
