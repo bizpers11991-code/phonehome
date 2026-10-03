@@ -21,6 +21,11 @@ func FuzzFetchDNS(f *testing.F) {
 		f.Fatal(err)
 	}
 	f.Add(old, cur, uint8(2))
+	upstream, err := os.ReadFile(filepath.Join("testdata", "upstream", "querylog.json"))
+	if err != nil {
+		f.Fatal(err)
+	}
+	f.Add(old, upstream, uint8(3))
 	f.Add([]byte(nil), cur, uint8(0))
 	f.Add(old, []byte(`{"T":"2026-10-02T00:00:00Z","QH":"a.","IP":"::ffff:10.0.0.1","Result":{"IsFiltered":true,"Reason":"FilteredBlockedService"}}`+"\n"), uint8(5))
 	f.Fuzz(func(t *testing.T, old, cur []byte, limit uint8) {

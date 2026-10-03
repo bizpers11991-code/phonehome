@@ -86,6 +86,15 @@ func (f *fakeFTL) serveQueries(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 		}
+		if until := q.Get("until"); until != "" { // FTL: timestamp < until
+			ts, err := strconv.ParseFloat(until, 64)
+			if err != nil {
+				f.t.Errorf("bad until %q", until)
+			}
+			if row.Time >= ts {
+				continue
+			}
+		}
 		rows = append(rows, row)
 	}
 	asc := q.Get("columns[0][data]") == "time" && q.Get("order[0][column]") == "0" && q.Get("order[0][dir]") == "asc"
@@ -187,6 +196,43 @@ func TestAPIFetch(t *testing.T) {
 	if f.logins != 1 || !slices.Equal(f.logouts, []string{"sid-1"}) {
 		t.Fatalf("logins %d, logouts %v: want one session, closed", f.logins, f.logouts)
 	}
+}
+
+// TestAPISettle checks that queries are read only once FTL has settled
+// their status: a forwarded query turns GRAVITY_CNAME when the reply's
+// CNAME chain hits a blocked name.
+func TestAPISettle(t *testing.T) {
+	const t0 = 1727870000.0
+	f, a := newFakeFTL(t, []apiQuery{
+		q(1, t0, "A", "FORWARDED", "a.example", "192.168.1.20"),
+		q(2, t0+20, "A", "FORWARDED", "metrics.vendor.example", "192.168.1.20"),
+		q(3, t0+21, "A", "NONE", "x.example", "192.168.1.20"),
+	})
+	now := time.Unix(t0+40, 0)
+	a.now = func() time.Time { return now }
+	ctx := context.Background()
+
+	got, cur, err := a.FetchDNS(ctx, "", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Domain != "a.example" || cur != "1@1727870000" {
+		t.Fatalf("got %+v, cursor %q: want only the settled query", got, cur)
+	}
+
+	f.mu.Lock()
+	f.queries[1].Status = "GRAVITY_CNAME"
+	f.queries[2].Type = "N/A"
+	f.mu.Unlock()
+	now = now.Add(15 * time.Second)
+	got, _, err = a.FetchDNS(ctx, cur, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertQueries(t, got, []model.DNSQuery{
+		{Time: unixTime(t0 + 20), ClientIP: netip.MustParseAddr("192.168.1.20"), Domain: "metrics.vendor.example", QType: "A", Blocked: true, Source: "pihole-api"},
+		{Time: unixTime(t0 + 21), ClientIP: netip.MustParseAddr("192.168.1.20"), Domain: "x.example", Source: "pihole-api"},
+	})
 }
 
 // TestAPIPagination puts more already-seen queries at the cursor's instant

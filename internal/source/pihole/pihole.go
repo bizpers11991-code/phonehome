@@ -63,9 +63,11 @@ func queryTypeName(t int64) string {
 }
 
 // apiTypeName converts a type string from the API, which already uses
-// record type names ("A", "HTTPS", "TYPE65").
+// record type names ("A", "HTTPS", "TYPE65"). get_query_type_str says
+// "NONE" for type 0 and "N/A" for values it does not know.
 func apiTypeName(s string) string {
-	if s == "OTHER" || s == "UNKNOWN" {
+	switch s {
+	case "OTHER", "UNKNOWN", "NONE", "N/A":
 		return ""
 	}
 	return s
