@@ -13,7 +13,9 @@
     blocked in `pihole.log`, and so did special domains such as
     `use-application-dns.net`, rate-limited queries and queries refused
     while gravity was busy.
-  - dnsmasq answers ending in `(DNSSEC signed)` were not recognised.
+  - dnsmasq answers ending in `(DNSSEC signed)` were not recognised, and
+    DNSSEC `validation` lines were taken for answers, settling a query
+    before Pi-hole had decided whether to block it.
   - The Pi-hole API reader could record a lookup before Pi-hole had
     decided to block it (CNAME inspection, a blocking upstream). It now
     waits until a lookup is 30 seconds old, as FTL does before saving.

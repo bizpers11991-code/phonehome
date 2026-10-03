@@ -31,7 +31,7 @@ with test fixtures built from what that code writes.
 
 | Source | Supported | Checked against |
 |---|---|---|
-| `pihole-db` | Pi-hole v5 and v6: FTL database versions 9 to 22 | FTL's own schema tests at v5.25.2, v6.0 and master (October 2026) |
+| `pihole-db` | Pi-hole v5 and v6: FTL database versions 9 to 22 (tested: 9, 12, 21, 22) | FTL's own schema tests at v5.25.2, v6.0 and master (October 2026) |
 | `pihole-api` | Pi-hole v6 (FTL v6.0 and later) | FTL's `/api/queries` code at v6.0 and master |
 | `adguard-querylog` | AdGuard Home v0.107 query logs, including the older single-rule result format | AdGuard Home's own log writer (master after v0.107.79) |
 | `dnsmasq-log` | `log-queries`, `log-queries=extra` and `log-queries=proto`; Pi-hole v5 and v6 `pihole.log` | dnsmasq 2.93's `log_query()` and the copy inside Pi-hole FTL |

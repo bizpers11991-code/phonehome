@@ -31,6 +31,11 @@ Oct  2 13:59:06 dnsmasq[812]: UDP 212 192.168.1.27/5353 query[A] slow.example fr
 Oct  2 13:59:06 dnsmasq[812]: UDP 212 192.168.1.27/5353 forwarded slow.example to 127.0.0.1#5335
 Oct  2 13:59:06 dnsmasq[812]: UDP 213 192.168.1.27/5353 query[A] busy.example from 192.168.1.27
 Oct  2 13:59:06 dnsmasq[812]: UDP 213 192.168.1.27/5353 to be refused (gravity database is not available) busy.example is REFUSED (EDE: blocked)
-Oct  2 13:59:06 dnsmasq[812]: UDP 212 192.168.1.27/5353 reply query is duplicate
 Oct  2 13:59:07 dnsmasq[812]: UDP 212 192.168.1.27/5353 reply slow.example is 198.51.100.7
 Oct  2 13:59:07 dnsmasq[812]: 214 dnssec-query[DS] example to 127.0.0.1#5335
+Oct  2 13:59:08 dnsmasq[812]: UDP 215 192.168.1.28/5353 query[A] signed.vendor.example from 192.168.1.28
+Oct  2 13:59:08 dnsmasq[812]: UDP 215 192.168.1.28/5353 forwarded signed.vendor.example to 127.0.0.1#5335
+Oct  2 13:59:08 dnsmasq[812]: UDP 215 192.168.1.28/5353 validation signed.vendor.example is SECURE
+Oct  2 13:59:08 dnsmasq[812]: UDP 215 192.168.1.28/5353 reply signed.vendor.example is <CNAME> (DNSSEC signed)
+Oct  2 13:59:08 dnsmasq[812]: UDP 215 192.168.1.28/5353 reply tracker.example is blocked during CNAME inspection
+Oct  2 13:59:08 dnsmasq[812]: UDP 215 192.168.1.28/5353 gravity blocked signed.vendor.example is 0.0.0.0
