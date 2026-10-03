@@ -41,6 +41,11 @@ const Window = 7 * 24 * time.Hour
 // domain or finding) is not repeated, even if it flaps.
 const cooldown = 24 * time.Hour
 
+// forgetDevice is how long a device the store does not keep (one known
+// only by IP) is remembered after it was last in a report; one that
+// returns later is announced as new again.
+const forgetDevice = 90 * 24 * time.Hour
+
 // forgetSent is how long a sent alert is remembered for de-duplication.
 const forgetSent = 30 * 24 * time.Hour
 
@@ -122,10 +127,11 @@ type state struct {
 type deviceState struct {
 	// Pending marks a device known when the baseline was taken but quiet
 	// that week: its state is learnt, silently, when it is next active.
-	Pending    bool     `json:"pending,omitempty"`
-	Grade      string   `json:"grade"`
-	Heartbeats []string `json:"heartbeats"` // snooping heartbeat domains
-	Bypasses   []string `json:"bypasses"`   // kind|evidence
+	Pending    bool      `json:"pending,omitempty"`
+	Seen       time.Time `json:"seen"` // last check it was in the report
+	Grade      string    `json:"grade"`
+	Heartbeats []string  `json:"heartbeats"` // snooping heartbeat domains
+	Bypasses   []string  `json:"bypasses"`   // kind|evidence
 }
 
 // Run checks every interval until ctx is cancelled. The first check waits
@@ -170,28 +176,29 @@ func (e *Engine) Check(ctx context.Context) error {
 		// "new" later.
 		return nil
 	}
-	var known map[string]bool // every device phonehome knows; nil: unknown
+	known := map[string]bool{} // devices phonehome keeps in its store
 	if e.Devices != nil {
 		ds, err := e.Devices(ctx)
 		if err != nil {
 			return fmt.Errorf("alerts: devices: %w", err)
 		}
-		known = map[string]bool{}
 		for _, d := range ds {
 			known[d.ID] = true
 		}
 	}
+	day := now.Truncate(24 * time.Hour) // Seen moves daily, not every check
 	next := map[string]*deviceState{}
 	for id, d := range st.Devices {
-		// Devices not seen this week keep what we knew, unless phonehome
-		// no longer knows them at all.
-		if known == nil || known[id] {
+		// Devices not seen this week keep what we knew. One known only by
+		// an IP address, which DHCP may since have given to another
+		// device, is forgotten after a while.
+		if known[id] || now.Sub(d.Seen) <= forgetDevice {
 			next[id] = d
 		}
 	}
 	if baseline {
 		for id := range known {
-			next[id] = &deviceState{Pending: true}
+			next[id] = &deviceState{Pending: true, Seen: day} // state still to be learnt
 		}
 	}
 	var events []Event
@@ -208,6 +215,7 @@ func (e *Engine) Check(ctx context.Context) error {
 	}
 	for _, d := range rep.Devices {
 		cur := snapshot(d)
+		cur.Seen = day
 		next[d.Device.ID] = cur
 		if baseline {
 			continue

@@ -243,12 +243,16 @@ func TestEngineKnownDevices(t *testing.T) {
 		t.Fatalf("got %d batches", len(rec.batches))
 	}
 
-	// A device phonehome forgot is forgotten here too.
-	known = known[:2]
+	// A device known only by IP is forgotten some months after it was last
+	// seen; one the store keeps (mac:8, never active) is not.
 	h.now = h.now.Add(5 * time.Minute)
+	h.devs = append(h.devs, dev("ip:10.0.0.5", "Guest", "A"))
 	check(t, e)
-	if strings.Contains(st.m[stateKey], "mac:8") || !strings.Contains(st.m[stateKey], "mac:9") {
-		t.Fatalf("state %s", st.m[stateKey])
+	h.devs = h.devs[:2]
+	h.now = h.now.Add(forgetDevice + 48*time.Hour)
+	check(t, e)
+	if s := st.m[stateKey]; strings.Contains(s, "ip:10.0.0.5") || !strings.Contains(s, "mac:8") || !strings.Contains(s, "mac:9") {
+		t.Fatalf("state %s", s)
 	}
 }
 

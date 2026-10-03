@@ -22,7 +22,9 @@ alerts on does not announce every device you own.
 
 **No repeats.** The same alert (same device and the same grade, domain or
 finding) is not sent again within 24 hours, however often it flaps. A
-device that drops out of the week and comes back is not "new".
+device that drops out of the week and comes back is not "new" (one known
+only by its IP address is forgotten 90 days after it was last seen, since
+DHCP may have handed that address to another device).
 
 **Rate limit.** All events found in one check go out together as one
 notification. At most `max_per_hour` notifications (default 6) are sent per
