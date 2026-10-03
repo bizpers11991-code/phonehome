@@ -21,6 +21,9 @@
     waits until a lookup is 30 seconds old, as FTL does before saving.
   - AdGuard Home `$dnsrewrite` rules that answer `REFUSED` or `NXDOMAIN`
     now count as blocks.
+- **Device names over the Pi-hole API.** `pihole-api` sources now also read
+  the devices Pi-hole knows (MAC, maker, addresses and host names) from
+  `/api/network/devices`, so they are no longer bare IP addresses.
 
 ## v0.2.0
 

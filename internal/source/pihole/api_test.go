@@ -66,6 +66,15 @@ func (f *fakeFTL) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		f.pages++
 		f.serveQueries(w, r)
+	case r.URL.Path == "/api/network/devices" && r.Method == http.MethodGet:
+		if !f.sids[r.Header.Get("X-FTL-SID")] {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if q := r.URL.Query(); q.Get("max_devices") != "10000" || q.Get("max_addresses") != "20" {
+			f.t.Errorf("network devices asked with %v; FTL's defaults list only 10 devices", q)
+		}
+		fmt.Fprint(w, networkReply)
 	default:
 		http.NotFound(w, r)
 	}
@@ -127,6 +136,41 @@ func (f *fakeFTL) serveQueries(w http.ResponseWriter, r *http.Request) {
 		"queries": out, "cursor": len(f.queries), "recordsTotal": len(f.queries),
 		"recordsFiltered": len(f.queries), "draw": 0, "took": 0.003,
 	})
+}
+
+// networkReply has every field FTL's api/network.c writes per device.
+const networkReply = `{"devices":[` +
+	`{"id":3,"hwaddr":"AA:BB:CC:00:11:22","interface":"eth0","firstSeen":1759398000,"lastQuery":1759402800,"numQueries":7,"macVendor":"Samsung Electronics Co.,Ltd",` +
+	`"ips":[{"ip":"192.168.1.19","name":"old-name","lastSeen":1759000000,"nameUpdated":1759000000},` +
+	`{"ip":"192.168.1.20","name":"samsung-tv.lan","lastSeen":1759402900,"nameUpdated":1759402900}]},` +
+	`{"id":4,"hwaddr":"ip-fd00::20","interface":"N/A","firstSeen":1759398100,"lastQuery":1759402801,"numQueries":2,"macVendor":"",` +
+	`"ips":[{"ip":"fd00::20","name":"","lastSeen":1759402801,"nameUpdated":0}]},` +
+	`{"id":5,"hwaddr":"00:00:00:00:00:00","interface":"lo","firstSeen":0,"lastQuery":0,"numQueries":0,"macVendor":"","ips":[]}` +
+	`],"took":0.002}`
+
+func TestAPINetworkDevices(t *testing.T) {
+	_, a := newFakeFTL(t, nil)
+	n := a.Network()
+	if n.Name() != "pihole-api-devices" {
+		t.Errorf("name %q", n.Name())
+	}
+	got, err := n.Devices(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []model.Device{
+		{ID: "ip:fd00::20", IPs: []netip.Addr{netip.MustParseAddr("fd00::20")},
+			FirstSeen: time.Unix(1759398100, 0), LastSeen: time.Unix(1759402801, 0)},
+		{ID: "mac:aa:bb:cc:00:11:22", MAC: "aa:bb:cc:00:11:22", Vendor: "Samsung Electronics Co.,Ltd", Hostname: "samsung-tv.lan",
+			IPs:       []netip.Addr{netip.MustParseAddr("192.168.1.20"), netip.MustParseAddr("192.168.1.19")},
+			FirstSeen: time.Unix(1759398000, 0), LastSeen: time.Unix(1759402900, 0)},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %+v", got)
+	}
+	for i := range want {
+		assertDevice(t, got[i], want[i])
+	}
 }
 
 func newFakeFTL(t *testing.T, queries []apiQuery) (*fakeFTL, *API) {
