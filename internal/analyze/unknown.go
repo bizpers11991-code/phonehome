@@ -37,9 +37,8 @@ func reportable(domain string) bool {
 
 func unknownDomain(name string, da *domainAcc) model.UnknownDomain {
 	u := model.UnknownDomain{Domain: name, Group: Registrable(name), Count: da.count}
-	if len(da.times) > 0 {
-		u.First = time.Unix(0, slices.Min(da.times))
-		u.Last = time.Unix(0, slices.Max(da.times))
+	if da.count > 0 {
+		u.First, u.Last = time.Unix(0, da.first), time.Unix(0, da.last)
 	}
 	return u
 }

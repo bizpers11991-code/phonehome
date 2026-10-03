@@ -197,6 +197,10 @@ type DomainStat struct {
 	CompanyID   string
 	CompanyName string
 	Purpose     string
+	Rule        string   // the KB pattern that matched, "" if none
+	Confidence  string   // the rule's confidence, "" if unmatched
+	Evidence    []string // the rule's evidence URLs
+	First, Last time.Time
 }
 
 // UnknownDomain is a domain a device looked up that the knowledge base does
@@ -246,6 +250,7 @@ type DeviceReport struct {
 	PerDay     float64       // Snooping per day
 	Hourly     [24]int       // lookups by local hour of day
 	TopDomains []DomainStat  // desc by Count, at most 25
+	Domains    []DomainStat  // every domain, desc by Count; TopDomains is its start
 	Companies  []CompanyStat // desc by Count
 	Countries  []string      // ISO codes of companies' HQs, desc by traffic
 	Heartbeats []Heartbeat

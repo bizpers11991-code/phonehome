@@ -131,6 +131,8 @@ type domainAcc struct {
 	count   int
 	blocked int
 	times   []int64 // unix nanoseconds, in input order
+	first   int64   // earliest and latest of times, kept as they are added
+	last    int64
 }
 
 type deviceAcc struct {
@@ -297,7 +299,14 @@ func (a *analysis) addQuery(q *model.DNSQuery) {
 		d.domains[info] = da
 	}
 	da.count++
-	da.times = append(da.times, q.Time.UnixNano())
+	ns := q.Time.UnixNano()
+	if da.count == 1 || ns < da.first {
+		da.first = ns
+	}
+	if da.count == 1 || ns > da.last {
+		da.last = ns
+	}
+	da.times = append(da.times, ns)
 	if q.Blocked {
 		d.blocked++
 		da.blocked++
@@ -390,11 +399,17 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 			hints[cls.KindHint] += da.count
 		}
 		ds := model.DomainStat{
-			Domain:   info.name,
-			Count:    da.count,
-			Blocked:  da.blocked,
-			Category: cls.Category,
-			Purpose:  cls.Purpose,
+			Domain:     info.name,
+			Count:      da.count,
+			Blocked:    da.blocked,
+			Category:   cls.Category,
+			Purpose:    cls.Purpose,
+			Rule:       cls.Rule,
+			Confidence: cls.Confidence,
+			Evidence:   cls.Evidence,
+		}
+		if da.count > 0 {
+			ds.First, ds.Last = time.Unix(0, da.first), time.Unix(0, da.last)
 		}
 		if co := cls.Company; co != nil && co.ID != "" {
 			ds.CompanyID, ds.CompanyName = co.ID, co.Name
@@ -433,7 +448,8 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 	slices.SortFunc(domains, func(x, y model.DomainStat) int {
 		return cmp.Or(cmp.Compare(y.Count, x.Count), cmp.Compare(x.Domain, y.Domain))
 	})
-	r.TopDomains = domains[:min(len(domains), maxTopDomains)]
+	r.Domains = domains
+	r.TopDomains = domains[:min(len(domains), maxTopDomains):min(len(domains), maxTopDomains)]
 	sortHeartbeats(r.Heartbeats)
 	r.Unknown = topUnknown(r.Unknown)
 

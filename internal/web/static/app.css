@@ -10,7 +10,7 @@
   --sunken: #efece5;
   --ink: #1b1c19;
   --ink-2: #4a4b45;
-  --ink-3: #74746c;
+  --ink-3: #6a6a62;
   --line: #e4e0d6;
   --line-2: #d3cec2;
   --accent: #1f5c46;
@@ -36,10 +36,12 @@
   --c-content: #3f74b5;
   --c-unknown: #a39d94;
 
-  --g-a: #2b8a5e;
-  --g-b: #5f8f2a;
-  --g-c: #b98007;
-  --g-d: #d4621a;
+  /* Grade colours carry white text: each is at least 4.5:1 against it
+     (internal/web/contrast_test.go checks this and every text colour). */
+  --g-a: #29845a;
+  --g-b: #558126;
+  --g-c: #9b6c06;
+  --g-d: #bd5717;
   --g-f: #b42318;
   --better: #1d6b47; /* text on --surface and --bg, contrast ≥ 4.5:1 */
   --worse: #a8261b;
@@ -165,6 +167,12 @@ svg { flex: none; }
 .period button:hover { color: var(--ink); }
 .period button[aria-checked="true"] { background: var(--ink); color: var(--bg); font-weight: 600; }
 
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.lang select {
+  min-height: 38px; padding: 6px 30px 6px 12px; border-radius: 999px; font: inherit; font-size: 0.9375rem;
+  color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+}
+
 /* ---------- Notices ---------- */
 
 .notice {
@@ -233,6 +241,8 @@ svg { flex: none; }
 .btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .btn.primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
 .btn .ico { width: 18px; height: 18px; }
+.btn.small { min-height: 32px; padding: 4px 10px; font-size: 0.8125rem; gap: 6px; }
+.btn.small .ico { width: 15px; height: 15px; }
 .icon-btn {
   display: inline-grid; place-items: center; width: 40px; height: 40px;
   border: 0; border-radius: 10px; background: none; color: var(--ink-2); cursor: pointer;
@@ -258,6 +268,7 @@ svg { flex: none; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 20px 20px 16px; box-shadow: var(--shadow); min-width: 0;
 }
+.card:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: var(--radius); }
 
 .dev-head { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
 .kind {
@@ -402,6 +413,25 @@ dialog::backdrop { background: var(--backdrop); }
 .stats dd small { font-size: 0.8125rem; font-weight: 500; color: var(--ink-3); margin-left: 4px; letter-spacing: 0; }
 
 .table-wrap { overflow-x: auto; margin: 0 -4px; }
+.table-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+.table-tools input {
+  flex: 1 1 16em; min-height: 38px; padding: 6px 12px; border-radius: 10px; font: inherit; font-size: 0.9375rem;
+  color: var(--ink); background: var(--bg); border: 1px solid var(--line-2);
+}
+.table-count { color: var(--ink-3); font-size: 0.8125rem; }
+.table-export { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; color: var(--ink-3); font-size: 0.8125rem; }
+.table-more { margin-top: 8px; }
+.table-more:has(> [hidden]) { display: none; }
+th .sort {
+  border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; white-space: nowrap;
+}
+th .sort:hover, th[aria-sort] .sort { color: var(--ink); }
+td.when { color: var(--ink-2); white-space: nowrap; font-size: 0.8125rem; }
+td.rule { white-space: nowrap; font-size: 0.8125rem; color: var(--ink-2); }
+td.rule a { display: inline-flex; align-items: center; gap: 3px; }
+td.rule .ico { width: 12px; height: 12px; }
+.hero-actions.export { margin-top: 12px; }
+.hero-actions .lead { color: var(--ink-2); font-size: 0.9375rem; font-weight: 500; }
 table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 th {
   text-align: left; font-weight: 500; color: var(--ink-3); font-size: 0.8125rem;
@@ -597,6 +627,9 @@ pre + pre { margin-top: 10px; }
   .drawer-body { padding: 0 16px 32px; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   th.company, td.company { display: none; }
+  .controls { width: 100%; flex-direction: column; align-items: stretch; }
+  .period button { white-space: nowrap; }
+  .lang select { width: 100%; }
   td .purpose { min-width: 0; }
   .unknown li { flex-direction: column; }
   .modal { padding: 18px; }

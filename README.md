@@ -154,6 +154,16 @@ no update checks, no fonts or scripts from a CDN, no accounts. Everything it kno
 the binary. The receipt footer says *"Nothing left this house to make this
 receipt"*, and that has to stay true.
 
+## Languages
+
+The dashboard speaks English, German, French, Spanish and Dutch. It follows
+your browser's language, and the selector at the top changes it. The
+German, French, Spanish and Dutch texts were **machine-translated** and have
+not yet been reviewed by native speakers. Corrections are very welcome: they
+all live in one file, [`internal/web/static/i18n.js`](internal/web/static/i18n.js).
+Knowledge-base texts (what a domain is for, the step-by-step fixes) and the
+Privacy Receipt stay in English for now.
+
 ## Contribute what your devices do
 
 The knowledge base is plain YAML in [`kb/`](kb/), and it is the part that gets

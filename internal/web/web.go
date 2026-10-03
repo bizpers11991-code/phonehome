@@ -72,6 +72,7 @@ func New(b Backend, o Options) http.Handler {
 	mux.HandleFunc("GET /api/report", s.report)
 	mux.HandleFunc("GET /api/status", s.status)
 	mux.HandleFunc("POST /api/devices/{id}/label", s.setLabel)
+	mux.HandleFunc("GET /api/devices/{id}/domains", s.domains)
 	mux.HandleFunc("GET /receipt/{file}", s.receipt)
 
 	var h http.Handler = mux
@@ -107,6 +108,29 @@ func (s *server) report(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, newReportDTO(rep))
+}
+
+// domains lists every domain one device looked up in the period, for the
+// details view's full table and its exports.
+func (s *server) domains(w http.ResponseWriter, r *http.Request) {
+	p, ok := s.period(r)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "days must be 1, 7 or 30")
+		return
+	}
+	rep, err := s.b.Report(r.Context(), p)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	id := r.PathValue("id")
+	for _, d := range rep.Devices {
+		if d.Device.ID == id {
+			writeJSON(w, http.StatusOK, newDomainsDTO(rep, d))
+			return
+		}
+	}
+	s.fail(w, r, ErrNotFound)
 }
 
 func (s *server) status(w http.ResponseWriter, r *http.Request) {
