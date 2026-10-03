@@ -1,0 +1,54 @@
+company: lg
+rules:
+  - pattern: lgthinq.com
+    category: essential
+    purpose: "LG ThinQ cloud for connected LG appliances; remote status and control stop if blocked."
+    confidence: medium
+    kind_hint: appliance
+    evidence:
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/thinq_api.py#L144
+      - https://github.com/ollo69/ha-smartthinq-sensors/blob/4b6228b21f61ff5f0c8032f256100724398bad18/custom_components/smartthinq_sensors/wideq/core_async.py#L63
+  - pattern: api-kic.lgthinq.com
+    category: essential
+    purpose: "LG ThinQ Connect API for the Korea and Asia region, used to read and control LG appliances."
+    confidence: medium
+    kind_hint: appliance
+    evidence:
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/thinq_api.py#L144
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L177
+  - pattern: api-aic.lgthinq.com
+    category: essential
+    purpose: "LG ThinQ Connect API for the Americas region, used to read and control LG appliances."
+    confidence: medium
+    kind_hint: appliance
+    evidence:
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/thinq_api.py#L144
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L177
+  - pattern: api-eic.lgthinq.com
+    category: essential
+    purpose: "LG ThinQ Connect API for the Europe region, used to read and control LG appliances."
+    confidence: medium
+    kind_hint: appliance
+    evidence:
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/thinq_api.py#L144
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L177
+  - pattern: route.lgthinq.com
+    category: essential
+    purpose: "Says which regional LG ThinQ server to use."
+    confidence: medium
+    kind_hint: appliance
+    evidence:
+      - https://github.com/ollo69/ha-smartthinq-sensors/blob/4b6228b21f61ff5f0c8032f256100724398bad18/custom_components/smartthinq_sensors/wideq/core_async.py#L63
+  - pattern: emp-oauth.lgecloud.com
+    category: essential
+    purpose: "LG account session service used when signing in to ThinQ."
+    confidence: medium
+    evidence:
+      - https://github.com/ollo69/ha-smartthinq-sensors/blob/4b6228b21f61ff5f0c8032f256100724398bad18/custom_components/smartthinq_sensors/wideq/core_async.py#L68
+  - pattern: lgaccount.com
+    category: essential
+    purpose: "LG account sign-in, used to log in to ThinQ."
+    confidence: medium
+    evidence:
+      - https://github.com/ollo69/ha-smartthinq-sensors/blob/4b6228b21f61ff5f0c8032f256100724398bad18/custom_components/smartthinq_sensors/wideq/core_async.py#L69
+      - https://github.com/ollo69/ha-smartthinq-sensors/blob/4b6228b21f61ff5f0c8032f256100724398bad18/custom_components/smartthinq_sensors/wideq/core_async.py#L72

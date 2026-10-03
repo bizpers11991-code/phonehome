@@ -22,3 +22,90 @@ rules:
     kind_hint: camera
     evidence:
       - https://forums.wyze.com/t/wyze-cam-v3-exceeds-60-000-dns-lookups-per-day/157789
+  - pattern: wyze.com
+    category: essential
+    purpose: "Wyze accounts and newer Wyze services: sign-in, home monitoring and device management."
+    confidence: medium
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/service/auth_service.py#L18
+      - https://github.com/SecKatie/wyzeapy/blob/02156cadfc6c309d7e7a3a680261d00246a779a7/src/wyzeapy/services/base_service.py#L500
+  - pattern: auth-prod.api.wyze.com
+    category: essential
+    purpose: "Wyze account sign-in; logging in fails if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/service/auth_service.py#L18
+  - pattern: hms.api.wyze.com
+    category: essential
+    purpose: "Wyze Home Monitoring API (arm and disarm profiles); the alarm cannot be changed remotely if blocked."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/SecKatie/wyzeapy/blob/02156cadfc6c309d7e7a3a680261d00246a779a7/src/wyzeapy/services/base_service.py#L646
+  - pattern: wyze-earth-service.wyzecam.com
+    category: essential
+    purpose: "Wyze cloud service for the Wyze thermostat."
+    confidence: medium
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/service/earth_service.py#L12
+      - https://github.com/SecKatie/wyzeapy/blob/02156cadfc6c309d7e7a3a680261d00246a779a7/src/wyzeapy/services/thermostat_service.py#L130
+  - pattern: wyze-sirius-service.wyzecam.com
+    category: essential
+    purpose: "Wyze cloud service for Wyze wall switches."
+    confidence: medium
+    kind_hint: plug
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/service/sirius_service.py#L12
+      - https://github.com/SecKatie/wyzeapy/blob/02156cadfc6c309d7e7a3a680261d00246a779a7/src/wyzeapy/services/wall_switch_service.py#L112
+  - pattern: wyze-venus-service-vn.wyzecam.com
+    category: essential
+    purpose: "Wyze cloud service for Wyze robot vacuums."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/service/venus_service.py#L16
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/api/devices/vacuums.py#L8
+  - pattern: wyze-lockwood-service.wyzecam.com
+    category: essential
+    purpose: "Wyze cloud service for the Wyze sprinkler controller."
+    confidence: medium
+    evidence:
+      - https://github.com/SecKatie/wyzeapy/blob/02156cadfc6c309d7e7a3a680261d00246a779a7/src/wyzeapy/services/irrigation_service.py#L152
+  - pattern: wyze-scale-service.wyzecam.com
+    category: essential
+    purpose: "Wyze cloud service for Wyze smart scales."
+    confidence: medium
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/service/scale_service.py#L15
+  - pattern: yd-saas-toc.wyzecam.com
+    category: essential
+    purpose: "Wyze cloud service for Wyze locks."
+    confidence: medium
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/service/ford_service.py#L53
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/api/devices/locks.py#L25
+  - pattern: wyze-lock-service-broker.wyzecam.com
+    category: essential
+    purpose: "Wyze lock notification service."
+    confidence: medium
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/models/devices/locks.py#L16
+  - pattern: wyze-platform-service.wyzecam.com
+    category: essential
+    purpose: "Wyze platform API for device settings shared across Wyze products."
+    confidence: medium
+    evidence:
+      - https://github.com/shauntarves/wyze-sdk/blob/2d73bfd1c714fb165b9b091b6b493f93fd1245dd/wyze_sdk/service/platform_service.py#L12
+  - pattern: app.wyzecam.com
+    category: essential
+    purpose: "Wyze app API that hands out camera live streams."
+    confidence: medium
+    kind_hint: camera
+    evidence:
+      - https://github.com/SecKatie/wyzeapy/blob/02156cadfc6c309d7e7a3a680261d00246a779a7/src/wyzeapy/services/base_service.py#L1135
+  - pattern: wyze-membership-service.wyzecam.com
+    category: essential
+    purpose: "Wyze subscription (membership) plans linked to your devices."
+    confidence: medium
+    evidence:
+      - https://github.com/SecKatie/wyzeapy/blob/02156cadfc6c309d7e7a3a680261d00246a779a7/src/wyzeapy/services/base_service.py#L674

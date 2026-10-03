@@ -91,3 +91,17 @@ rules:
     kind_hint: phone
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
+  - pattern: account.xiaomi.com
+    category: essential
+    purpose: "Xiaomi account sign-in for the Mi Home cloud; logging in fails if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor/blob/c4db715dace9806e905153c2977608873e8ab7c9/token_extractor.py#L283
+      - https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor/blob/c4db715dace9806e905153c2977608873e8ab7c9/token_extractor.py#L312
+  - pattern: sts.api.io.mi.com
+    category: essential
+    purpose: "Issues the Mi Home cloud session token after Xiaomi account sign-in."
+    confidence: medium
+    evidence:
+      - https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor/blob/c4db715dace9806e905153c2977608873e8ab7c9/token_extractor.py#L320
+      - https://github.com/PiotrMachowski/Xiaomi-cloud-tokens-extractor/blob/c4db715dace9806e905153c2977608873e8ab7c9/token_extractor.py#L582

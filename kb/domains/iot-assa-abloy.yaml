@@ -1,0 +1,32 @@
+company: assa-abloy
+rules:
+  - pattern: api-production.august.com
+    category: essential
+    purpose: "August and Yale Access API for locks and doorbells; remote locking and unlocking stop if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/bdraco/yalexs/blob/f9ce73591683864d33ad269929f298325d948963/yalexs/const.py#L61
+  - pattern: auth.august.com
+    category: essential
+    purpose: "August account sign-in used by Home Assistant's August integration."
+    confidence: medium
+    evidence:
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/august/application_credentials.py#L6
+  - pattern: api.aaecosystem.com
+    category: essential
+    purpose: "Yale Home (global) API for Yale locks; remote control stops if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/bdraco/yalexs/blob/f9ce73591683864d33ad269929f298325d948963/yalexs/const.py#L94
+  - pattern: oauth.aaecosystem.com
+    category: essential
+    purpose: "Yale Home account sign-in used by Home Assistant's Yale integration."
+    confidence: medium
+    evidence:
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/yale/application_credentials.py#L6
+  - pattern: websocket.aaecosystem.com
+    category: essential
+    purpose: "Yale Home live updates (lock and door state) over a WebSocket."
+    confidence: medium
+    evidence:
+      - https://github.com/bdraco/yalexs/blob/f9ce73591683864d33ad269929f298325d948963/yalexs/manager/socketio.py#L83

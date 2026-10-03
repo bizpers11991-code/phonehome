@@ -39,7 +39,7 @@ Open <http://localhost:8099>.
 | **Heartbeats** | Devices that call a server on a clock, every 60 seconds, around the clock, whether anyone is using them or not. |
 | **While you slept** | How much each device talked between 01:00 and 06:00 (you can set the window). |
 | **DNS bypass** | Devices that can, or do, route around your Pi-hole with DNS-over-HTTPS, DNS-over-TLS or a hard-coded resolver. |
-| **Who gets your data** | Every lookup is classified by a [knowledge base](kb/) of **715 rules across 138 companies**. Each rule cites its evidence and states a confidence level. |
+| **Who gets your data** | Every lookup is classified by a [knowledge base](kb/) of **784 rules across 146 companies**. Each rule cites its evidence and states a confidence level. |
 | **What to do about it** | 41 researched, step-by-step fixes, such as *Settings › General & Privacy › Terms & Privacy › Viewing Information Services → Off*. Each fix is shown only for the devices it applies to. |
 | **Since you fixed it** | Every report is compared with the period before it: grade F → D, ↓ 73% a day, which heartbeats stopped. Fix a setting, then come back next week for the second receipt. |
 
