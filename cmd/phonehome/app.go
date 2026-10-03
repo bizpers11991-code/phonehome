@@ -108,7 +108,17 @@ func (a *app) setOptions(o analyze.Options) {
 	a.mu.Unlock()
 }
 
+// SetLabel names a device the store knows or the last 30 days' report
+// shows (devices known only by IP exist only there). Any other id is
+// ErrNotFound: the store would otherwise create a device row for it.
 func (a *app) SetLabel(ctx context.Context, deviceID, label string) error {
+	known, err := a.knownDevice(ctx, deviceID)
+	if err != nil {
+		return err
+	}
+	if !known {
+		return web.ErrNotFound
+	}
 	if err := a.store.SetLabel(ctx, deviceID, label); err != nil {
 		return err
 	}
@@ -116,6 +126,29 @@ func (a *app) SetLabel(ctx context.Context, deviceID, label string) error {
 	clear(a.cache)
 	a.mu.Unlock()
 	return nil
+}
+
+func (a *app) knownDevice(ctx context.Context, id string) (bool, error) {
+	devs, err := a.store.Devices(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, d := range devs {
+		if d.ID == id {
+			return true, nil
+		}
+	}
+	now := time.Now()
+	r, err := a.Report(ctx, model.Period{From: now.AddDate(0, 0, -30), To: now})
+	if err != nil {
+		return false, err
+	}
+	for _, d := range r.Devices {
+		if d.Device.ID == id {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (a *app) Receipt(ctx context.Context, p model.Period, deviceID, format string) ([]byte, error) {
