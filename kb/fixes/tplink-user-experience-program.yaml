@@ -1,0 +1,12 @@
+id: tplink-user-experience-program
+title: Leave TP-Link's User Experience Improvement Program (Tapo and Kasa)
+vendors: [tapo, kasa, tp-link, tplink]
+kinds: [camera, plug, hub]
+steps:
+  - 'Tapo app: app Settings › About › "User Experience Improvement Program" and switch it off'
+  - 'Kasa app: app Settings › About › "User Experience Improvement Program" and switch it off'
+  - 'To delete your TP-Link account and its data instead, use account-delete.tplinkcloud.com'
+notes: 'TP-Link''s Tapo and Kasa policies say the optional programme collects your phone''s details (including IMEI and system version) and how you use product features. Leaving it does not stop the devices using TP-Link''s cloud for remote control.'
+evidence:
+  - https://privacy.tp-link.com/app/tapo/privacy
+  - https://privacy.tp-link.com/app/Kasa/privacy

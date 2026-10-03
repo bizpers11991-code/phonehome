@@ -1,0 +1,15 @@
+id: sharp-tv-platform-privacy
+title: Turn off content recognition and ad tracking on a Sharp Roku TV or Google TV
+vendors: [sharp]
+kinds: [tv]
+when: [acr, ads, tracking]
+steps:
+  - 'Sharp Roku TV: Home › Settings › Privacy › Smart TV Experience, highlight "Automatic Content Recognition (ACR)" and press OK to clear it (older Roku OS: "Use info from TV inputs")'
+  - 'Sharp Roku TV: Settings › Privacy › Advertising, clear "Personalize ads" and select "Reset advertising identifier"'
+  - 'Sharp Google TV / Android TV: Settings › Privacy › Ads › "Delete advertising ID" (press the D-pad twice to focus it)'
+notes: 'Sharp sells Roku TV and Google TV models; on these the privacy switches belong to Roku or Google, so the menus follow that platform''s updates.'
+evidence:
+  - https://news.sharpusa.com/2023-11-15-SHARP-LAUNCHES-THE-WORLDS-FIRST-OLED-4K-UHD-TV-MODELS-EQUIPPED-WITH-ROKU-TV-STREAMING-PLATFORM
+  - https://support.roku.com/en-us/article/using-more-ways-to-watch-on-your-roku-tv
+  - https://www.howtogeek.com/your-roku-is-tracking-more-than-you-think-heres-how-to-limit-it/
+  - https://support.google.com/googletv/answer/13392198?hl=en
