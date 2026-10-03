@@ -30,6 +30,10 @@ auth:
   password: ""
   password_file: ""
 
+# Serve /metrics for Prometheus, behind the same basic auth as the web UI.
+# Off by default. What is exported: docs/integrations.md.
+metrics: false
+
 # Where to read from. Leave empty (or delete) to auto-detect Pi-hole,
 # AdGuard Home, dnsmasq/OpenWrt leases and conntrack at their usual paths.
 # Each source gets a name (default: its type); keep names stable, they track

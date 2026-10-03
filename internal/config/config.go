@@ -48,6 +48,7 @@ type Config struct {
 	Sources       []Source          `yaml:"sources"`   // empty = auto-detect
 	Labels        map[string]string `yaml:"labels"`    // MAC or IP → friendly name
 	Resolvers     []string          `yaml:"resolvers"` // your own DNS servers' LAN IPs; exempt from DNS-bypass findings
+	Metrics       bool              `yaml:"metrics"`   // serve /metrics for Prometheus (off by default)
 }
 
 // QuietHours is the local-time window [Start, End) in which a home is

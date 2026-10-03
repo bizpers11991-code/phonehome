@@ -35,8 +35,11 @@ var ErrNotFound = errors.New("not found")
 type Options struct {
 	// Username and Password enable HTTP basic auth when Password is set.
 	Username, Password string
-	Now                func() time.Time
-	Logger             *slog.Logger
+	// Metrics serves /metrics in the Prometheus text format, behind the
+	// same basic auth as everything else.
+	Metrics bool
+	Now     func() time.Time
+	Logger  *slog.Logger
 }
 
 // MaxLabelLen is the longest device label accepted, in characters.
@@ -73,6 +76,10 @@ func New(b Backend, o Options) http.Handler {
 	mux.HandleFunc("GET /api/status", s.status)
 	mux.HandleFunc("POST /api/devices/{id}/label", s.setLabel)
 	mux.HandleFunc("GET /receipt/{file}", s.receipt)
+	if o.Metrics {
+		m := &metrics{s: s}
+		mux.HandleFunc("GET /metrics", m.serve)
+	}
 
 	var h http.Handler = mux
 	if o.Password != "" {

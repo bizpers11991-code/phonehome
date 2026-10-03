@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### New
+- **Prometheus metrics.** With `metrics: true`, `/metrics` serves per-device
+  grades, snooping per day, lookups by category, quiet-hours lookups,
+  heartbeats and DNS-bypass findings, home totals and the health of each
+  source, behind the dashboard's basic auth. Off by default.
+  [docs/integrations.md](docs/integrations.md) lists every series and shows
+  Prometheus, Grafana and Home Assistant set-ups.
+
 ## v0.2.0
 
 ### New
