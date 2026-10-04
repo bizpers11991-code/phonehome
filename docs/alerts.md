@@ -69,7 +69,12 @@ alerts:
     # discovery_prefix: homeassistant
 ```
 
-Set only the targets you want; each one gets every notification. A public
+Set only the targets you want; each one gets every notification.
+For MQTT, put the user name and password in `username` and `password_file`,
+not in the broker address. `mqtts://` checks the broker's certificate
+against the system's trusted CAs, so a self-signed broker certificate is not
+accepted. Give each phonehome its own `client_id` if you run more than one:
+a broker disconnects a client when another connects with the same id. A public
 ntfy topic can be read by anyone who guesses its name: use a long random
 name, or your own ntfy server with a token.
 

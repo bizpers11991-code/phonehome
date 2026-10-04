@@ -158,9 +158,11 @@ that has to stay true.
 
 [Alerts](docs/alerts.md) are off by default. If you configure a webhook,
 ntfy, Gotify or MQTT target, phonehome sends that target, and only that
-target, the alert itself: the device's name, kind and vendor, its grade,
-and the domain or finding that triggered it. That is never more than the
-dashboard shows. If the target is outside your home (say the public
+target, the alert itself: the device's id (usually its MAC address), name,
+kind and vendor, its grade, and the domain or finding that triggered it.
+MQTT also keeps a retained grade sensor for every device on the broker, for
+Home Assistant. That is never more than the dashboard shows; exactly what is
+sent is in [docs/alerts.md](docs/alerts.md). If the target is outside your home (say the public
 ntfy.sh), that is the one thing that leaves it.
 
 ## Contribute what your devices do

@@ -52,18 +52,20 @@ func newAlerts(cfg config.Alerts, a *app, st *store.Store) (*alert.Engine, error
 	return e, nil
 }
 
-// runAlerts checks for alerts every interval until ctx ends. wait returns
-// once the last check has finished, so the store outlives it.
-func runAlerts(ctx context.Context, cfg config.Alerts, a *app, st *store.Store) (wait func(), err error) {
+// runAlerts checks for alerts every interval until ctx ends. stop ends the
+// checks and returns once the last one has finished, so the store outlives
+// it; serve may also return early, with an error from its listener.
+func runAlerts(ctx context.Context, cfg config.Alerts, a *app, st *store.Store) (stop func(), err error) {
 	e, err := newAlerts(cfg, a, st)
 	if err != nil || e == nil {
 		return func() {}, err
 	}
 	logger.Info("alerts on", "targets", len(e.Notifiers), "every", cfg.Interval)
+	ctx, cancel := context.WithCancel(ctx)
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
 		e.Run(ctx, cfg.Interval)
 	}()
-	return func() { <-done }, nil
+	return func() { cancel(); <-done }, nil
 }
