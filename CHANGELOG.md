@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Knowledge base
+- 784 → 802 rules and 146 → 147 companies. Tesla's Fleet API, sign-in
+  hosts (from the client library Home Assistant's Tesla integrations use)
+  and Ecovacs' regional REST, MQTT and XMPP hosts (from the Deebot
+  libraries), each linked to the line of code that names it.
+
 ## v0.3.0
 
 ### New

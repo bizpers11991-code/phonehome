@@ -41,3 +41,99 @@ rules:
     confidence: low
     evidence:
       - https://github.com/bmartin5692/bumper/blob/master/docs/DNS_Setup.md
+  - pattern: portal-ww.ecouser.net
+    category: essential
+    purpose: "Ecovacs REST API and sign-in for the worldwide region, used by the Deebot integration to list and control robots."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/authentication.py#L83
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/util/continents.py#L15-L274
+  - pattern: portal-eu.ecouser.net
+    category: essential
+    purpose: "Ecovacs REST API and sign-in for the Europe region, used by the Deebot integration to list and control robots."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/authentication.py#L83
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/util/continents.py#L15-L274
+  - pattern: portal-na.ecouser.net
+    category: essential
+    purpose: "Ecovacs REST API and sign-in for the North America region, used by the Deebot integration to list and control robots."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/authentication.py#L83
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/util/continents.py#L15-L274
+  - pattern: portal-as.ecouser.net
+    category: essential
+    purpose: "Ecovacs REST API and sign-in for the Asia region, used by the Deebot integration to list and control robots."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/authentication.py#L83
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/util/continents.py#L15-L274
+  - pattern: mq.ecouser.net
+    category: essential
+    purpose: "Ecovacs MQTT broker for China, which current Deebots use for commands and status."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/mqtt_client.py#L91
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/util/continents.py#L15-L274
+  - pattern: mq-eu.ecouser.net
+    category: essential
+    purpose: "Ecovacs MQTT broker for the Europe region, which current Deebots use for commands and status."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/mqtt_client.py#L91
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/util/continents.py#L15-L274
+  - pattern: mq-na.ecouser.net
+    category: essential
+    purpose: "Ecovacs MQTT broker for the North America region, which current Deebots use for commands and status."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/mqtt_client.py#L91
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/util/continents.py#L15-L274
+  - pattern: mq-as.ecouser.net
+    category: essential
+    purpose: "Ecovacs MQTT broker for the Asia region, which current Deebots use for commands and status."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/mqtt_client.py#L91
+      - https://github.com/DeebotUniverse/client.py/blob/be8cbbda9159e8b750efc4727eccf66ae5ff80bf/deebot_client/util/continents.py#L15-L274
+  - pattern: msg-ww.ecouser.net
+    category: essential
+    purpose: "Ecovacs XMPP server (port 5223) for the worldwide region, which older Deebots use for commands and status."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/mib1185/py-sucks/blob/07a5c8b22f45899f6dd18ff32bde087e7fab68c4/sucks/__init__.py#L503
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/ecovacs/controller.py#L55
+  - pattern: msg-eu.ecouser.net
+    category: essential
+    purpose: "Ecovacs XMPP server (port 5223) for the Europe region, which older Deebots use for commands and status."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/mib1185/py-sucks/blob/07a5c8b22f45899f6dd18ff32bde087e7fab68c4/sucks/__init__.py#L503
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/ecovacs/controller.py#L55
+  - pattern: msg-na.ecouser.net
+    category: essential
+    purpose: "Ecovacs XMPP server (port 5223) for the North America region, which older Deebots use for commands and status."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/mib1185/py-sucks/blob/07a5c8b22f45899f6dd18ff32bde087e7fab68c4/sucks/__init__.py#L503
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/ecovacs/controller.py#L55
+  - pattern: msg-as.ecouser.net
+    category: essential
+    purpose: "Ecovacs XMPP server (port 5223) for the Asia region, which older Deebots use for commands and status."
+    confidence: medium
+    kind_hint: vacuum
+    evidence:
+      - https://github.com/mib1185/py-sucks/blob/07a5c8b22f45899f6dd18ff32bde087e7fab68c4/sucks/__init__.py#L503
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/ecovacs/controller.py#L55
