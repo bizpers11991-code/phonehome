@@ -1,0 +1,41 @@
+company: tesla
+rules:
+  - pattern: fleet-api.prd.na.vn.cloud.tesla.com
+    category: essential
+    purpose: "Tesla Fleet API, \"na\" region: vehicle and energy-site (Powerwall, solar) data and commands, as used by Home Assistant's Tesla integrations."
+    confidence: medium
+    evidence:
+      - https://github.com/Teslemetry/python-tesla-fleet-api/blob/95b4e200d59b9d72e7051efce9cc2ace576596ab/tesla_fleet_api/const.py#L17
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/tesla_fleet/__init__.py#L8
+  - pattern: fleet-api.prd.eu.vn.cloud.tesla.com
+    category: essential
+    purpose: "Tesla Fleet API, \"eu\" region: vehicle and energy-site (Powerwall, solar) data and commands."
+    confidence: medium
+    evidence:
+      - https://github.com/Teslemetry/python-tesla-fleet-api/blob/95b4e200d59b9d72e7051efce9cc2ace576596ab/tesla_fleet_api/const.py#L18
+      - https://github.com/Teslemetry/python-tesla-fleet-api/blob/95b4e200d59b9d72e7051efce9cc2ace576596ab/tesla_fleet_api/tesla/energysite.py#L324
+  - pattern: fleet-api.prd.cn.vn.cloud.tesla.cn
+    category: essential
+    purpose: "Tesla Fleet API, \"cn\" region (China): vehicle and energy-site data and commands."
+    confidence: medium
+    evidence:
+      - https://github.com/Teslemetry/python-tesla-fleet-api/blob/95b4e200d59b9d72e7051efce9cc2ace576596ab/tesla_fleet_api/const.py#L19
+  - pattern: fleet-auth.prd.vn.cloud.tesla.com
+    category: essential
+    purpose: "Tesla Fleet API sign-in (OAuth authorize and token); integrations cannot sign in or refresh their access if blocked."
+    confidence: medium
+    evidence:
+      - https://github.com/home-assistant/core/blob/3b1cab025bcbd9dab4a35c40d013b41e8f51566e/homeassistant/components/tesla_fleet/const.py#L20-L21
+      - https://github.com/Teslemetry/python-tesla-fleet-api/blob/95b4e200d59b9d72e7051efce9cc2ace576596ab/tesla_fleet_api/tesla/oauth.py#L109
+  - pattern: auth.tesla.com
+    category: essential
+    purpose: "Tesla account sign-in page that apps send you to when you authorize access to your Tesla."
+    confidence: medium
+    evidence:
+      - https://github.com/Teslemetry/python-tesla-fleet-api/blob/95b4e200d59b9d72e7051efce9cc2ace576596ab/tesla_fleet_api/tesla/oauth.py#L54
+  - pattern: auth.tesla.cn
+    category: essential
+    purpose: "Tesla account sign-in page for China, used when authorizing access to your Tesla."
+    confidence: medium
+    evidence:
+      - https://github.com/Teslemetry/python-tesla-fleet-api/blob/95b4e200d59b9d72e7051efce9cc2ace576596ab/tesla_fleet_api/tesla/oauth.py#L52

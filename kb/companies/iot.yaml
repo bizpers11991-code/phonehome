@@ -42,6 +42,10 @@ companies:
     name: Ecovacs Robotics
     country: CN
     url: https://www.ecovacs.com
+  - id: tesla
+    name: Tesla
+    country: US
+    url: https://www.tesla.com
   - id: irobot
     name: iRobot
     country: US
