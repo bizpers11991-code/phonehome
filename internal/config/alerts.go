@@ -142,7 +142,10 @@ func (a Alerts) validate() error {
 	}
 	if m := a.MQTT; m != nil {
 		u, err := url.Parse(m.Broker)
-		if err != nil || u.Host == "" || !slices.Contains([]string{"mqtt", "tcp", "mqtts", "ssl", "tls"}, u.Scheme) {
+		if err == nil && u.User != nil {
+			// Not echoed: the address holds a password.
+			bad("mqtt.broker must not contain a user name or password; set username and password_file instead")
+		} else if err != nil || u.Host == "" || !slices.Contains([]string{"mqtt", "tcp", "mqtts", "ssl", "tls"}, u.Scheme) {
 			bad(`mqtt.broker %q must look like mqtt://192.168.1.2:1883 or mqtts://broker.lan:8883`, m.Broker)
 		}
 		if m.Password != "" && m.PasswordFile != "" {

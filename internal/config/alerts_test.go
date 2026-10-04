@@ -56,6 +56,7 @@ func TestAlertsConfigErrors(t *testing.T) {
 		"alerts:\n  gotify: {url: https://g.lan}\n":                          "application token",
 		"alerts:\n  mqtt: {broker: http://b.lan}\n":                          "mqtt.broker",
 		"alerts:\n  mqtt: {broker: mqtt://b.lan, password: x}\n":             "needs a username",
+		"alerts:\n  mqtt: {broker: \"mqtt://u:secret@b.lan\"}\n":             "must not contain a user name",
 		"alerts:\n  mqtt: {broker: mqtt://b.lan, topic: home/#}\n":           "wildcards",
 	} {
 		_, err := Parse([]byte(yaml))
