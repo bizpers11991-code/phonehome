@@ -34,6 +34,13 @@
   device are left out), and heartbeats on local names and reverse lookups
   are no longer reported anywhere.
 
+### Docs
+- [docs/testing-at-home.md](docs/testing-at-home.md): a first real
+  measurement of your own home: which source, how long to collect, reading
+  `phonehome unknown`, suggesting rules and sharing a receipt without MAC
+  addresses. A test now keeps the "Suggest a rule" link's prefilled fields
+  in step with the issue form.
+
 ## v0.3.0
 
 ### New
