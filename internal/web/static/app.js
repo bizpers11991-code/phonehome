@@ -313,7 +313,7 @@ function renderHero() {
       t('hero.snooping', { n: fmt(r.snooping), count: r.snooping }),
       blocked ? t('hero.blocked', { n: fmt(blocked), count: blocked }) : null,
     ].filter(Boolean).join(' · ') }),
-    sinceHero(r),
+    sinceHero(r) ?? '', // replaceChildren would print null
     stack(r.categories, r.total),
     h('div', { class: 'legend' },
       legendGroup(t('legend.about'), snoop, r.total),
