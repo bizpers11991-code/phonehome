@@ -10,12 +10,13 @@ rules:
       - https://github.com/ollo69/ha-smartthinq-sensors/blob/4b6228b21f61ff5f0c8032f256100724398bad18/custom_components/smartthinq_sensors/wideq/core_async.py#L63
   - pattern: api-kic.lgthinq.com
     category: essential
-    purpose: "LG ThinQ Connect API for the Korea and Asia region, used to read and control LG appliances."
+    purpose: "LG ThinQ Connect API for the Asia-Pacific region (Korea, Japan, China, India, Australia and others), used to read and control LG appliances."
     confidence: medium
     kind_hint: appliance
     evidence:
       - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/thinq_api.py#L144
-      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L177
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L176-L179
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L186-L207
   - pattern: api-aic.lgthinq.com
     category: essential
     purpose: "LG ThinQ Connect API for the Americas region, used to read and control LG appliances."
@@ -23,15 +24,17 @@ rules:
     kind_hint: appliance
     evidence:
       - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/thinq_api.py#L144
-      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L177
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L176-L179
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L208-L246
   - pattern: api-eic.lgthinq.com
     category: essential
-    purpose: "LG ThinQ Connect API for the Europe region, used to read and control LG appliances."
+    purpose: "LG ThinQ Connect API for Europe, the Middle East and Africa, used to read and control LG appliances."
     confidence: medium
     kind_hint: appliance
     evidence:
       - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/thinq_api.py#L144
-      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L177
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L176-L179
+      - https://github.com/thinq-connect/pythinqconnect/blob/2617a12e6cc8e7fec0f1c831211216970d870b3f/thinqconnect/country.py#L247-L353
   - pattern: route.lgthinq.com
     category: essential
     purpose: "Says which regional LG ThinQ server to use."

@@ -8,6 +8,21 @@
   and Ecovacs' regional REST, MQTT and XMPP hosts (from the Deebot
   libraries), each linked to the line of code that names it.
 
+### Fixed
+- In `pihole.log` without serials, when a client asked A and AAAA for the
+  same name, A got a CNAME reply and AAAA was then blocked upstream, the
+  block was counted for A instead of AAAA.
+- The device panel's domain table fits a 1280px screen: the panel is wider,
+  dates and confidence wrap, and the evidence column shows "Evidence 1/2"
+  links instead of raw URLs (a list of links was being turned into text).
+- LG ThinQ regional API rules cite the full list of countries each region
+  serves, and their purposes now name every region that list covers.
+
+### Changed in v0.3.0, now noted
+- Each `pihole-api` source also shows a second `<name>-devices` entry in
+  the source health list: it reads device names from Pi-hole's
+  `/api/network/devices`.
+
 ## v0.3.0
 
 ### New

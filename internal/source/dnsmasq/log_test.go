@@ -362,3 +362,27 @@ func TestCNAMEVerdicts(t *testing.T) {
 		"14:10:00 ok.example A 192.168.1.22 false",
 	})
 }
+
+// TestUpstreamBlockAfterCNAME: without serials, A gets a CNAME reply and
+// is held; the upstream then blocks AAAA for the same name. The block is
+// AAAA's, not the held A query's.
+func TestUpstreamBlockAfterCNAME(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "pihole.log")
+	l := newTestLog(path)
+	const p = "Oct  2 14:10:00 dnsmasq[9]: "
+	appendFile(t, path, p+"query[A] m.example from 192.168.1.21\n"+
+		p+"forwarded m.example to 9.9.9.9\n"+
+		p+"query[AAAA] m.example from 192.168.1.21\n"+
+		p+"forwarded m.example to 9.9.9.9\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply cdn.example is 192.0.2.10\n"+
+		p+"blocked upstream with NULL address m.example is ::\n"+
+		p+"query[A] ok.example from 192.168.1.22\n"+
+		p+"reply ok.example is 192.0.2.2\n")
+	got, _ := drain(t, l, "", 10)
+	equal(t, got, []string{
+		"14:10:00 m.example A 192.168.1.21 false",
+		"14:10:00 m.example AAAA 192.168.1.21 true",
+		"14:10:00 ok.example A 192.168.1.22 false",
+	})
+}

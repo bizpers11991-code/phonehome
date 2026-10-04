@@ -182,6 +182,9 @@ type pending struct {
 	line     int
 	answered bool
 	hold     int // answered with a CNAME: line number up to which to wait
+	// inspected: held, and blocked by a "blocked during CNAME inspection"
+	// line, so the verdict line that follows is its own.
+	inspected bool
 }
 
 type reader struct {
@@ -280,8 +283,10 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 //	gravity blocked m.example is 0.0.0.0   (not when answered from cache)
 //
 // so the CNAME-inspection line goes to the held query, and the verdict
-// after it to a held query before any unanswered one: a client asking A
-// and AAAA for m.example at once has both pending.
+// after it to that query: a client asking A and AAAA for m.example at once
+// has both pending. Any other blocking verdict goes to an unanswered query
+// first, and only then to a held one: when A got a CNAME and AAAA is then
+// "blocked upstream", the block is AAAA's.
 func answer(queue []pending, e event, lineNum int) {
 	matches := func(p *pending) bool {
 		if p.e.serial != "" && e.serial != "" {
@@ -295,19 +300,24 @@ func answer(queue []pending, e event, lineNum int) {
 		for i := len(queue) - 1; i >= 0; i-- {
 			p := &queue[i]
 			if p.hold > 0 && (p.e.serial == "" || e.serial == "" || p.e.serial == e.serial) {
-				p.e.blocked = true // still held for the verdict line after it
+				p.e.blocked, p.inspected = true, true // still held for the verdict line after it
 				return
 			}
 		}
 		return
 	}
-	if e.blocked {
+	// release ends a held query's wait with a blocking verdict.
+	release := func(only func(p *pending) bool) bool {
 		for i := range queue {
-			if p := &queue[i]; p.hold > 0 && matches(p) {
-				p.e.blocked, p.hold = true, 0 // the verdict is final
-				return
+			if p := &queue[i]; p.hold > 0 && matches(p) && only(p) {
+				p.e.blocked, p.hold, p.inspected = true, 0, false // the verdict is final
+				return true
 			}
 		}
+		return false
+	}
+	if e.blocked && release(func(p *pending) bool { return p.inspected }) {
+		return
 	}
 	for i := range queue {
 		p := &queue[i]
@@ -319,6 +329,9 @@ func answer(queue []pending, e event, lineNum int) {
 			p.hold = lineNum + cnameHold
 		}
 		return
+	}
+	if e.blocked {
+		release(func(*pending) bool { return true })
 	}
 }
 

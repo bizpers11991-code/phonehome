@@ -102,7 +102,7 @@ function setLang(lang) {
 function h(tag, props, ...kids) {
   const el = document.createElement(tag);
   setProps(el, props);
-  el.append(...kids.flat().filter((k) => k != null && k !== false));
+  el.append(...kids.flat(Infinity).filter((k) => k != null && k !== false)); // nested lists too: never stringify an element
   return el;
 }
 
