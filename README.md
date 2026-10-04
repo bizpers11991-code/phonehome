@@ -76,6 +76,7 @@ Zero to a NAS, and it only ever **reads** your DNS server's files.
 [AdGuard Home](docs/setup/adguard-home.md) · [OpenWrt / dnsmasq](docs/setup/openwrt.md) ·
 [Unraid](docs/setup/unraid.md) · [Synology](docs/setup/synology.md) ·
 [Proxmox LXC](docs/setup/proxmox-lxc.md). Questions: [FAQ](docs/FAQ.md).
+First measurement of your own home: [testing at home](docs/testing-at-home.md).
 Prometheus, Grafana and Home Assistant: [docs/integrations.md](docs/integrations.md).
 
 ### Next to Pi-hole (Docker)
