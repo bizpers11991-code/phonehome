@@ -135,3 +135,16 @@ func TestCatalogCoversPage(t *testing.T) {
 		}
 	}
 }
+
+// TestElementHelperFlattens guards h() in app.js: callers pass nested lists
+// (the domain table's evidence links are [' ', <a>] pairs), and a list that
+// is not flattened is turned into a string, so a link shows its raw URL.
+func TestElementHelperFlattens(t *testing.T) {
+	b, err := staticFS.ReadFile("static/app.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), "el.append(...kids.flat(Infinity)") {
+		t.Error("h() in app.js must flatten its children completely")
+	}
+}

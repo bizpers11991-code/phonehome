@@ -383,7 +383,7 @@ dialog { color: var(--ink); background: var(--surface); border: 0; padding: 0; }
 dialog::backdrop { background: var(--backdrop); }
 
 .drawer {
-  margin: 0 0 0 auto; height: 100%; max-height: 100%; width: min(720px, 100%); max-width: 100%;
+  margin: 0 0 0 auto; height: 100%; max-height: 100%; width: min(1040px, 100%); max-width: 100%;
   box-shadow: -12px 0 48px rgba(0, 0, 0, 0.18); overflow-y: auto; overscroll-behavior: contain;
 }
 .drawer[open] { animation: slide-in 0.22s cubic-bezier(0.2, 0.7, 0.2, 1); }
@@ -426,8 +426,9 @@ th .sort {
   border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; white-space: nowrap;
 }
 th .sort:hover, th[aria-sort] .sort { color: var(--ink); }
-td.when { color: var(--ink-2); white-space: nowrap; font-size: 0.8125rem; }
-td.rule { white-space: nowrap; font-size: 0.8125rem; color: var(--ink-2); }
+td.when { color: var(--ink-2); font-size: 0.8125rem; min-width: 7em; }
+td.rule { font-size: 0.8125rem; color: var(--ink-2); min-width: 8em; }
+td.rule a { white-space: nowrap; }
 td.rule a { display: inline-flex; align-items: center; gap: 3px; }
 td.rule .ico { width: 12px; height: 12px; }
 .hero-actions.export { margin-top: 12px; }
@@ -627,6 +628,7 @@ pre + pre { margin-top: 10px; }
   .drawer-body { padding: 0 16px 32px; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   th.company, td.company { display: none; }
+  .domain-table td:first-child { min-width: 11em; } /* the table scrolls sideways; the name stays readable */
   .controls { width: 100%; flex-direction: column; align-items: stretch; }
   .period button { white-space: nowrap; }
   .lang select { width: 100%; }
