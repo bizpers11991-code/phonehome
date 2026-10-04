@@ -1,6 +1,45 @@
 # Changelog
 
-## Unreleased
+## v0.3.0
+
+### New
+- **Prometheus metrics.** With `metrics: true`, `/metrics` serves per-device
+  grades, snooping per day, lookups by category, quiet-hours lookups,
+  heartbeats and DNS-bypass findings, home totals and the health of each
+  source, behind the dashboard's basic auth. Off by default.
+  [docs/integrations.md](docs/integrations.md) lists every series and shows
+  Prometheus, Grafana and Home Assistant set-ups.
+- **Alerts to your own services.** phonehome can notify a webhook, ntfy,
+  Gotify or an MQTT broker when a new device appears, a grade gets worse, a
+  device starts a snooping heartbeat or starts bypassing DNS. Off unless a
+  target is configured; de-duplicated, rate-limited and remembered across
+  restarts. MQTT also keeps a Home Assistant grade sensor per device via MQTT
+  discovery. Exactly what is sent: [docs/alerts.md](docs/alerts.md).
+
+### Dashboard
+- **Five languages.** English, German, French, Spanish and Dutch, chosen from
+  the browser's languages or the new selector. The non-English texts are
+  machine-translated; corrections welcome. Knowledge-base texts and the
+  receipt stay English.
+- **Every domain, sortable and filterable.** A device's details list every
+  domain it looked up, with company, category, lookups, blocks, first and
+  last seen, and the rule's confidence and evidence links.
+- **Export.** The report (CSV, one row per device, or JSON) and a device's
+  domain table, generated in the browser.
+- **Accessibility.** Arrow keys move between device cards; dialogs keep focus
+  inside and return it on close; light-mode colours now meet WCAG AA
+  contrast, checked by a test for light and dark.
+- The headline no longer shows the word "null" when there is no earlier
+  period to compare with.
+
+### Knowledge base
+- 715 → 784 rules and 138 → 146 companies, mined from the open-source
+  clients that talk to each vendor's cloud (Home Assistant integrations and
+  the libraries behind them). Every new rule links to the exact line of
+  code that names the host. New: August/Yale (ASSA ABLOY), LG ThinQ,
+  Home Connect (Bosch/Siemens), Miele, SolarEdge, Enphase, SwitchBot, Nuki
+  and LIFX. More hosts for Ring, ecobee, Tuya, Xiaomi, Wyze, tado,
+  SmartThings, eufy, Govee, Meross, Tapo, Arlo and Netatmo.
 
 ### Fixed
 - **Readers checked against upstream source.** Each reader was compared
@@ -24,41 +63,13 @@
 - **Device names over the Pi-hole API.** `pihole-api` sources now also read
   the devices Pi-hole knows (MAC, maker, addresses and host names) from
   `/api/network/devices`, so they are no longer bare IP addresses.
-### Knowledge base
-- 715 → 784 rules and 138 → 146 companies, mined from the open-source
-  clients that talk to each vendor's cloud (Home Assistant integrations and
-  the libraries behind them). Every new rule links to the exact line of
-  code that names the host. New: August/Yale (ASSA ABLOY), LG ThinQ,
-  Home Connect (Bosch/Siemens), Miele, SolarEdge, Enphase, SwitchBot, Nuki
-  and LIFX. More hosts for Ring, ecobee, Tuya, Xiaomi, Wyze, tado,
-  SmartThings, eufy, Govee, Meross, Tapo, Arlo and Netatmo.
-### New
-- **Prometheus metrics.** With `metrics: true`, `/metrics` serves per-device
-  grades, snooping per day, lookups by category, quiet-hours lookups,
-  heartbeats and DNS-bypass findings, home totals and the health of each
-  source, behind the dashboard's basic auth. Off by default.
-  [docs/integrations.md](docs/integrations.md) lists every series and shows
-  Prometheus, Grafana and Home Assistant set-ups.
-### New
-- **Alerts to your own services.** phonehome can notify a webhook, ntfy,
-  Gotify or an MQTT broker when a new device appears, a grade gets worse, a
-  device starts a snooping heartbeat or starts bypassing DNS. Off unless a
-  target is configured; de-duplicated, rate-limited and remembered across
-  restarts. MQTT also keeps a Home Assistant grade sensor per device via MQTT
-  discovery. Exactly what is sent: [docs/alerts.md](docs/alerts.md).
-### Dashboard
-- **Five languages.** English, German, French, Spanish and Dutch, chosen from
-  the browser's languages or the new selector. The non-English texts are
-  machine-translated; corrections welcome. Knowledge-base texts and the
-  receipt stay English.
-- **Every domain, sortable and filterable.** A device's details list every
-  domain it looked up, with company, category, lookups, blocks, first and
-  last seen, and the rule's confidence and evidence links.
-- **Export.** The report (CSV, one row per device, or JSON) and a device's
-  domain table, generated in the browser.
-- **Accessibility.** Arrow keys move between device cards; dialogs keep focus
-  inside and return it on close; light-mode colours now meet WCAG AA
-  contrast, checked by a test for light and dark.
+  Each `pihole-api` source therefore shows a second entry, `<name>-devices`,
+  in the source health list.
+- Renaming a device the dashboard doesn't know now answers 404 instead of
+  creating it.
+- An end-to-end smoke test ([scripts/smoke.sh](scripts/smoke.sh)) builds the
+  binary, starts the demo and checks every endpoint, its headers and its
+  refusals in CI.
 
 ## v0.2.0
 

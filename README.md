@@ -42,6 +42,8 @@ Open <http://localhost:8099>.
 | **Who gets your data** | Every lookup is classified by a [knowledge base](kb/) of **784 rules across 146 companies**. Each rule cites its evidence and states a confidence level. |
 | **What to do about it** | 41 researched, step-by-step fixes, such as *Settings › General & Privacy › Terms & Privacy › Viewing Information Services → Off*. Each fix is shown only for the devices it applies to. |
 | **Since you fixed it** | Every report is compared with the period before it: grade F → D, ↓ 73% a day, which heartbeats stopped. Fix a setting, then come back next week for the second receipt. |
+| **Tell me when it changes** | Optional alerts to your own webhook, ntfy, Gotify or MQTT (with Home Assistant sensors) for a new device, a worse grade, a new heartbeat or DNS bypass, plus a Prometheus `/metrics` endpoint. All off by default. |
+| **Every domain, your language** | A sortable table of every domain a device looked up, CSV/JSON export, and a dashboard in English, German, French, Spanish and Dutch. |
 
 Every device gets a grade from A to F based on how much of its traffic is
 about you rather than for you. [The rules are short and public.](docs/grading.md)
@@ -161,9 +163,9 @@ ntfy, Gotify or MQTT target, phonehome sends that target, and only that
 target, the alert itself: the device's id (usually its MAC address), name,
 kind and vendor, its grade, and the domain or finding that triggered it.
 MQTT also keeps a retained grade sensor for every device on the broker, for
-Home Assistant. That is never more than the dashboard shows; exactly what is
-sent is in [docs/alerts.md](docs/alerts.md). If the target is outside your home (say the public
-ntfy.sh), that is the one thing that leaves it.
+Home Assistant. That is never more than the dashboard shows; exactly what
+is sent is in [docs/alerts.md](docs/alerts.md). If the target is outside
+your home (say the public ntfy.sh), that is the one thing that leaves it.
 
 ## Languages
 
