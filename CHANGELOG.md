@@ -11,7 +11,9 @@
 ### Fixed
 - In `pihole.log` without serials, when a client asked A and AAAA for the
   same name, A got a CNAME reply and AAAA was then blocked upstream, the
-  block was counted for A instead of AAAA.
+  block was counted for A instead of AAAA. A blocking verdict now goes to
+  the query of the type its address is for (0.0.0.0 for A, :: for AAAA), so
+  an upstream block of a CNAME chain still counts for the query it ends.
 - The device panel's domain table fits a 1280px screen: the panel is wider,
   dates and confidence wrap, and the evidence column shows "Evidence 1/2"
   links instead of raw URLs (a list of links was being turned into text).

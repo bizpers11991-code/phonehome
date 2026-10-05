@@ -25,6 +25,9 @@ type event struct {
 	// name in the chain, not the query, so it belongs to the query whose
 	// CNAME answer is being held back.
 	cnameBlock bool
+	// family: for a blocking answer, the query type its address or NODATA
+	// is for ("A" for 0.0.0.0, "AAAA" for ::), "" when it doesn't say.
+	family string
 }
 
 // programs are the syslog tags whose lines we read. Pi-hole's FTL embeds
@@ -140,6 +143,9 @@ func parseMessage(msg string) (event, bool) {
 		e.blocked = isBlock(strings.Join(f[:n-3], " "), f[n-1])
 		e.cname = f[n-1] == "<CNAME>"
 		e.cnameBlock = cnameBlock
+		if e.blocked {
+			e.family = family(f[n-1])
+		}
 	default:
 		return event{}, false
 	}
@@ -209,6 +215,24 @@ func isBlock(source, answer string) bool {
 
 // typeName turns dnsmasq's "type=65" for types it has no name for into the
 // RFC 3597 form other sources use.
+// family is the query type a blocking answer is for, from the address or
+// NODATA that FTL logs in NULL and NODATA blocking modes.
+func family(answer string) string {
+	if answer == "NODATA-IPv4" {
+		return "A"
+	}
+	if answer == "NODATA-IPv6" {
+		return "AAAA"
+	}
+	if a, err := netip.ParseAddr(answer); err == nil {
+		if a.Is4() {
+			return "A"
+		}
+		return "AAAA"
+	}
+	return ""
+}
+
 func typeName(t string) string {
 	if n, ok := strings.CutPrefix(t, "type="); ok {
 		switch n {

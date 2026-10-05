@@ -182,9 +182,6 @@ type pending struct {
 	line     int
 	answered bool
 	hold     int // answered with a CNAME: line number up to which to wait
-	// inspected: held, and blocked by a "blocked during CNAME inspection"
-	// line, so the verdict line that follows is its own.
-	inspected bool
 }
 
 type reader struct {
@@ -282,13 +279,28 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 //	reply tracker.example is blocked during CNAME inspection
 //	gravity blocked m.example is 0.0.0.0   (not when answered from cache)
 //
-// so the CNAME-inspection line goes to the held query, and the verdict
-// after it to that query: a client asking A and AAAA for m.example at once
-// has both pending. Any other blocking verdict goes to an unanswered query
-// first, and only then to a held one: when A got a CNAME and AAAA is then
-// "blocked upstream", the block is AAAA's.
+// and an upstream block of the chain the same way, with "blocked upstream"
+// as the verdict. So the CNAME-inspection line goes to the held query, and
+// the verdict after it to a held query before any unanswered one. A client
+// asking A and AAAA for m.example at once has both pending, so a verdict
+// that says which type it is for (0.0.0.0 or ::) goes to a query of that
+// type first: when A got a CNAME and AAAA is then "blocked upstream ... is
+// ::", the block is AAAA's.
 func answer(queue []pending, e event, lineNum int) {
+	if e.blocked && e.family != "" && !e.cnameBlock &&
+		settle(queue, e, lineNum, func(p *pending) bool { return p.e.qtype == e.family }) {
+		return
+	}
+	settle(queue, e, lineNum, func(*pending) bool { return true })
+}
+
+// settle is answer for the queries only accepts; it reports whether one
+// took e.
+func settle(queue []pending, e event, lineNum int, only func(p *pending) bool) bool {
 	matches := func(p *pending) bool {
+		if !only(p) {
+			return false
+		}
 		if p.e.serial != "" && e.serial != "" {
 			return p.e.serial == e.serial
 		}
@@ -300,24 +312,19 @@ func answer(queue []pending, e event, lineNum int) {
 		for i := len(queue) - 1; i >= 0; i-- {
 			p := &queue[i]
 			if p.hold > 0 && (p.e.serial == "" || e.serial == "" || p.e.serial == e.serial) {
-				p.e.blocked, p.inspected = true, true // still held for the verdict line after it
-				return
-			}
-		}
-		return
-	}
-	// release ends a held query's wait with a blocking verdict.
-	release := func(only func(p *pending) bool) bool {
-		for i := range queue {
-			if p := &queue[i]; p.hold > 0 && matches(p) && only(p) {
-				p.e.blocked, p.hold, p.inspected = true, 0, false // the verdict is final
+				p.e.blocked = true // still held for the verdict line after it
 				return true
 			}
 		}
 		return false
 	}
-	if e.blocked && release(func(p *pending) bool { return p.inspected }) {
-		return
+	if e.blocked {
+		for i := range queue {
+			if p := &queue[i]; p.hold > 0 && matches(p) {
+				p.e.blocked, p.hold = true, 0 // the verdict is final
+				return true
+			}
+		}
 	}
 	for i := range queue {
 		p := &queue[i]
@@ -328,11 +335,9 @@ func answer(queue []pending, e event, lineNum int) {
 		if e.cname {
 			p.hold = lineNum + cnameHold
 		}
-		return
+		return true
 	}
-	if e.blocked {
-		release(func(*pending) bool { return true })
-	}
+	return false
 }
 
 // readLine returns the next line including its newline, however long.
