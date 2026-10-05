@@ -41,11 +41,11 @@ func AnalyzeCompared(c Classifier, p model.Period, devs []model.Device, qs []mod
 	prev := newAnalysis(c, prevP, devs, o)
 	prev.cache = cur.cache // classify each domain once across both periods
 	prev.noFixes = true
-	for i := range qs {
-		if cur.inPeriod(qs[i].Time) {
-			cur.addQuery(&qs[i])
+	for q := range byTime(qs) {
+		if cur.inPeriod(q.Time) {
+			cur.addQuery(q)
 		} else {
-			prev.addQuery(&qs[i])
+			prev.addQuery(q)
 		}
 	}
 	for i := range fl {

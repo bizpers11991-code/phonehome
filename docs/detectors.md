@@ -12,7 +12,10 @@ Two limits apply to everything below:
 - **DNS caching.** A device that already knows a server's address does not
   ask again until the answer expires (its TTL, often minutes to hours). So one
   lookup can stand for many connections. Every count here is a **lower bound**
-  on how often the device actually connects.
+  on how often the device actually connects. The other way round, one lookup
+  can be several queries in the log (A, AAAA and HTTPS records, retries of a
+  blocked name); those count once, as described in
+  [grading.md](grading.md#the-terms).
 
 ## Attribution: which device made the lookup
 

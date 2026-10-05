@@ -78,7 +78,8 @@ func BenchmarkAnalyze(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		r := Analyze(benchClassifier, week, devs, qs, nil, utcOpt)
-		if len(r.Devices) != benchDevices || r.Total != benchPerWeek {
+		// A few hundred long-tail repeats fall within countWindow.
+		if len(r.Devices) != benchDevices || r.Total < benchPerWeek*99/100 {
 			b.Fatalf("got %d devices, %d lookups", len(r.Devices), r.Total)
 		}
 	}
@@ -94,7 +95,7 @@ func BenchmarkAnalyzeCompared(b *testing.B) {
 	b.ResetTimer()
 	for b.Loop() {
 		r := AnalyzeCompared(benchClassifier, p, devs, qs, nil, utcOpt, week.From)
-		if len(r.Devices) != benchDevices || r.Previous == nil || r.Total+r.Previous.Total != len(qs) {
+		if len(r.Devices) != benchDevices || r.Previous == nil || r.Total+r.Previous.Total < len(qs)*99/100 {
 			b.Fatalf("got %d devices, %d lookups", len(r.Devices), r.Total)
 		}
 	}
