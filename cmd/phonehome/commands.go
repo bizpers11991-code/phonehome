@@ -15,8 +15,10 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/bizpers11991-code/phonehome/internal/analyze"
 	"github.com/bizpers11991-code/phonehome/internal/config"
@@ -228,10 +230,28 @@ func cmdServe(ctx context.Context, args []string) error {
 	}
 	defer stopAlerts() // before the deferred st.Close
 
+	if pw == "" && !loopback(cfg.Listen) {
+		logger.Warn("the dashboard has no password and is reachable from other machines; anyone on your network can read every device's lookups. Set auth: in the config",
+			"listen", cfg.Listen)
+	}
 	h := web.New(a, web.Options{
 		Username: cfg.Auth.Username, Password: pw, Logger: logger, Metrics: cfg.Metrics,
+		AllowedHosts: cfg.AllowedHosts,
 	})
 	return listenAndServe(ctx, cfg.Listen, h)
+}
+
+// loopback reports whether listen only accepts connections from this machine.
+func loopback(listen string) bool {
+	host, _, err := net.SplitHostPort(listen)
+	if err != nil {
+		return false
+	}
+	if host == "localhost" {
+		return true
+	}
+	a, err := netip.ParseAddr(host)
+	return err == nil && a.IsLoopback()
 }
 
 func cmdDemo(ctx context.Context, args []string) error {
@@ -282,7 +302,14 @@ func loadDemo(ctx context.Context, seed int64, days int) (*store.Store, error) {
 }
 
 func listenAndServe(ctx context.Context, addr string, h http.Handler) error {
-	srv := &http.Server{Addr: addr, Handler: h, ReadHeaderTimeout: 10 * time.Second}
+	srv := &http.Server{
+		Addr: addr, Handler: h,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		// No WriteTimeout: a month's report or receipt on a Pi can take a
+		// while to compute.
+	}
 	errc := make(chan error, 1)
 	go func() { errc <- srv.ListenAndServe() }()
 	logger.Info("dashboard listening", "addr", addr)
@@ -454,13 +481,13 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 			fmt.Fprintf(w, "  Only %.1f of those %.0f days have data; rates are per day of data.\n", pc.Days, pc.Period.Days())
 		}
 		for _, g := range pc.Gone {
-			fmt.Fprintf(w, "  Not seen this period: %s (was %s)\n", g.Device.DisplayName(), gradeOrDash(g.Grade))
+			fmt.Fprintf(w, "  Not seen this period: %s (was %s)\n", printable(g.Device.DisplayName()), gradeOrDash(g.Grade))
 		}
 	}
 	fmt.Fprintln(w)
 	for _, d := range r.Devices {
 		fmt.Fprintf(w, "%s  %-28s %8s lookups  %7s snooping/day  (%s)\n",
-			gradeOrDash(d.Grade), d.Device.DisplayName(), thousands(d.Total), thousands(round(d.PerDay)), d.Device.Kind)
+			gradeOrDash(d.Grade), printable(d.Device.DisplayName()), thousands(d.Total), thousands(round(d.PerDay)), d.Device.Kind)
 		if c := d.Previous; c != nil {
 			if !c.Seen {
 				fmt.Fprintf(w, "     new: not seen in the %s\n", since)
@@ -469,10 +496,10 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 					thousands(round(c.PerDay)), thousands(round(c.NowPerDay)), changeText(*c), gradeOrDash(c.Grade), gradeOrDash(d.Grade))
 			}
 			for _, h := range c.Stopped {
-				fmt.Fprintf(w, "     stopped: %s heartbeat (%s)\n", h.Domain, h.Category.Label())
+				fmt.Fprintf(w, "     stopped: %s heartbeat (%s)\n", printable(h.Domain), h.Category.Label())
 			}
 			for _, h := range c.Started {
-				fmt.Fprintf(w, "     new heartbeat: %s (%s)\n", h.Domain, h.Category.Label())
+				fmt.Fprintf(w, "     new heartbeat: %s (%s)\n", printable(h.Domain), h.Category.Label())
 			}
 		}
 		cats := make([]model.Category, 0, len(d.ByCategory))
@@ -487,16 +514,31 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 		}
 		for _, h := range d.Heartbeats {
 			if h.Category.Snooping() {
-				fmt.Fprintf(w, "     heartbeat: %s every %s (%s)\n", h.Domain, h.Every.Round(time.Second), h.Category.Label())
+				fmt.Fprintf(w, "     heartbeat: %s every %s (%s)\n", printable(h.Domain), h.Every.Round(time.Second), h.Category.Label())
 			}
 		}
 		for _, b := range d.Bypasses {
-			fmt.Fprintf(w, "     ! %s (%s)\n", b.Detail, b.Evidence)
+			fmt.Fprintf(w, "     ! %s (%s)\n", printable(b.Detail), b.Evidence)
 		}
 		if len(d.Fixes) > 0 {
 			fmt.Fprintf(w, "     fix: %s\n", d.Fixes[0].Title)
 		}
 	}
+}
+
+// printable escapes what a terminal would act on in a name that came from
+// the network (a DHCP hostname, a queried domain): control characters,
+// invalid UTF-8 and other non-printing characters, as Go escapes ("\x1b").
+// The sources skip such domains, but stores written before they did, and
+// hostnames, may still hold them.
+func printable(s string) string {
+	for _, r := range s {
+		if r == utf8.RuneError || !strconv.IsPrint(r) {
+			q := strconv.Quote(s)
+			return q[1 : len(q)-1]
+		}
+	}
+	return s
 }
 
 // previousLabel names the period before a report: "previous 7 days".
@@ -598,7 +640,7 @@ func resolveDevice(r model.HomeReport, q string) (string, error) {
 		if d.Device.ID == q || strings.EqualFold(d.Device.DisplayName(), q) {
 			return d.Device.ID, nil
 		}
-		names = append(names, fmt.Sprintf("  %s  (%s)", d.Device.ID, d.Device.DisplayName()))
+		names = append(names, fmt.Sprintf("  %s  (%s)", d.Device.ID, printable(d.Device.DisplayName())))
 	}
 	return "", fmt.Errorf("no device %q in this period; devices:\n%s", q, strings.Join(names, "\n"))
 }

@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bizpers11991-code/phonehome/internal/source"
 )
 
 // event is one parsed dnsmasq log line that matters to us: either a query
@@ -133,13 +135,13 @@ func parseMessage(msg string) (event, bool) {
 		e.query = true
 		e.qtype = typeName(f[0][len("query[") : len(f[0])-1])
 		e.client = client.WithZone("").Unmap()
-		e.name = normalize(f[1])
+		e.name = source.Domain(f[1])
 	case n >= 4 && f[n-2] == "is" && f[0] != "validation":
 		// source, name, "is", answer; the source may be several words.
 		// Lines with no name ("reply is truncated") are not answers, and
 		// neither are DNSSEC results ("validation a.example is SECURE"),
 		// which dnsmasq logs before it processes the reply.
-		e.name = normalize(f[n-3])
+		e.name = source.Domain(f[n-3])
 		e.blocked = isBlock(strings.Join(f[:n-3], " "), f[n-1])
 		e.cname = f[n-1] == "<CNAME>"
 		e.cnameBlock = cnameBlock
@@ -247,10 +249,6 @@ func typeName(t string) string {
 		return ""
 	}
 	return t
-}
-
-func normalize(name string) string {
-	return strings.ToLower(strings.TrimSuffix(name, "."))
 }
 
 func isDigits(s string) bool {

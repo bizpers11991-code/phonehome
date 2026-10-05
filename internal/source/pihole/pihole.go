@@ -16,6 +16,8 @@ import (
 	"net/netip"
 	"strings"
 	"time"
+
+	"github.com/bizpers11991-code/phonehome/internal/source"
 )
 
 // Option configures a DB or API reader.
@@ -122,7 +124,7 @@ func apiStatusBlocked(s string) bool {
 }
 
 func normalizeDomain(d string) string {
-	return strings.ToLower(strings.TrimSuffix(strings.TrimSpace(d), "."))
+	return source.Domain(strings.TrimSpace(d))
 }
 
 // parseAddr parses an IP address as FTL prints it, dropping any zone and

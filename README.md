@@ -168,6 +168,27 @@ Home Assistant. That is never more than the dashboard shows; exactly what
 is sent is in [docs/alerts.md](docs/alerts.md). If the target is outside
 your home (say the public ntfy.sh), that is the one thing that leaves it.
 
+## Security
+
+The dashboard shows every device's lookups and lets anyone who can reach it
+rename devices. By default it listens on port 8099 on every interface with
+no password, which suits a trusted home LAN; anywhere else, set `auth:` in
+the config (phonehome logs a warning at startup when it has no password and
+is reachable from other machines).
+
+It answers only requests addressed to it by an IP address, `localhost`, a
+single-label name (`pi`, `nas`), or a name under `.local`, `.lan`,
+`.home.arpa` or `.internal`. That stops a web page from re-pointing its own
+domain at your phonehome (DNS rebinding) and reading or changing your data
+through your browser. If you reach phonehome by a real domain name, for
+example through a reverse proxy or Tailscale, list that name in the config:
+
+```yaml
+allowed_hosts: [phonehome.example.com, "*.tailnet-name.ts.net"]
+```
+
+Other names get *421 Misdirected Request*, naming that setting.
+
 ## Languages
 
 The dashboard speaks English, German, French, Spanish and Dutch. It follows

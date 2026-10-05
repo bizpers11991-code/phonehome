@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
 )
@@ -45,5 +46,33 @@ func TestPrintUnknown(t *testing.T) {
 	printUnknown(&b, model.HomeReport{Devices: r.Devices[:1]}, 7, 10, time.UTC)
 	if !strings.Contains(b.String(), "No unclassified domains") {
 		t.Errorf("empty output = %q", b.String())
+	}
+}
+
+// Names from the network reach the terminal escaped, so a hostile DHCP
+// hostname or a domain in an old store cannot drive it.
+func TestPrintEscapes(t *testing.T) {
+	evil := "\x1b]0;owned\x07\x1b[2Jevil.example"
+	r := model.HomeReport{Devices: []model.DeviceReport{{
+		Device:     model.Device{ID: "mac:aa", Hostname: "tv\x1b[31m\xff", Vendor: "Acme\r"},
+		Grade:      "D",
+		Total:      2,
+		Heartbeats: []model.Heartbeat{{Domain: evil, Category: model.CatTracking, Every: time.Minute}},
+		Unknown:    []model.UnknownDomain{{Domain: evil, Group: evil, Count: 2}},
+	}}}
+	var b strings.Builder
+	printReport(&b, r, 7)
+	printUnknown(&b, r, 7, 10, time.UTC)
+	out := b.String()
+	if strings.ContainsAny(out, "\x1b\x07\r") || !utf8.ValidString(out) {
+		t.Fatalf("control characters reach the terminal:\n%q", out)
+	}
+	for _, want := range []string{`tv\x1b[31m\xff`, `\x1b]0;owned\a\x1b[2Jevil.example`, `Acme\r`} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output lacks %s:\n%s", want, out)
+		}
+	}
+	if got := printable("bücher.example"); got != "bücher.example" {
+		t.Errorf("printable mangled a printable name: %q", got)
 	}
 }

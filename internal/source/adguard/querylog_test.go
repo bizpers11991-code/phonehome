@@ -327,3 +327,27 @@ func appendFile(t *testing.T, path, s string) {
 		t.Fatal(err)
 	}
 }
+
+// Names a client sent with control characters are dropped, and a line
+// longer than source.MaxLine is skipped without losing the lines around it,
+// including while AdGuard Home is still writing it.
+func TestHostileLines(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "querylog.json")
+	// Valid but for the padding, so only the length cap skips it.
+	long := `{"IP":"192.168.1.5","T":"2026-10-02T00:00:02Z","QH":"long.example","QT":"A","Result":{}}` + strings.Repeat(" ", source.MaxLine)
+	appendFile(t, path,
+		`{"IP":"192.168.1.5","T":"2026-10-02T00:00:01Z","QH":"one.example","QT":"A","Result":{}}`+"\n"+
+			long+"\n"+
+			`{"IP":"192.168.1.5","T":"2026-10-02T00:00:03Z","QH":"\u001b]0;owned\u0007\u001b[2Jevil.example","QT":"A","Result":{}}`+"\n"+
+			`{"IP":"192.168.1.5","T":"2026-10-02T00:00:04Z","QH":"two.example","QT":"A","Result":{}}`+"\n")
+	l := NewQueryLog(path)
+	got, cur := drain(t, l, "", 1)
+	equal(t, got, []string{"one.example A 192.168.1.5 false", "two.example A 192.168.1.5 false"})
+
+	appendFile(t, path, long)
+	got, cur = drain(t, l, cur, 100)
+	equal(t, got, nil)
+	appendFile(t, path, "\n"+`{"IP":"192.168.1.5","T":"2026-10-02T00:00:05Z","QH":"three.example","QT":"A","Result":{}}`+"\n")
+	got, _ = drain(t, l, cur, 100)
+	equal(t, got, []string{"three.example A 192.168.1.5 false"})
+}

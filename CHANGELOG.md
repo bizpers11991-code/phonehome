@@ -57,6 +57,36 @@
   restarts. MQTT also keeps a Home Assistant grade sensor per device via MQTT
   discovery. Exactly what is sent: [docs/alerts.md](docs/alerts.md).
 
+### Security
+- **The dashboard answers only to local names.** Requests addressed to a
+  host name other than an IP address, `localhost`, a single-label name or a
+  name under `.local`, `.lan`, `.home.arpa` or `.internal` get 421, so a web
+  page that re-points its own domain at phonehome (DNS rebinding) can no
+  longer read reports or rename devices through a browser on your LAN. List
+  other names you use, such as a reverse proxy's, in the new
+  `allowed_hosts:` setting. `/healthz` is unaffected.
+- **A warning at startup** when the dashboard has no password and listens
+  beyond this machine.
+- **Concurrent dashboard requests share one analysis.** Requests for the
+  same period wait for the analysis already running instead of starting
+  their own, at most two analyses run at once, and rendered receipts are
+  cached for 30 seconds like reports. Sixteen simultaneous 30-day reports
+  on the demo household now allocate 0.15 GiB instead of 2.3 GiB.
+- **Server timeouts:** a request must arrive within 30 seconds, and idle
+  connections close after two minutes.
+- **Hostile names stay out of your terminal.** Domain names longer than 253
+  bytes, not UTF-8, or containing spaces or control characters are skipped
+  when reading Pi-hole, AdGuard Home and dnsmasq, and `phonehome report` and
+  `phonehome unknown` escape non-printing characters in domain and device
+  names.
+- **Log lines over 64 KiB are skipped** by the dnsmasq and AdGuard Home
+  readers instead of being held in memory whole; reading resumes correctly
+  after them.
+- **`/metrics` stays valid** when a DHCP hostname is not UTF-8.
+- **`install.sh --systemd` installs the config readable only by root and
+  the service** (0640, group `phonehome`), since it may hold the dashboard
+  password.
+
 ### Dashboard
 - **Five languages.** English, German, French, Spanish and Dutch, chosen from
   the browser's languages or the new selector. The non-English texts are

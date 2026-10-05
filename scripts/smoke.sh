@@ -110,6 +110,15 @@ expect "receipt of unknown device" 404 "$base/receipt/mac%3A00%3A00%3A00%3A00%3A
 expect "receipt bad format" 404 "$base/receipt/home.gif"
 expect "unknown route" 404 "$base/api/nope"
 
+# DNS rebinding: requests addressed to a name this server does not answer
+# to are refused; local names and addresses are not.
+expect "foreign Host refused" 421 -H 'Host: rebind.attacker.example' "$base/api/report?days=7"
+grep -q allowed_hosts "$work/body" && ok "refusal names allowed_hosts" || fail "refusal does not name allowed_hosts"
+expect "foreign Host rename refused" 421 -X POST -H 'Host: rebind.attacker.example' -H 'Origin: http://rebind.attacker.example' \
+	-H 'Content-Type: application/json' --data '{"label":"x"}' "$base/api/devices/$devq/label"
+expect "LAN name accepted" 200 -H 'Host: phonehome.lan:8099' "$base/api/status"
+expect "healthz with foreign Host" 200 -H 'Host: rebind.attacker.example' "$base/healthz"
+
 # Renaming: allowed same-origin with JSON, refused cross-site or as a form.
 label() { get -X POST "$base/api/devices/$devq/label" "$@"; }
 code=$(label -H 'Content-Type: application/json' -H 'Sec-Fetch-Site: same-origin' --data '{"label":"Smoke test"}')
