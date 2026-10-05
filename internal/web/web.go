@@ -38,8 +38,12 @@ type Options struct {
 	// Metrics serves /metrics in the Prometheus text format, behind the
 	// same basic auth as everything else.
 	Metrics bool
-	Now     func() time.Time
-	Logger  *slog.Logger
+	// AllowedHosts are host names, beyond IP addresses and local names,
+	// that requests may be addressed to; "*.example.com" matches every name
+	// below example.com. See hostAllowed.
+	AllowedHosts []string
+	Now          func() time.Time
+	Logger       *slog.Logger
 }
 
 // MaxLabelLen is the longest device label accepted, in characters.
@@ -86,7 +90,7 @@ func New(b Backend, o Options) http.Handler {
 	if o.Password != "" {
 		h = basicAuth(h, o.Username, o.Password)
 	}
-	return s.logRequests(securityHeaders(h))
+	return s.logRequests(securityHeaders(checkHost(h, o.AllowedHosts)))
 }
 
 // period parses ?days=1|7|30 (default 7) into [now−days, now).

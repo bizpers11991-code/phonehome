@@ -39,6 +39,7 @@ var fileTypes = []string{TypePiholeDB, TypeAdGuardQueryLog, TypeDnsmasqLog, Type
 // Config is the whole configuration file.
 type Config struct {
 	Listen        string            `yaml:"listen"`
+	AllowedHosts  []string          `yaml:"allowed_hosts"` // host names the web UI answers to, beyond IPs and local names
 	DB            string            `yaml:"db"`
 	RetentionDays int               `yaml:"retention_days"` // 0 keeps data forever
 	Interval      time.Duration     `yaml:"interval"`
@@ -153,6 +154,11 @@ func (c *Config) Validate() error {
 	} else if _, _, err := net.SplitHostPort(c.Listen); err != nil {
 		bad(`listen %q is not host:port; use something like ":8099"`, c.Listen)
 	}
+	for _, h := range c.AllowedHosts {
+		if !validHostPattern(h) {
+			bad(`allowed_hosts: %q is not a host name; list names like "phonehome.example.com" or "*.example.com", without scheme or port`, h)
+		}
+	}
 	if c.DB == "" {
 		bad("db is empty; set it to a writable file path such as /var/lib/phonehome/phonehome.db")
 	}
@@ -247,6 +253,27 @@ func (s Source) validate() error {
 		}
 	}
 	return nil
+}
+
+// validHostPattern accepts a host name, optionally starting with "*." to
+// match every name below it. A bare "*" is refused: it would turn the
+// host check off.
+func validHostPattern(h string) bool {
+	h = strings.TrimSuffix(strings.TrimPrefix(h, "*."), ".")
+	if h == "" || len(h) > 253 {
+		return false
+	}
+	for _, label := range strings.Split(h, ".") {
+		if label == "" || len(label) > 63 {
+			return false
+		}
+		for _, c := range label {
+			if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '-' || c == '_') {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func isFileType(t string) bool {

@@ -52,8 +52,11 @@ func (f *fake) Receipt(_ context.Context, p model.Period, id, format string) ([]
 	return []byte("<" + format + ">"), f.err
 }
 
+// newServer serves b at a fixed time. httptest requests are addressed to
+// example.com, which is allowed here.
 func newServer(b web.Backend, o web.Options) http.Handler {
 	o.Now = func() time.Time { return now }
+	o.AllowedHosts = append(o.AllowedHosts, "example.com")
 	return web.New(b, o)
 }
 
@@ -325,6 +328,73 @@ func TestBasicAuth(t *testing.T) {
 	}
 	if w := get(t, newServer(&fake{}, web.Options{}), "/api/report"); w.Code != 200 {
 		t.Errorf("auth enforced without a password: %d", w.Code)
+	}
+}
+
+// Only requests addressed to this machine by a local name, an address or
+// a configured name are answered, so a foreign site re-pointed at the
+// server's address (DNS rebinding) cannot read or change anything.
+func TestHostCheck(t *testing.T) {
+	f := &fake{}
+	h := web.New(f, web.Options{AllowedHosts: []string{"phonehome.example.com", "*.ts.net"}})
+	for _, tc := range []struct {
+		host string
+		code int
+	}{
+		{"192.168.1.2:8099", 200},
+		{"192.168.1.2", 200},
+		{"[fe80::1]:8099", 200},
+		{"[::1]", 200},
+		{"localhost:8099", 200},
+		{"pi:8099", 200},
+		{"NAS", 200},
+		{"pi.hole:8099", 200},
+		{"phonehome.local:8099", 200},
+		{"pi.lan.", 200},
+		{"phonehome.home.arpa", 200},
+		{"box.internal", 200},
+		{"phonehome.example.com", 200},
+		{"PhoneHome.Example.com:443", 200},
+		{"pi.tailnet-1234.ts.net", 200},
+		{"ts.net", 421},
+		{"example.com", 421},
+		{"rebind.attacker.example:8099", 421},
+		{"phonehome.example.com.attacker.example", 421},
+		{"sub.phonehome.example.com", 421}, // exact names match only themselves
+		{"evilts.net", 421},
+		{"evil-lan", 200}, // single-label names only resolve on the LAN
+		{"evillan.attacker.example", 421},
+		{"", 421},
+	} {
+		r := httptest.NewRequest(http.MethodGet, "/api/report", nil)
+		r.Host = tc.host
+		w := do(t, h, r)
+		if w.Code != tc.code {
+			t.Errorf("Host %q: %d, want %d", tc.host, w.Code, tc.code)
+		}
+		if tc.code == 421 && !strings.Contains(w.Body.String(), "allowed_hosts") {
+			t.Errorf("Host %q: refusal does not name allowed_hosts: %q", tc.host, w.Body.String())
+		}
+	}
+
+	f.labelID = ""
+	r := postLabel("/api/devices/mac:aa/label", "application/json", `{"label":"x"}`)
+	r.Host = "rebind.attacker.example:8099"
+	r.Header.Set("Origin", "http://rebind.attacker.example:8099")
+	if w := do(t, h, r); w.Code != 421 || f.labelID != "" {
+		t.Errorf("rename through a foreign Host: %d, label written for %q", w.Code, f.labelID)
+	}
+	// Only "*." patterns are wildcards; a bare "*" (refused by the config)
+	// does not turn the check off.
+	r = httptest.NewRequest(http.MethodGet, "/api/report", nil)
+	r.Host = "rebind.attacker.example"
+	if w := do(t, web.New(f, web.Options{AllowedHosts: []string{"*", "*example"}}), r); w.Code != 421 {
+		t.Errorf("AllowedHosts * let a foreign Host in: %d", w.Code)
+	}
+	r = httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	r.Host = "rebind.attacker.example"
+	if w := do(t, h, r); w.Code != 200 {
+		t.Errorf("healthz with a foreign Host: %d", w.Code)
 	}
 }
 

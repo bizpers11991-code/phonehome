@@ -3,7 +3,6 @@ package dnsmasq
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -235,17 +234,18 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 				return s.start, err
 			}
 		}
-		line, err := readLine(br)
-		if errors.Is(err, io.EOF) && (s.live || len(line) == 0) {
+		line, n, err := source.ReadLine(br)
+		if errors.Is(err, io.EOF) && (s.live || n == 0) {
 			// The live log's unterminated last line is still being written.
 			break
 		}
 		if err != nil && !errors.Is(err, io.EOF) {
 			return s.start, fmt.Errorf("dnsmasq: read %s: %w", s.f.Name(), err)
 		}
-		offset += int64(len(line))
+		offset += int64(n)
 		lineNum++
-		if e, ok := parseLine(string(line), r.loc, r.now); ok {
+		// A nil line was longer than any real one, and is skipped.
+		if e, ok := parseLine(string(line), r.loc, r.now); line != nil && ok {
 			if e.query {
 				for i := range queue {
 					queue[i].hold = 0
@@ -338,14 +338,4 @@ func settle(queue []pending, e event, lineNum int, only func(p *pending) bool) b
 		return true
 	}
 	return false
-}
-
-// readLine returns the next line including its newline, however long.
-func readLine(br *bufio.Reader) ([]byte, error) {
-	line, err := br.ReadSlice('\n')
-	if errors.Is(err, bufio.ErrBufferFull) {
-		rest, err := br.ReadBytes('\n')
-		return append(bytes.Clone(line), rest...), err
-	}
-	return line, err
 }

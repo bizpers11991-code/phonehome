@@ -3,7 +3,6 @@ package adguard
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -309,12 +308,7 @@ func (s *scan) file(ctx context.Context, f *os.File) error {
 				return err
 			}
 		}
-		line, err := r.ReadSlice('\n')
-		if errors.Is(err, bufio.ErrBufferFull) {
-			// A line longer than the buffer: read the rest of it.
-			rest, err2 := r.ReadBytes('\n')
-			line, err = append(bytes.Clone(line), rest...), err2
-		}
+		line, _, err := source.ReadLine(r)
 		if err != nil {
 			// io.EOF: whatever is left has no newline yet, so AdGuard is
 			// still writing it; it is read next time.
@@ -323,8 +317,8 @@ func (s *scan) file(ctx context.Context, f *os.File) error {
 			}
 			return fmt.Errorf("adguard: read %s: %w", f.Name(), err)
 		}
-		var e entry
-		if json.Unmarshal(line, &e) != nil || e.T.IsZero() {
+		var e entry // a nil line was too long, and is skipped
+		if line == nil || json.Unmarshal(line, &e) != nil || e.T.IsZero() {
 			continue
 		}
 		s.add(&e)
@@ -362,7 +356,7 @@ func (s *scan) add(e *entry) {
 
 func (s *scan) query(e *entry) (model.DNSQuery, bool) {
 	ip, err := netip.ParseAddr(e.IP)
-	dom := strings.ToLower(strings.TrimSuffix(e.QH, "."))
+	dom := source.Domain(e.QH)
 	if err != nil || dom == "" {
 		return model.DNSQuery{}, false
 	}
@@ -413,16 +407,16 @@ func nextEntry(f io.ReaderAt, from, to int64) (int64, time.Time, bool) {
 		}
 	}
 	for {
-		line, err := r.ReadBytes('\n')
+		line, n, err := source.ReadLine(r)
 		if err != nil {
 			return 0, time.Time{}, false
 		}
 		var e struct {
 			T time.Time `json:"T"`
 		}
-		if json.Unmarshal(line, &e) == nil && !e.T.IsZero() {
+		if line != nil && json.Unmarshal(line, &e) == nil && !e.T.IsZero() {
 			return off, e.T, true
 		}
-		off += int64(len(line))
+		off += int64(n)
 	}
 }

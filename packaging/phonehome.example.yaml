@@ -4,6 +4,15 @@
 # Address the web UI listens on. Overridden by $PHONEHOME_LISTEN.
 listen: ":8099"
 
+# Host names the web UI answers to, beyond IP addresses, localhost,
+# single-label names (pi, nas) and names under .local, .lan, .home.arpa and
+# .internal. List the name you use if you reach phonehome by a real domain,
+# e.g. through a reverse proxy: exact names, or "*.example.com" for every
+# name below example.com. Requests addressed to other names are refused
+# (421), so a web page cannot point its own domain at phonehome (DNS
+# rebinding) and read your data through your browser.
+allowed_hosts: []
+
 # SQLite database file. Overridden by $PHONEHOME_DB.
 db: /var/lib/phonehome/phonehome.db
 
@@ -24,7 +33,9 @@ quiet_hours: {start: 1, end: 6}
 timezone: ""
 
 # HTTP basic auth for the web UI. Leave username empty to disable (fine on a
-# trusted LAN). Prefer password_file over putting the password here.
+# trusted LAN; phonehome warns at startup when it has no password and listen
+# is not a loopback address). Prefer password_file over putting the password
+# here.
 auth:
   username: ""
   password: ""

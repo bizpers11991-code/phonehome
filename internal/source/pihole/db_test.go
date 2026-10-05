@@ -147,6 +147,25 @@ func TestDBFetchV5(t *testing.T) {
 	}
 }
 
+// A name with control characters, as a client may send, is skipped but
+// consumed: it must not reach the terminal of whoever runs phonehome.
+func TestDBHostileDomain(t *testing.T) {
+	path, w := fixture(t, v5Schema)
+	exec(t, w, `INSERT INTO queries (timestamp, type, status, domain, client) VALUES
+		(1727870281, 1, 2, char(27) || ']0;owned' || char(7) || char(27) || '[2Jevil.example', '192.168.1.5'),
+		(1727870282, 1, 2, 'fine.example', '192.168.1.5')`)
+	got, cur, err := openDB(t, path).FetchDNS(context.Background(), "", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertQueries(t, got, []model.DNSQuery{
+		{Time: time.Unix(1727870282, 0), ClientIP: netip.MustParseAddr("192.168.1.5"), Domain: "fine.example", QType: "A", Source: "pihole"},
+	})
+	if cur != "2" {
+		t.Fatalf("cursor = %q, want 2", cur)
+	}
+}
+
 func TestDBFetchV6(t *testing.T) {
 	path, w := fixture(t, v6Schema)
 	exec(t, w, `INSERT INTO query_storage (timestamp, type, status, domain, client) VALUES

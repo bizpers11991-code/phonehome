@@ -433,3 +433,47 @@ func TestUpstreamChainBlock(t *testing.T) {
 		"14:10:00 ok.example A 192.168.1.22 false",
 	})
 }
+
+// Resolvers log whatever name a client sends. One carrying terminal escape
+// sequences must not reach the store, and so the terminal of whoever runs
+// `phonehome unknown`.
+func TestHostileNames(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dnsmasq.log")
+	appendFile(t, path, "Oct  2 13:58:01 router dnsmasq[812]: query[A] \x1b]0;owned\x07\x1b[2Jevil.example from 192.168.1.5\n"+
+		"Oct  2 13:58:01 router dnsmasq[812]: config \x1b]0;owned\x07\x1b[2Jevil.example is NXDOMAIN\n"+
+		"Oct  2 13:58:02 router dnsmasq[812]: query[A] bad\xffutf8.example from 192.168.1.5\n"+
+		"Oct  2 13:58:03 router dnsmasq[812]: query[A] "+strings.Repeat("a.", 127)+"example from 192.168.1.5\n"+
+		"Oct  2 13:58:04 router dnsmasq[812]: query[A] fine.example from 192.168.1.5\n"+
+		"Oct  2 13:58:04 router dnsmasq[812]: reply fine.example is 1.2.3.4\n")
+	got, _ := drain(t, newTestLog(path), "", 100)
+	equal(t, got, []string{"13:58:04 fine.example A 192.168.1.5 false"})
+}
+
+// A line longer than source.MaxLine is skipped without losing the lines
+// around it or the position to resume from, including while dnsmasq is
+// still writing it.
+func TestOverlongLine(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dnsmasq.log")
+	// Valid but for the padding, so only the length cap skips it.
+	long := "Oct  2 13:58:02 router dnsmasq[812]: query[A] long.example from 192.168.1.5" + strings.Repeat(" ", source.MaxLine)
+	appendFile(t, path, "Oct  2 13:58:01 router dnsmasq[812]: query[A] one.example from 192.168.1.5\n"+
+		"Oct  2 13:58:01 router dnsmasq[812]: reply one.example is 1.2.3.4\n"+
+		long+"\n"+
+		"Oct  2 13:58:03 router dnsmasq[812]: query[A] two.example from 192.168.1.5\n"+
+		"Oct  2 13:58:03 router dnsmasq[812]: reply two.example is 1.2.3.4\n")
+	l := newTestLog(path)
+	got, cur := drain(t, l, "", 1)
+	equal(t, got, []string{
+		"13:58:01 one.example A 192.168.1.5 false",
+		"13:58:03 two.example A 192.168.1.5 false",
+	})
+
+	// An over-long line still being written, then finished.
+	appendFile(t, path, long)
+	got, cur = drain(t, l, cur, 100)
+	equal(t, got, nil)
+	appendFile(t, path, "\nOct  2 13:58:04 router dnsmasq[812]: query[A] three.example from 192.168.1.5\n"+
+		"Oct  2 13:58:04 router dnsmasq[812]: reply three.example is 1.2.3.4\n")
+	got, _ = drain(t, l, cur, 100)
+	equal(t, got, []string{"13:58:04 three.example A 192.168.1.5 false"})
+}

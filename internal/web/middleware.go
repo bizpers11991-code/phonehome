@@ -5,7 +5,10 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"log/slog"
+	"net"
 	"net/http"
+	"net/netip"
+	"strings"
 	"time"
 )
 
@@ -20,6 +23,61 @@ func securityHeaders(next http.Handler) http.Handler {
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("Cross-Origin-Opener-Policy", "same-origin")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// localSuffixes are the domains a home network's own names live under.
+// Nobody outside the LAN can make a browser resolve one of them.
+var localSuffixes = []string{".local", ".lan", ".home.arpa", ".internal"}
+
+// hostAllowed reports whether a request's Host header names this machine
+// the way people on a LAN do: an IP address, localhost, pi.hole, a
+// single-label name (pi, nas), a name under a local suffix, or one listed
+// in allowed_hosts ("*.example.com" matches any name below example.com).
+// A page on a public name re-pointed at this machine's address (DNS
+// rebinding) still carries that public name, so it is refused.
+func hostAllowed(host string, allowed []string) bool {
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	host = strings.TrimSuffix(strings.ToLower(strings.Trim(host, "[]")), ".")
+	if host == "" {
+		return false
+	}
+	if _, err := netip.ParseAddr(host); err == nil {
+		return true
+	}
+	// pi.hole is the name Pi-hole answers for itself, which phonehome often
+	// shares a machine with.
+	if host == "localhost" || host == "pi.hole" || !strings.Contains(host, ".") {
+		return true
+	}
+	for _, s := range localSuffixes {
+		if strings.HasSuffix(host, s) {
+			return true
+		}
+	}
+	for _, a := range allowed {
+		a = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(a)), ".")
+		if parent, ok := strings.CutPrefix(a, "*."); ok && strings.HasSuffix(host, "."+parent) || host == a {
+			return true
+		}
+	}
+	return false
+}
+
+// checkHost refuses requests addressed to a host name this server does not
+// answer to, except /healthz, which reveals nothing.
+func checkHost(next http.Handler, allowed []string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/healthz" && !hostAllowed(r.Host, allowed) {
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			w.WriteHeader(http.StatusMisdirectedRequest)
+			w.Write([]byte("phonehome does not answer to this host name; add it to allowed_hosts in phonehome.yaml\n"))
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }

@@ -108,7 +108,7 @@ func printUnknown(w io.Writer, r model.HomeReport, days, limit int, loc *time.Lo
 		for _, u := range d.Unknown {
 			total += u.Count
 		}
-		fmt.Fprintf(w, "\n%s  (%s)  %s lookups\n", d.Device.DisplayName(), deviceKind(d.Device), thousands(total))
+		fmt.Fprintf(w, "\n%s  (%s)  %s lookups\n", printable(d.Device.DisplayName()), printable(deviceKind(d.Device)), thousands(total))
 		fmt.Fprintf(w, "  %8s  %-12s  %-12s  %s\n", "lookups", "first seen", "last seen", "domain")
 		gs := groupUnknown(d.Unknown)
 		shown := gs
@@ -117,12 +117,12 @@ func printUnknown(w io.Writer, r model.HomeReport, days, limit int, loc *time.Lo
 		}
 		for _, g := range shown {
 			if len(g.domains) == 1 { // nothing to group: show the name itself
-				fmt.Fprintf(w, "  %8s  %-12s  %-12s  %s\n", thousands(g.count), stamp(g.first), stamp(g.last), g.domains[0].Domain)
+				fmt.Fprintf(w, "  %8s  %-12s  %-12s  %s\n", thousands(g.count), stamp(g.first), stamp(g.last), printable(g.domains[0].Domain))
 				continue
 			}
-			fmt.Fprintf(w, "  %8s  %-12s  %-12s  %s  (%d names)\n", thousands(g.count), stamp(g.first), stamp(g.last), g.name, len(g.domains))
+			fmt.Fprintf(w, "  %8s  %-12s  %-12s  %s  (%d names)\n", thousands(g.count), stamp(g.first), stamp(g.last), printable(g.name), len(g.domains))
 			for _, u := range g.domains {
-				fmt.Fprintf(w, "  %8s  %-12s  %-12s    %s\n", thousands(u.Count), stamp(u.First), stamp(u.Last), u.Domain)
+				fmt.Fprintf(w, "  %8s  %-12s  %-12s    %s\n", thousands(u.Count), stamp(u.First), stamp(u.Last), printable(u.Domain))
 			}
 		}
 		if n := len(gs) - len(shown); n > 0 {

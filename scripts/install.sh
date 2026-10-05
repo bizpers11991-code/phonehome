@@ -133,10 +133,23 @@ if [ "$WITH_SYSTEMD" -eq 1 ]; then
 		sed "s|/usr/local/bin/phonehome|$BINDIR/phonehome|" "$unit" >"$unit.new"
 		mv "$unit.new" "$unit"
 	fi
+	# The config can hold the dashboard password, so only root and the
+	# service may read it. The service runs as a dynamic user; a static
+	# "phonehome" group, added to its unit, lets it read the file.
+	if ! getent group phonehome >/dev/null 2>&1; then
+		if command -v groupadd >/dev/null 2>&1; then
+			as_root groupadd --system phonehome
+		else
+			as_root addgroup -S phonehome
+		fi
+	fi
+	sed '/^DynamicUser=yes$/a\
+SupplementaryGroups=phonehome' "$unit" >"$unit.new"
+	mv "$unit.new" "$unit"
 	as_root install -m 0644 "$unit" /etc/systemd/system/phonehome.service
 	as_root install -d -m 0755 /etc/phonehome
 	if [ -f "$work/$name/phonehome.example.yaml" ] && [ ! -e /etc/phonehome/phonehome.yaml ]; then
-		as_root install -m 0644 "$work/$name/phonehome.example.yaml" /etc/phonehome/phonehome.yaml
+		as_root install -m 0640 -g phonehome "$work/$name/phonehome.example.yaml" /etc/phonehome/phonehome.yaml
 	fi
 	as_root systemctl daemon-reload
 	as_root systemctl enable --now phonehome.service
