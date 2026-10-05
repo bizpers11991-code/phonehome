@@ -17,14 +17,18 @@ the device being moved to another network.
 
 ### Does phonehome itself phone home?
 
-No. It makes no network connections except to the sources you configure (in
-practice, only the Pi-hole API source talks over the network at all). No
-telemetry, no update checks, no accounts, no fonts or scripts from a CDN; the
-dashboard works offline. The knowledge base ships inside the binary.
+No. It makes no network connections except to the sources you configure
+and, if you turn alerts on, the alert targets you configure (your webhook,
+ntfy, Gotify or MQTT broker). Of the sources, only the Pi-hole API one talks
+over the network at all. No telemetry, no update checks, no accounts, no
+fonts or scripts from a CDN; the dashboard works offline. The knowledge base
+ships inside the binary.
 
-You can check: the only outgoing HTTP client is the Pi-hole API source in
-[`internal/source/pihole/api.go`](../internal/source/pihole/api.go), and the
-release binaries are built by a public
+You can check: the only outgoing clients are the Pi-hole API source in
+[`internal/source/pihole/api.go`](../internal/source/pihole/api.go) and the
+alert senders in [`internal/alert/`](../internal/alert/), which do nothing
+until you configure a target ([docs/alerts.md](alerts.md) shows exactly what
+they send). The release binaries are built by a public
 [workflow](../.github/workflows/release.yml) from tagged source.
 
 ### What about DNS-over-HTTPS? Devices can just skip my Pi-hole.
