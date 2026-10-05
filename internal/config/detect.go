@@ -34,17 +34,22 @@ type Detection struct {
 	Problems []Problem // files that exist but cannot be used, for types with no usable file
 }
 
-// Problem is a well-known file that exists but phonehome cannot read.
+// Problem is a well-known file that exists but phonehome cannot read, or a
+// configured file that is missing or unreadable.
 type Problem struct {
 	Type     string // source type the file would have been
 	Path     string
 	Err      string // what went wrong, e.g. "permission denied"
 	Hint     string // how to fix it, in one or two sentences
 	Optional bool   // the source only adds detail (device names, connections)
+	Missing  bool   // the file does not exist (configured sources only)
 }
 
 // String is the problem as one log or terminal line.
 func (p Problem) String() string {
+	if p.Missing {
+		return fmt.Sprintf("%s does not exist: %s", p.Path, p.Hint)
+	}
 	return fmt.Sprintf("found %s but %s: %s", p.Path, p.Err, p.Hint)
 }
 
@@ -99,6 +104,28 @@ func Detect(probe func(path string) error) Detection {
 	first(TypeLeases, leasesPaths, true)
 	first(TypeConntrack, []string{DefaultConntrackPath}, true)
 	return d
+}
+
+// CheckSources probes the files that configured sources read and returns a
+// Problem, with the hints auto-detection gives, for every one that is
+// missing or cannot be read. probe is as for Detect.
+func CheckSources(srcs []Source, probe func(path string) error) []Problem {
+	var out []Problem
+	for _, s := range srcs {
+		if !isFileType(s.Type) || s.Path == "" {
+			continue
+		}
+		if err := probe(s.Path); err != nil {
+			out = append(out, ProblemFor(s.Type, s.Path, err))
+		}
+	}
+	return out
+}
+
+// ProblemFor explains why the file at path, read by a source of type typ,
+// failed probe or Check with err.
+func ProblemFor(typ, path string, err error) Problem {
+	return problemFor(typ, path, err, typ == TypeLeases || typ == TypeConntrack)
 }
 
 // UnreadableError describes a file that exists but cannot be opened for
@@ -162,6 +189,13 @@ func problemFor(typ, path string, err error, optional bool) Problem {
 		p.Err = ue.Err.Error()
 	}
 	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		p.Err, p.Missing = "it does not exist", true
+		p.Hint = "check the path in your config; with Docker, mount the folder that holds the file into the container"
+		if typ == TypeAdGuardQueryLog {
+			p.Hint = "AdGuard Home creates it when it logs its first lookup; if it has, " + p.Hint
+		}
+		return p
 	case errors.Is(err, errNotRegular):
 		p.Err = "it is a directory or device, not a file"
 		p.Hint = "if this is a Docker bind mount, the file did not exist when the container started; " +

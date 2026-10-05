@@ -41,8 +41,9 @@ func (s *setupState) set(v model.Setup) {
 	s.mu.Unlock()
 }
 
-// newSetup describes the sources in use and, in auto-detect mode (det not
-// nil), what detection could not read.
+// newSetup describes the sources in use and what could not be read: in
+// auto-detect mode (det not nil) what detection found, otherwise the
+// configured files that are missing or unreadable.
 func newSetup(srcs []config.Source, det *config.Detection, at time.Time) model.Setup {
 	out := model.Setup{}
 	for _, s := range srcs {
@@ -53,12 +54,29 @@ func newSetup(srcs []config.Source, det *config.Detection, at time.Time) model.S
 		out.Sources = append(out.Sources, model.SetupSource{Type: s.Type, Location: loc})
 	}
 	if det == nil {
+		out.Problems = setupProblems(config.CheckSources(srcs, config.Check))
 		return out
 	}
 	out.AutoDetect, out.CheckedAt = true, at
-	for _, p := range det.Problems {
-		out.Problems = append(out.Problems, model.SetupProblem{
-			Type: p.Type, Path: p.Path, Problem: p.Err, Hint: p.Hint, Optional: p.Optional,
+	out.Problems = setupProblems(det.Problems)
+	return out
+}
+
+// checkConfigured checks the files of configured sources again, so that
+// the status shows a fixed permission or a newly created file at once.
+func checkConfigured(srcs []model.SetupSource) []model.SetupProblem {
+	list := make([]config.Source, 0, len(srcs))
+	for _, s := range srcs {
+		list = append(list, config.Source{Type: s.Type, Path: s.Location})
+	}
+	return setupProblems(config.CheckSources(list, config.Check))
+}
+
+func setupProblems(ps []config.Problem) []model.SetupProblem {
+	var out []model.SetupProblem
+	for _, p := range ps {
+		out = append(out, model.SetupProblem{
+			Type: p.Type, Path: p.Path, Problem: p.Err, Hint: p.Hint, Optional: p.Optional, Missing: p.Missing,
 		})
 	}
 	return out
@@ -82,9 +100,12 @@ func logDetection(log *slog.Logger, prev, next config.Detection) {
 		if slices.Contains(prev.Problems, p) {
 			continue
 		}
-		if p.Optional {
+		switch {
+		case p.Missing:
+			log.Warn("configured source file does not exist", "type", p.Type, "path", p.Path, "hint", p.Hint)
+		case p.Optional:
 			log.Info("optional source not readable", "type", p.Type, "path", p.Path, "err", p.Err, "hint", p.Hint)
-		} else {
+		default:
 			log.Warn("source found but not readable", "type", p.Type, "path", p.Path, "err", p.Err, "hint", p.Hint)
 		}
 	}

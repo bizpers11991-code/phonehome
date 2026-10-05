@@ -46,7 +46,8 @@ If `querylog.dir_path` is set in `AdGuardHome.yaml`, the log is there instead.
 ## Docker
 
 [`packaging/compose/adguard.yml`](../../packaging/compose/adguard.yml) runs
-AdGuard Home and phonehome together:
+AdGuard Home and phonehome together. It needs Docker Compose v2.23.1 or later
+(`docker compose version`) for its inline `configs:` block:
 
 ```sh
 mkdir adguard && cd adguard

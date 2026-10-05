@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bizpers11991-code/phonehome/internal/analyze"
+	"github.com/bizpers11991-code/phonehome/internal/config"
 	"github.com/bizpers11991-code/phonehome/internal/kb"
 	"github.com/bizpers11991-code/phonehome/internal/model"
 	"github.com/bizpers11991-code/phonehome/internal/receipt"
@@ -191,8 +192,18 @@ func (a *app) Status(ctx context.Context) (model.Status, error) {
 	st, err := a.store.Status(ctx)
 	st.Version = version
 	st.Demo = a.demo
-	st.Setup = a.setup.get()
+	st.Setup = a.statusSetup()
 	return st, err
+}
+
+// statusSetup is how sources were chosen. Configured files are checked on
+// every call, so a fixed permission or a newly created file shows at once.
+func (a *app) statusSetup() model.Setup {
+	s := a.setup.get()
+	if !s.AutoDetect && len(s.Sources) > 0 {
+		s.Problems = checkConfigured(s.Sources)
+	}
+	return s
 }
 
 // setOptions replaces the analysis options, e.g. when serve starts reading
@@ -315,6 +326,15 @@ func findDevice(r model.HomeReport, id string) (model.DeviceReport, bool) {
 		}
 	}
 	return model.DeviceReport{}, false
+}
+
+// checkDays rejects a --days that would make an empty, inverted or
+// overflowing period.
+func checkDays(days int) error {
+	if days < 1 || days > config.MaxRetentionDays {
+		return fmt.Errorf("--days %d: use a number of days from 1 to %d", days, config.MaxRetentionDays)
+	}
+	return nil
 }
 
 // lastDays is the period [now-days, now).

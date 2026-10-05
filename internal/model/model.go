@@ -378,11 +378,13 @@ type SetupSource struct {
 	Location string // file path or URL
 }
 
-// SetupProblem is a well-known file auto-detection found but could not use.
+// SetupProblem is a well-known file auto-detection found but could not use,
+// or a configured file that is missing or unreadable.
 type SetupProblem struct {
 	Type     string
 	Path     string
 	Problem  string // e.g. "permission denied"
 	Hint     string // how to fix it
 	Optional bool   // the source only adds detail; lookups come from elsewhere
+	Missing  bool   // a configured file that does not exist
 }

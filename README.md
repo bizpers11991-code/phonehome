@@ -83,10 +83,12 @@ Prometheus, Grafana and Home Assistant: [docs/integrations.md](docs/integrations
 
 ```sh
 curl -O https://raw.githubusercontent.com/bizpers11991-code/phonehome/main/docker-compose.yml
+echo "PIHOLE_GID=$(stat -c %g /etc/pihole/pihole-FTL.db)" > .env
 docker compose up -d        # → http://<pi-hole-host>:8099
 ```
 
-The compose file mounts `/etc/pihole` read-only, and phonehome finds the database on its own.
+The compose file mounts `/etc/pihole` read-only and finds the database there on its own;
+`PIHOLE_GID` puts phonehome in the group that may read it.
 Pi-hole in Docker too? Use [`packaging/compose/pihole.yml`](packaging/compose/pihole.yml)
 ([guide](docs/setup/pihole-docker.md)); AdGuard Home: [`adguard.yml`](packaging/compose/adguard.yml).
 

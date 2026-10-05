@@ -1,6 +1,7 @@
-# phonehome next to an existing Pi-hole. phonehome only ever reads Pi-hole's
-# files; the mount is read-only.
+# phonehome next to a Pi-hole installed on this host. phonehome only ever
+# reads Pi-hole's files; the mount is read-only.
 #
+#   echo "PIHOLE_GID=$(stat -c %g /etc/pihole/pihole-FTL.db)" > .env
 #   docker compose up -d   →   http://<this-host>:8099
 services:
   phonehome:
@@ -22,10 +23,11 @@ services:
       # The image sets GOMEMLIMIT=128MiB so reports fit next to Pi-hole on a
       # small Pi; raise it (or set "off") on a machine with RAM to spare.
       # GOMEMLIMIT: 256MiB
-    # Pi-hole's database is readable by the pihole group only. If the
-    # dashboard says no source was found, run phonehome with that group's GID
-    # (1000 in the official pihole/pihole image):
-    # group_add: ["1000"]   # stat -c %g /etc/pihole/pihole-FTL.db
+    # Pi-hole lets only its own group read pihole-FTL.db, and that group's
+    # number differs from host to host. Set PIHOLE_GID to the output of
+    # `stat -c %g /etc/pihole/pihole-FTL.db`, e.g. in a .env file next to this
+    # one (see the top of this file).
+    group_add: ["${PIHOLE_GID:?set PIHOLE_GID to the output of: stat -c %g /etc/pihole/pihole-FTL.db}"]
 
     # Connection data (conntrack) only exists in the host's network namespace.
     # To see flows (e.g. devices bypassing your DNS) use host networking and

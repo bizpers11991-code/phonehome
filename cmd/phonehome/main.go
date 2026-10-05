@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 )
 
@@ -25,20 +26,41 @@ var version = "dev"
 const usage = `phonehome — see what your devices say about you.
 
 Usage:
-  phonehome serve   [--config FILE]           dashboard + continuous ingest
-  phonehome demo    [--listen ADDR]           try it with a synthetic household
+  phonehome serve   [--config FILE] [--listen ADDR]
+                                              dashboard + continuous ingest
+  phonehome demo    [--listen ADDR] [--days N] [--metrics]
+                                              try it with a synthetic household
   phonehome ingest  [--config FILE] [--once]  pull records from your sources
-  phonehome report  [--config FILE] [--days N]
-  phonehome receipt [--config FILE] [--days N] [--device ID] [-o FILE]
-  phonehome unknown [--config FILE] [--days N] [--device ID] [--limit N]
+  phonehome report  [--config FILE | --demo] [--days N]
+  phonehome receipt [--config FILE | --demo] [--days N] [--device ID] [-o FILE]
+  phonehome unknown [--config FILE | --demo] [--days N] [--device ID] [--limit N]
                                               unclassified domains, to report
   phonehome kb lint | stats
   phonehome version
 
-Config is read from --config, $PHONEHOME_CONFIG, or ./phonehome.yaml, then
-/etc/phonehome/phonehome.yaml. With no config, sources are auto-detected.
+Config is read from --config or $PHONEHOME_CONFIG (which must exist), else
+./phonehome.yaml, then /etc/phonehome/phonehome.yaml. With no config, sources
+are auto-detected. --listen defaults to $PHONEHOME_LISTEN, else ":8099" for
+serve (or listen: in the config) and 127.0.0.1:8099 for demo.
+"phonehome COMMAND -h" lists every flag.
 Docs: https://github.com/bizpers11991-code/phonehome
 `
+
+// init fills in version for builds without -ldflags, such as
+// "go install …@v0.3.0", from the module version Go records.
+func init() { version = buildVersion(version, debug.ReadBuildInfo) }
+
+// buildVersion is v unless it is "dev" and the build info names a module
+// version; "(devel)" means a build from a local checkout.
+func buildVersion(v string, read func() (*debug.BuildInfo, bool)) string {
+	if v != "dev" {
+		return v
+	}
+	if bi, ok := read(); ok && bi.Main.Version != "" && bi.Main.Version != "(devel)" {
+		return bi.Main.Version
+	}
+	return v
+}
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

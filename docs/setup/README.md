@@ -80,7 +80,8 @@ so it does not matter which container starts first:
 Anything else needs a config file. phonehome reads `--config FILE`, then
 `$PHONEHOME_CONFIG`, then `./phonehome.yaml`, then
 `/etc/phonehome/phonehome.yaml`. The Docker image looks at
-`/config/phonehome.yaml`. Every setting is described in
+`/config/phonehome.yaml`. A file named with `--config` or `$PHONEHOME_CONFIG`
+must exist, except these default locations. Every setting is described in
 [packaging/phonehome.example.yaml](../../packaging/phonehome.example.yaml);
 unknown keys are rejected, so a typo fails loudly instead of being ignored.
 
