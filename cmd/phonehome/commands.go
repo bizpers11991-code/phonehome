@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bizpers11991-code/phonehome/internal/analyze"
@@ -228,10 +229,28 @@ func cmdServe(ctx context.Context, args []string) error {
 	}
 	defer stopAlerts() // before the deferred st.Close
 
+	if pw == "" && !loopback(cfg.Listen) {
+		logger.Warn("the dashboard has no password and listens beyond this machine; anyone on your network can read every device's lookups. Set auth: in the config",
+			"listen", cfg.Listen)
+	}
 	h := web.New(a, web.Options{
 		Username: cfg.Auth.Username, Password: pw, Logger: logger, Metrics: cfg.Metrics,
+		AllowedHosts: cfg.AllowedHosts,
 	})
 	return listenAndServe(ctx, cfg.Listen, h)
+}
+
+// loopback reports whether listen only accepts connections from this machine.
+func loopback(listen string) bool {
+	host, _, err := net.SplitHostPort(listen)
+	if err != nil {
+		return false
+	}
+	if host == "localhost" {
+		return true
+	}
+	a, err := netip.ParseAddr(host)
+	return err == nil && a.IsLoopback()
 }
 
 func cmdDemo(ctx context.Context, args []string) error {
@@ -282,7 +301,21 @@ func loadDemo(ctx context.Context, seed int64, days int) (*store.Store, error) {
 }
 
 func listenAndServe(ctx context.Context, addr string, h http.Handler) error {
-	srv := &http.Server{Addr: addr, Handler: h, ReadHeaderTimeout: 10 * time.Second}
+	var running sync.RWMutex // read-held by each request; see the shutdown below
+	srv := &http.Server{
+		Addr: addr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			running.RLock()
+			defer running.RUnlock()
+			h.ServeHTTP(w, r)
+		}),
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		// No WriteTimeout: a month's report on a Pi takes a while.
+		// Requests see ctx, so shutting down cancels their store queries.
+		BaseContext: func(net.Listener) context.Context { return ctx },
+	}
 	errc := make(chan error, 1)
 	go func() { errc <- srv.ListenAndServe() }()
 	logger.Info("dashboard listening", "addr", addr)
@@ -292,7 +325,15 @@ func listenAndServe(ctx context.Context, addr string, h http.Handler) error {
 	case <-ctx.Done():
 		shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		return srv.Shutdown(shutdown)
+		err := srv.Shutdown(shutdown)
+		if err != nil {
+			srv.Close() // drop slow clients
+		}
+		// Wait for requests still running (ctx is cancelled, so they end
+		// soon) and keep any more from starting: the caller closes the
+		// store next.
+		running.Lock()
+		return err
 	}
 }
 

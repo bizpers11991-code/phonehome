@@ -206,8 +206,10 @@ func writeMetrics(rep model.HomeReport, st model.Status, days int) []byte {
 var labelEscaper = strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`)
 
 // escapeLabel escapes a label value as the text format requires: backslash,
-// double quote and line feed. Device names are user-chosen labels.
-func escapeLabel(s string) string { return labelEscaper.Replace(s) }
+// double quote and line feed. Device names are user-chosen labels, or DHCP
+// hostnames that need not be UTF-8, which the format requires (one bad byte
+// would fail the whole scrape).
+func escapeLabel(s string) string { return labelEscaper.Replace(strings.ToValidUTF8(s, "�")) }
 
 func formatValue(v float64) string {
 	switch {

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
 )
@@ -128,5 +129,21 @@ func TestWriteMetricsEmpty(t *testing.T) {
 	}
 	if got["phonehome_demo"] != "1" || got["phonehome_home_devices"] != "0" {
 		t.Errorf("got %v", got)
+	}
+}
+
+// A DHCP hostname need not be UTF-8; the exposition format must be, or the
+// whole scrape fails.
+func TestWriteMetricsInvalidUTF8(t *testing.T) {
+	rep := model.HomeReport{Devices: []model.DeviceReport{{
+		Device: model.Device{ID: "mac:aa", Hostname: "tv\xff\xfe\"\n"}, Grade: "B",
+	}}}
+	body := writeMetrics(rep, model.Status{}, 7)
+	if !utf8.Valid(body) {
+		t.Fatalf("not UTF-8: %q", body)
+	}
+	parseExposition(t, body)
+	if !bytes.Contains(body, []byte(`name="tv`+"�"+`\"\n"`)) {
+		t.Errorf("hostname not sanitised and escaped:\n%s", body)
 	}
 }

@@ -6,6 +6,8 @@ package source
 import (
 	"context"
 	"errors"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
 )
@@ -14,6 +16,24 @@ import (
 // cannot interpret: one saved by another kind of source under the same
 // name, or damaged. The caller may start over from "".
 var ErrBadCursor = errors.New("unreadable cursor")
+
+// Domain normalises a queried name as the store keeps it: lowercase, no
+// trailing dot. It returns "" for a name to skip: longer than DNS allows
+// (253 bytes), not UTF-8, or containing a space or a control character.
+// Resolvers log whatever a client sends, and such a name would otherwise
+// reach the terminal of whoever runs `phonehome report`.
+func Domain(name string) string {
+	name = strings.TrimSuffix(name, ".")
+	if len(name) > 253 || !utf8.ValidString(name) {
+		return ""
+	}
+	for _, r := range name {
+		if r <= ' ' || r >= 0x7f && r <= 0x9f { // C0, space, DEL, C1
+			return ""
+		}
+	}
+	return strings.ToLower(name)
+}
 
 // DNSSource yields DNS lookups incrementally.
 //

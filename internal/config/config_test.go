@@ -96,6 +96,16 @@ func TestParseRejectsUnknownKeys(t *testing.T) {
 	}
 }
 
+func TestAllowedHosts(t *testing.T) {
+	c, err := Parse([]byte(`allowed_hosts: [phonehome.example.com, "*.ts.net", nas.]`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"phonehome.example.com", "*.ts.net", "nas."}; !reflect.DeepEqual(c.AllowedHosts, want) {
+		t.Errorf("AllowedHosts = %q, want %q", c.AllowedHosts, want)
+	}
+}
+
 func TestValidateMessages(t *testing.T) {
 	tests := []struct {
 		name string
@@ -122,6 +132,9 @@ func TestValidateMessages(t *testing.T) {
 		{"file with url", "sources:\n  - type: leases\n    path: /x\n    url: http://x", "remove url"},
 		{"dup names", "sources:\n  - type: leases\n    path: /a\n  - type: leases\n    path: /b", "distinct"},
 		{"bad label", "labels:\n  tv: TV", "neither a MAC"},
+		{"allowed_hosts url", `allowed_hosts: ["https://ph.example.com"]`, "allowed_hosts"},
+		{"allowed_hosts port", `allowed_hosts: ["ph.example.com:443"]`, "allowed_hosts"},
+		{"allowed_hosts any", `allowed_hosts: ["*"]`, "allowed_hosts"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
