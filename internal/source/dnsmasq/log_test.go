@@ -386,3 +386,50 @@ func TestUpstreamBlockAfterCNAME(t *testing.T) {
 		"14:10:00 ok.example A 192.168.1.22 false",
 	})
 }
+
+// When upstream blocks the target of a CNAME chain, FTL logs the CNAME and
+// then the verdict under the query's own name, back to back: the verdict is
+// the held query's even though its sibling of the other type is unanswered.
+func TestUpstreamChainBlock(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "pihole.log")
+	l := newTestLog(path)
+	const p = "Oct  2 14:10:00 dnsmasq[9]: "
+	appendFile(t, path, p+"query[A] m.example from 192.168.1.21\n"+
+		p+"query[AAAA] m.example from 192.168.1.21\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply cdn.example is blocked due to upstream response (answer)\n"+
+		p+"blocked upstream with NULL address m.example is 0.0.0.0\n"+
+		p+"query[A] other.example from 192.168.1.22\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply cdn.example is blocked due to upstream response (answer)\n"+
+		p+"blocked upstream with NULL address m.example is ::\n"+
+		p+"reply other.example is 192.0.2.3\n"+
+		p+"query[A] ok.example from 192.168.1.22\n"+
+		p+"reply ok.example is 192.0.2.2\n")
+	got, _ := drain(t, l, "", 10)
+	equal(t, got, []string{
+		"14:10:00 m.example A 192.168.1.21 true",
+		"14:10:00 m.example AAAA 192.168.1.21 true",
+		"14:10:00 other.example A 192.168.1.22 false",
+		"14:10:00 ok.example A 192.168.1.22 false",
+	})
+
+	// A quiet log: A's chain is blocked upstream, AAAA's has no AAAA.
+	path = filepath.Join(t.TempDir(), "pihole.log")
+	l = newTestLog(path)
+	appendFile(t, path, p+"query[A] m.example from 192.168.1.21\n"+
+		p+"query[AAAA] m.example from 192.168.1.21\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply cdn.example is blocked due to upstream response (answer)\n"+
+		p+"blocked upstream with NULL address m.example is 0.0.0.0\n"+
+		p+"reply m.example is <CNAME>\n"+
+		p+"reply cdn.example is NODATA-IPv6\n"+
+		p+"query[A] ok.example from 192.168.1.22\n"+
+		p+"reply ok.example is 192.0.2.2\n")
+	got, _ = drain(t, l, "", 10)
+	equal(t, got, []string{
+		"14:10:00 m.example A 192.168.1.21 true",
+		"14:10:00 m.example AAAA 192.168.1.21 false",
+		"14:10:00 ok.example A 192.168.1.22 false",
+	})
+}
