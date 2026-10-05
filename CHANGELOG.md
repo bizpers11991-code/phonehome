@@ -83,6 +83,17 @@
   SmartThings, eufy, Govee, Meross, Tapo, Arlo and Netatmo.
 
 ### Fixed
+- **Lookup counts and grades change: a lookup is now counted once, not once
+  per query.** A device asking for the same name again within a minute of a
+  counted lookup (A, AAAA and HTTPS records together, retries, re-queries of
+  a blocked name answered with Pi-hole's 2-second TTL) makes one lookup,
+  blocked if any of its queries was. Before, iPhones, Macs and Chrome looked
+  up to three times worse than other devices doing the same thing, and
+  blocking a tracker could make a device's grade worse. Totals, categories,
+  snooping per day, hourly and quiet-hours counts, the domain table, blocked
+  counts, comparisons, receipts, `/metrics`, alerts and exports all drop
+  accordingly, and some grades improve; heartbeat detection is unchanged.
+  See [docs/grading.md](docs/grading.md#the-terms).
 - **Readers checked against upstream source.** Each reader was compared
   with the code of the software it reads, and the fixtures now come from
   that code. Supported versions are listed in

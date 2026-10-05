@@ -84,9 +84,29 @@ in `internal/analyze/compare.go`.
   the knowledge base does not know yet.
 - **Per day** is snooping lookups divided by the length of the period in days,
   so a 7-day report and a 1-day report are comparable.
-- **Blocked lookups still count.** A blocked lookup is an attempt: the device
-  tried to reach that server. Your blocklist protects you; it does not make
-  the device better behaved.
+- **A lookup** is one device asking for one name, counted at most once a
+  minute. DNS logs record *queries*, and one lookup often makes several:
+  iPhones, Macs and Chrome ask for the A, AAAA and HTTPS records of a name
+  together, and Pi-hole answers blocked names with a 2-second TTL, so a
+  device retrying a blocked tracker asks again every few seconds. Counting
+  queries made Apple devices look up to three times worse than others doing
+  the same thing, and made blocking a tracker worsen a device's grade. Now
+  queries for the same name by the same device within 60 seconds of a
+  counted lookup are part of it, whatever their record type and whether or
+  not they were blocked; the lookup counts as blocked if any of them was.
+  The minute runs from the counted lookup, so a name asked for non-stop
+  counts once a minute. A server contacted on a clock close to once a
+  minute (Samsung's content recognition, for one) has the beats that come a
+  little early folded into the one before: such a clock counts somewhere
+  between half and all of its beats, a lower bound like every other count
+  here. Every figure built from lookups uses this count: totals,
+  categories, per day, the hour-by-hour chart, quiet hours, the domain
+  table, blocked counts, comparisons, receipts, `/metrics`, alerts and
+  exports. Heartbeat cadences are measured from the queries themselves and
+  are not affected.
+- **Blocked lookups still count**, once each as above. A blocked lookup is an
+  attempt: the device tried to reach that server. Your blocklist protects
+  you; it does not make the device better behaved.
 - **Content recognition** is singled out because it is the most intimate
   thing a TV can send: a fingerprint of whatever is on the screen, including
   your own videos and other devices plugged into it.

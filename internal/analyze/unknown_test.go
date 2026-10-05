@@ -47,8 +47,8 @@ func TestUnknownDomains(t *testing.T) {
 func TestUnknownCapped(t *testing.T) {
 	var qs []model.DNSQuery
 	for i := range maxUnknown + 10 {
-		for range i + 1 {
-			qs = append(qs, q(time.Hour, "10.0.0.5", fmt.Sprintf("d%03d.example", i)))
+		for k := range i + 1 {
+			qs = append(qs, q(time.Hour+time.Duration(k)*time.Minute, "10.0.0.5", fmt.Sprintf("d%03d.example", i)))
 		}
 	}
 	d := findDevice(t, Analyze(newFakeKB(), week, nil, qs, nil, utcOpt), "ip:10.0.0.5")
