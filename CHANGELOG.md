@@ -111,6 +111,31 @@
 - An end-to-end smoke test ([scripts/smoke.sh](scripts/smoke.sh)) builds the
   binary, starts the demo and checks every endpoint, its headers and its
   refusals in CI.
+- **First-run rough edges.**
+  - A configured `pihole-db`, `adguard-querylog` or `dnsmasq-log` file that
+    is missing or unreadable now says so, with the hints auto-detection
+    gives (group to add, Docker mounts), in the log, in the source's error,
+    in `/api/status` setup problems and after `phonehome report`, instead
+    of SQLite's `unable to open database file (14)`.
+  - A `--config` or `$PHONEHOME_CONFIG` file that does not exist is an
+    error instead of a silent switch to auto-detection. The default
+    locations, including the Docker image's `/config/phonehome.yaml`, stay
+    optional.
+  - `phonehome receipt` refuses to write an empty receipt (grade "?") when
+    the home, or the `--device`, has no lookups in the period.
+  - `--days` must be at least 1 (`report`, `receipt`, `unknown`, `demo`).
+  - A busy port fails before "dashboard listening" is logged, with a hint
+    to use `--listen`; `serve` now takes `--listen` too.
+  - `demo` honours `$PHONEHOME_LISTEN`, so the Docker image's demo is
+    reachable without `--listen :8099`.
+  - `phonehome version` shows the module version for `go install …@vX`
+    builds instead of `dev`.
+  - `phonehome help` lists `--demo`, `--listen`, `--days` and `--metrics`
+    where they apply, and how `--listen` defaults.
+  - The root `docker-compose.yml` (Pi-hole on the host) asks for
+    `PIHOLE_GID`, the group that may read `pihole-FTL.db`, instead of a
+    commented-out GID that was wrong for most hosts.
+    `packaging/compose/adguard.yml` notes it needs Docker Compose v2.23.1+.
 
 ## v0.2.0
 
