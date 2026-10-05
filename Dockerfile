@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Multi-arch: docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 .
-FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:8a5910f31396cd4d89662f56c68b3ae31d374308270a1c3bd96672ee5ed43414 AS build
 ARG TARGETOS TARGETARCH TARGETVARIANT
 ARG VERSION=dev
 WORKDIR /src
@@ -12,7 +12,7 @@ RUN GOARM="${TARGETVARIANT#v}" CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
  && mkdir -p /out/data
 
 # distroless/static ships CA certificates and tzdata and runs as nonroot (65532).
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
 COPY --from=build /out/phonehome /usr/local/bin/phonehome
 COPY --from=build --chown=65532:65532 /out/data /data
 # GOMEMLIMIT keeps the 30-day report near 128 MiB on a Pi (docs/performance.md);

@@ -1,46 +1,5 @@
 # Changelog
 
-## Unreleased
-
-### Knowledge base
-- 784 → 802 rules and 146 → 147 companies. Tesla's Fleet API, sign-in
-  hosts (from the client library Home Assistant's Tesla integrations use)
-  and Ecovacs' regional REST, MQTT and XMPP hosts (from the Deebot
-  libraries), each linked to the line of code that names it.
-
-### Fixed
-- In `pihole.log` without serials, when a client asked A and AAAA for the
-  same name, A got a CNAME reply and AAAA was then blocked upstream, the
-  block was counted for A instead of AAAA. A blocking verdict now goes to
-  the query of the type its address is for (0.0.0.0 for A, :: for AAAA), so
-  an upstream block of a CNAME chain still counts for the query it ends.
-- The device panel's domain table fits a 1280px screen: the panel is wider,
-  dates and confidence wrap, and the evidence column shows "Evidence 1/2"
-  links instead of raw URLs (a list of links was being turned into text).
-- LG ThinQ regional API rules cite the full list of countries each region
-  serves, and their purposes now name every region that list covers.
-
-### Changed in v0.3.0, now noted
-- Each `pihole-api` source also shows a second `<name>-devices` entry in
-  the source health list: it reads device names from Pi-hole's
-  `/api/network/devices`.
-
-### Fixed
-- **Receipts no longer print names that identify your home.** Heartbeat and
-  "heartbeats stopped" lines could show local names (`annas-iphone.lan`),
-  reverse lookups that contain a home address, and vendor names carrying the
-  device's MAC or serial number. Receipts now redact names the way the
-  Suggest a rule link does (ID-like labels become `*`, names mentioning the
-  device are left out), and heartbeats on local names and reverse lookups
-  are no longer reported anywhere.
-
-### Docs
-- [docs/testing-at-home.md](docs/testing-at-home.md): a first real
-  measurement of your own home: which source, how long to collect, reading
-  `phonehome unknown`, suggesting rules and sharing a receipt without MAC
-  addresses. A test now keeps the "Suggest a rule" link's prefilled fields
-  in step with the issue form.
-
 ## v0.3.0
 
 ### New
@@ -57,6 +16,15 @@
   restarts. MQTT also keeps a Home Assistant grade sensor per device via MQTT
   discovery. Exactly what is sent: [docs/alerts.md](docs/alerts.md).
 
+### Privacy
+- **Receipts no longer print names that identify your home.** Heartbeat and
+  "heartbeats stopped" lines could show local names (`annas-iphone.lan`),
+  reverse lookups that contain a home address, and vendor names carrying the
+  device's MAC or serial number. Receipts now redact names the way the
+  Suggest a rule link does (ID-like labels become `*`, names mentioning the
+  device are left out), and heartbeats on local names and reverse lookups
+  are no longer reported anywhere.
+
 ### Dashboard
 - **Five languages.** English, German, French, Spanish and Dutch, chosen from
   the browser's languages or the new selector. The non-English texts are
@@ -64,7 +32,8 @@
   receipt stay English.
 - **Every domain, sortable and filterable.** A device's details list every
   domain it looked up, with company, category, lookups, blocks, first and
-  last seen, and the rule's confidence and evidence links.
+  last seen, and the rule's confidence and evidence links. The table fits a
+  1280px screen, with evidence shown as "Evidence 1/2" links.
 - **Export.** The report (CSV, one row per device, or JSON) and a device's
   domain table, generated in the browser.
 - **Accessibility.** Arrow keys move between device cards; dialogs keep focus
@@ -74,13 +43,16 @@
   period to compare with.
 
 ### Knowledge base
-- 715 → 784 rules and 138 → 146 companies, mined from the open-source
+- 715 → 802 rules and 138 → 147 companies, mined from the open-source
   clients that talk to each vendor's cloud (Home Assistant integrations and
   the libraries behind them). Every new rule links to the exact line of
   code that names the host. New: August/Yale (ASSA ABLOY), LG ThinQ,
-  Home Connect (Bosch/Siemens), Miele, SolarEdge, Enphase, SwitchBot, Nuki
-  and LIFX. More hosts for Ring, ecobee, Tuya, Xiaomi, Wyze, tado,
-  SmartThings, eufy, Govee, Meross, Tapo, Arlo and Netatmo.
+  Home Connect (Bosch/Siemens), Miele, SolarEdge, Enphase, SwitchBot, Nuki,
+  LIFX and Tesla (Fleet API and sign-in). More hosts for Ring, ecobee, Tuya,
+  Xiaomi, Wyze, tado, SmartThings, eufy, Govee, Meross, Tapo, Arlo, Netatmo
+  and Ecovacs (regional REST, MQTT and XMPP).
+- LG ThinQ regional API rules cite the full list of countries each region
+  serves, and their purposes name every region that list covers.
 
 ### Fixed
 - **Readers checked against upstream source.** Each reader was compared
@@ -93,6 +65,10 @@
     blocked in `pihole.log`, and so did special domains such as
     `use-application-dns.net`, rate-limited queries and queries refused
     while gravity was busy.
+  - In `pihole.log` without serials, when a client asked A and AAAA for the
+    same name and only one was blocked upstream, the block could be counted
+    for the wrong one. A blocking verdict now goes to the query of the type
+    its address is for (0.0.0.0 for A, :: for AAAA).
   - dnsmasq answers ending in `(DNSSEC signed)` were not recognised, and
     DNSSEC `validation` lines were taken for answers, settling a query
     before Pi-hole had decided whether to block it.
@@ -108,9 +84,16 @@
   in the source health list.
 - Renaming a device the dashboard doesn't know now answers 404 instead of
   creating it.
+
+### Docs and tests
+- [docs/testing-at-home.md](docs/testing-at-home.md): a first real
+  measurement of your own home: which source, how long to collect, reading
+  `phonehome unknown`, suggesting rules and sharing a receipt without MAC
+  addresses.
 - An end-to-end smoke test ([scripts/smoke.sh](scripts/smoke.sh)) builds the
   binary, starts the demo and checks every endpoint, its headers and its
-  refusals in CI.
+  refusals in CI. Another test keeps the "Suggest a rule" link's prefilled
+  fields in step with the issue form.
 
 ## v0.2.0
 
