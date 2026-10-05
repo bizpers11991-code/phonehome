@@ -7,32 +7,17 @@ import (
 	"time"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
+	"github.com/bizpers11991-code/phonehome/internal/redact"
 )
 
 // maxUnknown caps DeviceReport.Unknown.
 const maxUnknown = 50
 
-// localSuffixes are names that only mean something inside one network, plus
-// reverse-lookup zones. They are never reported as unclassified: no knowledge
-// base rule can describe them, and they tend to carry hostnames and addresses.
-var localSuffixes = []string{
-	"arpa", // in-addr.arpa, ip6.arpa, home.arpa, resolver.arpa
-	"local", "lan", "home", "internal", "intranet", "corp", "private",
-	"localdomain", "localhost", "test", "invalid",
-}
-
-// reportable reports whether an unclassified domain is worth listing: a
-// public, multi-label name outside the local and reverse zones.
+// reportable reports whether a domain is worth listing as unclassified or as
+// a heartbeat: a public, multi-label name outside the local and reverse zones
+// (redact.Local).
 func reportable(domain string) bool {
-	if !strings.Contains(domain, ".") {
-		return false
-	}
-	for _, s := range localSuffixes {
-		if domain == s || strings.HasSuffix(domain, "."+s) {
-			return false
-		}
-	}
-	return true
+	return strings.Contains(domain, ".") && !redact.Local(domain)
 }
 
 func unknownDomain(name string, da *domainAcc) model.UnknownDomain {

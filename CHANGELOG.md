@@ -25,6 +25,15 @@
   the source health list: it reads device names from Pi-hole's
   `/api/network/devices`.
 
+### Fixed
+- **Receipts no longer print names that identify your home.** Heartbeat and
+  "heartbeats stopped" lines could show local names (`annas-iphone.lan`),
+  reverse lookups that contain a home address, and vendor names carrying the
+  device's MAC or serial number. Receipts now redact names the way the
+  Suggest a rule link does (ID-like labels become `*`, names mentioning the
+  device are left out), and heartbeats on local names and reverse lookups
+  are no longer reported anywhere.
+
 ## v0.3.0
 
 ### New

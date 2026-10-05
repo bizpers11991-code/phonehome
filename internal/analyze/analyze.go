@@ -430,7 +430,10 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 		if info.resolver {
 			d.addBypass(BypassDoHLookup, info.name, da.count)
 		}
-		if every, jitter, ok := detectHeartbeat(da.times, a.o.MinHeartbeat); ok {
+		// Local names and reverse lookups are left out, as in Unknown: a clock
+		// on the home network is no privacy finding, and receipts print
+		// heartbeat names.
+		if every, jitter, ok := detectHeartbeat(da.times, a.o.MinHeartbeat); ok && reportable(info.name) {
 			r.Heartbeats = append(r.Heartbeats, model.Heartbeat{
 				Domain:   info.name,
 				Category: cls.Category,

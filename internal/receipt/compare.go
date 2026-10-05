@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
+	"github.com/bizpers11991-code/phonehome/internal/redact"
 )
 
 // sinceTitle names the comparison for the block heading: "SINCE LAST WEEK".
@@ -76,8 +77,8 @@ func (b *builder) since(c *model.Comparison, gradeKey, now string, stopped []mod
 	}
 }
 
-// homeStopped gathers the stopped heartbeats of every device in a home,
-// worst category first.
+// homeStopped gathers the printable stopped heartbeats of every device in a
+// home, worst category first.
 func homeStopped(r model.HomeReport) []model.Heartbeat {
 	var out []model.Heartbeat
 	for _, cat := range model.Categories() {
@@ -85,11 +86,25 @@ func homeStopped(r model.HomeReport) []model.Heartbeat {
 			if d.Previous == nil {
 				continue
 			}
-			for _, h := range d.Previous.Stopped {
+			for _, h := range printable(d.Previous.Stopped, d.Device) {
 				if h.Category == cat {
 					out = append(out, h)
 				}
 			}
+		}
+	}
+	return out
+}
+
+// printable returns the heartbeats of device d whose names may be printed on
+// a receipt, redacted (redact.Domain); the others are left out. A receipt is
+// made to be shared, so it must not carry local names, reverse lookups, or
+// the device's MAC, address or serial number.
+func printable(hs []model.Heartbeat, d model.Device) []model.Heartbeat {
+	out := make([]model.Heartbeat, 0, len(hs))
+	for _, h := range hs {
+		if h.Domain = redact.Domain(h.Domain, d); h.Domain != "" {
+			out = append(out, h)
 		}
 	}
 	return out

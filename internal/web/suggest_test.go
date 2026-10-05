@@ -98,16 +98,3 @@ func TestSuggestURLCapped(t *testing.T) {
 		t.Errorf("device = %q, title = %q for an unknown device", q.Get("device"), q.Get("title"))
 	}
 }
-
-func TestIDLike(t *testing.T) {
-	for lb, want := range map[string]bool{
-		"api": false, "cdn": false, "acr0": false, "us-east-1": false, "log-ingestion": false,
-		"samsungcloudsolution": false, "fe2": false, "decade": false,
-		"105": true, "a1b2c3d4": true, "3c22fb7e90aa": true, "123e4567-e89b-12d3": true,
-		"dev7x9k2m4q8z1p0w3": true,
-	} {
-		if got := idLike(lb); got != want {
-			t.Errorf("idLike(%q) = %v, want %v", lb, got, want)
-		}
-	}
-}

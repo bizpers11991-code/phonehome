@@ -123,7 +123,10 @@ func TestHeartbeatsInReport(t *testing.T) {
 		at := time.Duration(i) * 10 * time.Minute
 		qs = append(qs,
 			q(at, "10.0.0.5", "time.example"),
-			q(at+time.Minute, "10.0.0.5", "acr.samsung.example"))
+			q(at+time.Minute, "10.0.0.5", "acr.samsung.example"),
+			// Clocks on local names and reverse lookups are not reported.
+			q(at+3*time.Minute, "10.0.0.5", "annas-iphone.lan"),
+			q(at+4*time.Minute, "10.0.0.5", "105.1.168.192.in-addr.arpa"))
 		if i < 100 { // telemetry: fewer lookups, still regular
 			qs = append(qs, q(2*at+2*time.Minute, "10.0.0.5", "log.google.example"))
 		}
