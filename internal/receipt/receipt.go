@@ -292,7 +292,7 @@ func Device(r model.DeviceReport, o Options) Doc {
 	around := !slices.Contains(r.Hourly[:], 0)
 	b.categories(r.ByCategory, func(c model.Category) {
 		n := 0
-		for _, h := range r.Heartbeats {
+		for _, h := range printable(r.Heartbeats, r.Device) {
 			if h.Category != c || n == 2 {
 				continue
 			}
@@ -336,7 +336,7 @@ func Device(r model.DeviceReport, o Options) Doc {
 
 	b.totals(r.Total, r.SnoopShare, r.PerDay)
 	if r.Previous != nil {
-		b.since(r.Previous, "GRADE", r.Grade, r.Previous.Stopped)
+		b.since(r.Previous, "GRADE", r.Grade, printable(r.Previous.Stopped, r.Device))
 	}
 	b.kind(Rule)
 	aside := []string{"PRIVACY GRADE", "A QUIET ... F LOUD", ""}

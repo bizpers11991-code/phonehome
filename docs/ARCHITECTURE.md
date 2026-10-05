@@ -183,6 +183,11 @@ func Home(r model.HomeReport, o Options) Doc
 func (d Doc) SVG() []byte
 func (d Doc) PNG() ([]byte, error)                   // pure Go, embedded Go Mono font
 ```
+Receipts are made to be shared, so the domain names they print (heartbeats,
+heartbeats that stopped) go through `internal/redact`, as the **Suggest a
+rule** link's do: ID-like labels become `*`, and local names, reverse lookups
+and names containing the device's hostname, label, MAC or address are left
+out.
 
 ### `internal/web`: dashboard + JSON API
 ```go

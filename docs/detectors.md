@@ -70,6 +70,8 @@ the shortest and longest 10% of gaps, so a night unplugged or a burst of
 active use does not hide a pattern, then take the median gap and its
 variability (coefficient of variation). If the median is an hour or less and
 the variability is at most 0.35, we report a heartbeat "every *median*".
+Local names (`.lan`, `.local`, `.home.arpa`, ...) and reverse lookups are
+left out: a clock inside the home network sends nothing out of it.
 
 **Why it matters.** People use their devices irregularly. A destination
 contacted on a steady clock, all day and all night, is contacted whether or
