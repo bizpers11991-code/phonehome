@@ -167,15 +167,6 @@ rules:
     evidence:
       - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
       - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
-  - pattern: samsungelectronics.com
-    category: telemetry
-    purpose: Short hosts such as upu. and dpu. that Samsung TVs contact frequently; their exact function is undocumented.
-    confidence: low
-    kind_hint: tv
-    evidence:
-      - https://arxiv.org/abs/1911.03447
-      - https://rainbow.chard.org/2017/03/08/selectively-blocking-samsung-tvs-network-access/
-      - https://mattcasmith.net/2020/02/15/pi-hole-samsung-smart-tv/
   - pattern: infolink.pavv.co.kr
     category: telemetry
     purpose: Legacy Samsung TV service (2013-2015 models) that exchanges data with Samsung on a regular schedule.

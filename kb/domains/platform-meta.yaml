@@ -22,7 +22,7 @@ rules:
   - pattern: graph.oculus.com
     category: telemetry
     purpose: Meta Quest platform API; collected several data types including the headset's serial number.
-    confidence: high
+    confidence: medium
     evidence:
       - https://www.usenix.org/system/files/sec22-trimananda.pdf
 

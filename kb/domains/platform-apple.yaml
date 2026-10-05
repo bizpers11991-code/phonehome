@@ -243,6 +243,13 @@ rules:
       - https://docs.apphud.com/docs/apple-search-ads
 
   # --- Content --------------------------------------------------------------
+  - pattern: gs-loc.apple.com
+    category: content
+    purpose: Apple's Wi-Fi location service, which returns the positions of Wi-Fi access points a device reports seeing so it can locate itself.
+    confidence: medium
+    evidence:
+      - https://github.com/hubert3/iSniff-GPS/blob/38dafe454553038eb4c0568b729e96491df8842b/iSniff_GPS/wloc.py#L98-L100
+      - https://github.com/hubert3/iSniff-GPS/blob/38dafe454553038eb4c0568b729e96491df8842b/README.md
   - pattern: icloud.com
     category: content
     purpose: iCloud services such as backup, photos, mail and sync.

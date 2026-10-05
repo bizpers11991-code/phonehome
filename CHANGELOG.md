@@ -104,6 +104,18 @@
   period to compare with.
 
 ### Knowledge base
+- **Fewer false alarms and less overclaiming, checked against sources.**
+  The bare `lgtvcommon.com` and `samba.tv` rules are gone: the evidence
+  that could be checked lists only subdomains, or states no purpose, and
+  the evidenced subdomains keep their rules. A laptop visiting Samba TV's
+  site is no longer flagged for content recognition;
+  `samsungelectronics.com`, whose function is undocumented, is dropped;
+  OneSignal push notifications count as content; `graph.oculus.com` is
+  medium confidence. New, from Android, Chromium and client source:
+  `time.android.com` (essential), Chrome's variations and Optimization
+  Guide downloads, Nest's `home.nest.com` API, Apple's Wi-Fi location
+  service `gs-loc.apple.com`, and LaunchDarkly's and Optimizely's
+  configuration (content) and event (telemetry) hosts. 802 → 810 rules.
 - 715 → 784 rules and 138 → 146 companies, mined from the open-source
   clients that talk to each vendor's cloud (Home Assistant integrations and
   the libraries behind them). Every new rule links to the exact line of
