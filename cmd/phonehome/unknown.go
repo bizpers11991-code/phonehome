@@ -26,6 +26,9 @@ func cmdUnknown(ctx context.Context, args []string) error {
 	if err := fl.Parse(args); err != nil {
 		return errUsage
 	}
+	if err := checkDays(*days); err != nil {
+		return err
+	}
 	a, done, err := reportApp(ctx, *cfgPath, *useDemo)
 	if err != nil {
 		return err

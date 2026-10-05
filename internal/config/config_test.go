@@ -348,3 +348,26 @@ func TestMetricsOption(t *testing.T) {
 		t.Fatalf("metrics must be off by default: %+v, %v", c, err)
 	}
 }
+
+func TestCheckSources(t *testing.T) {
+	denied := &UnreadableError{GID: 999, Group: "pihole", Mode: 0o640, Err: fs.ErrPermission}
+	got := CheckSources([]Source{
+		{Type: TypePiholeDB, Path: "/etc/pihole/pihole-FTL.db"},
+		{Type: TypeAdGuardQueryLog, Path: "/adguard/querylog.json"},
+		{Type: TypeDnsmasqLog, Path: "/var/log/dnsmasq.log"}, // readable
+		{Type: TypeLeases, Path: "/leases"},
+		{Type: TypePiholeAPI, URL: "http://pi.hole"}, // nothing to check
+	}, probeMap(map[string]bool{"/var/log/dnsmasq.log": true}, map[string]error{"/etc/pihole/pihole-FTL.db": denied}))
+	if len(got) != 3 {
+		t.Fatalf("problems = %+v", got)
+	}
+	if p := got[0]; p.Missing || !strings.Contains(p.String(), `group_add: ["999"]`) {
+		t.Errorf("unreadable database: %+v", p)
+	}
+	if p := got[1]; !p.Missing || p.Optional || !strings.HasPrefix(p.String(), "/adguard/querylog.json does not exist: AdGuard Home creates it") {
+		t.Errorf("missing query log: %q", p)
+	}
+	if p := got[2]; !p.Missing || !p.Optional || !strings.Contains(p.Hint, "check the path") {
+		t.Errorf("missing leases: %+v", p)
+	}
+}

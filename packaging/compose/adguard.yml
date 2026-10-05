@@ -1,4 +1,5 @@
-# AdGuard Home and phonehome, side by side.
+# AdGuard Home and phonehome, side by side. Needs Docker Compose v2.23.1 or
+# later for the inline "configs: content:" below (docker compose version).
 #
 #   docker compose -f adguard.yml up -d
 #   AdGuard Home first-run setup: http://<this-host>:3000

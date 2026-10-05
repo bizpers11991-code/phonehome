@@ -78,6 +78,8 @@ jobs:
           ruby -c "$RUNNER_TEMP/manifests/phonehome.rb"
           bash -n "$RUNNER_TEMP/manifests/PKGBUILD"
       - name: compose files
+        env:
+          PIHOLE_GID: "999" # docker-compose.yml requires it
         run: |
           for f in docker-compose.yml packaging/compose/*.yml; do
             docker compose -f "$f" config -q
