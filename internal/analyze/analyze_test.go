@@ -222,9 +222,10 @@ func TestSharedIPTieIsDeterministic(t *testing.T) {
 func TestAggregates(t *testing.T) {
 	kb := newFakeKB()
 	var qs []model.DNSQuery
+	// Repeats are a minute apart, so each is a lookup of its own.
 	add := func(n int, domain string, at time.Duration, blocked bool) {
-		for range n {
-			x := q(at, "10.0.0.5", domain)
+		for i := range n {
+			x := q(at+time.Duration(i)*time.Minute, "10.0.0.5", domain)
 			x.Blocked = blocked
 			qs = append(qs, x)
 		}
@@ -343,7 +344,7 @@ func TestDeviceOrder(t *testing.T) {
 	}
 	qs := []model.DNSQuery{
 		q(0, "10.0.0.1", "log.google.example"),
-		q(0, "10.0.0.1", "log.google.example"),
+		q(time.Minute, "10.0.0.1", "log.google.example"),
 		q(0, "10.0.0.2", "log.google.example"),
 		q(0, "10.0.0.3", "log.google.example"),
 	}

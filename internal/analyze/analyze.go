@@ -10,6 +10,7 @@ package analyze
 import (
 	"cmp"
 	"fmt"
+	"iter"
 	"math"
 	"net/netip"
 	"slices"
@@ -106,16 +107,51 @@ type Classifier interface {
 // "ip:<addr>". Only records whose time lies in [p.From, p.To) count, and
 // devices with neither lookups nor flows in the period are left out.
 //
+// Repeated queries for one name by one device within countWindow count as
+// one lookup (see addQuery). qs may be in any order.
+//
 // c must not be nil. Each distinct domain is classified once.
 func Analyze(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQuery, fl []model.Flow, o Options) model.HomeReport {
 	a := newAnalysis(c, p, devs, o.normalized())
-	for i := range qs {
-		a.addQuery(&qs[i])
+	for q := range byTime(qs) {
+		a.addQuery(q)
 	}
 	for i := range fl {
 		a.addFlow(&fl[i])
 	}
 	return a.report()
+}
+
+// byTime yields qs oldest first, as addQuery needs. The store already returns
+// lookups in time order (DNSBetween), so that is one check and one pass;
+// other input (merged sources, tests) is walked through a sorted index, never
+// reordered in place. Equal times keep their input order.
+func byTime(qs []model.DNSQuery) iter.Seq[*model.DNSQuery] {
+	return func(yield func(*model.DNSQuery) bool) {
+		cmpTime := func(x, y *model.DNSQuery) int { return x.Time.Compare(y.Time) }
+		sorted := true
+		for i := 1; i < len(qs) && sorted; i++ {
+			sorted = cmpTime(&qs[i-1], &qs[i]) <= 0
+		}
+		if sorted {
+			for i := range qs {
+				if !yield(&qs[i]) {
+					return
+				}
+			}
+			return
+		}
+		idx := make([]int, len(qs))
+		for i := range idx {
+			idx[i] = i
+		}
+		slices.SortStableFunc(idx, func(x, y int) int { return cmpTime(&qs[x], &qs[y]) })
+		for _, i := range idx {
+			if !yield(&qs[i]) {
+				return
+			}
+		}
+	}
 }
 
 // domainInfo is the per-run cache entry for one distinct domain.
@@ -128,11 +164,17 @@ type domainInfo struct {
 // domainAcc accumulates one device's lookups of one domain.
 type domainAcc struct {
 	info    *domainInfo
-	count   int
-	blocked int
-	times   []int64 // unix nanoseconds, in input order
-	first   int64   // earliest and latest of times, kept as they are added
-	last    int64
+	count   int // lookups, each standing for its queries within countWindow
+	blocked int // lookups with at least one blocked query
+	// times are the starts of query bursts (burstWindow), oldest first: the
+	// moments detectHeartbeat would merge them into anyway.
+	times []int64 // unix nanoseconds
+	first int64   // first and last query
+	last  int64
+	// counted is when the latest lookup began; countedBlocked whether any of
+	// its queries so far was blocked.
+	counted        int64
+	countedBlocked bool
 }
 
 type deviceAcc struct {
@@ -276,6 +318,31 @@ func (a *analysis) domain(name string) *domainInfo {
 	return info
 }
 
+// countWindow is how long after a counted lookup further queries for the
+// same name by the same device are the same lookup rather than a new one.
+//
+// One lookup becomes several queries in two common ways. Apple devices and
+// Chrome ask for A, AAAA and HTTPS records together, so counting queries
+// made them look up to three times worse than a device asking for A alone.
+// And Pi-hole answers blocked names with a 2-second TTL, so a device retrying
+// a blocked tracker queries it again and again: counting queries made
+// blocking a tracker worsen the device's grade. Both happen within seconds.
+//
+// The window is 30 seconds rather than a minute because steady clocks near
+// the window are counted erratically: a beat landing just inside it is
+// absorbed. Samsung's content recognition calls about once a minute, and a
+// 60-second window drops every beat that comes a little early: about a
+// quarter of them at 4% jitter. At 30 seconds a once-a-minute clock is
+// counted in full with up to ±50% jitter. Faster clocks (LG's ACR, about
+// every 15 s) count at most twice a minute. Heartbeat detection does not
+// depend on the window: it sees every burst (domainAcc.times), as before.
+const countWindow = 30 * time.Second
+
+// addQuery adds one stored query. Queries must arrive oldest first (byTime).
+// A query for a name the device already looked up less than countWindow ago
+// adds nothing but its time and, if blocked, marks that lookup blocked; every
+// count derived from lookups (totals, categories, hours, domains, blocked)
+// therefore counts lookups, not queries.
 func (a *analysis) addQuery(q *model.DNSQuery) {
 	if !a.inPeriod(q.Time) {
 		return
@@ -285,28 +352,35 @@ func (a *analysis) addQuery(q *model.DNSQuery) {
 	}
 	d := a.device(q.ClientIP)
 	d.seen(q.Time)
+
+	info := a.domain(q.Domain)
+	ns := q.Time.UnixNano()
+	da := d.domains[info]
+	if da == nil {
+		da = &domainAcc{info: info, first: ns}
+		d.domains[info] = da
+	}
+	da.last = ns
+	if n := len(da.times); n == 0 || time.Duration(ns-da.times[n-1]) > burstWindow {
+		da.times = append(da.times, ns)
+	}
+	if da.count > 0 && time.Duration(ns-da.counted) < countWindow {
+		if q.Blocked && !da.countedBlocked {
+			da.countedBlocked = true
+			d.blocked++
+			da.blocked++
+		}
+		return
+	}
+
+	da.count++
+	da.counted, da.countedBlocked = ns, q.Blocked
 	d.total++
 	h := q.Time.In(a.o.Location).Hour()
 	d.hourly[h]++
 	if a.o.quiet(h) {
 		d.quiet++
 	}
-
-	info := a.domain(q.Domain)
-	da := d.domains[info]
-	if da == nil {
-		da = &domainAcc{info: info}
-		d.domains[info] = da
-	}
-	da.count++
-	ns := q.Time.UnixNano()
-	if da.count == 1 || ns < da.first {
-		da.first = ns
-	}
-	if da.count == 1 || ns > da.last {
-		da.last = ns
-	}
-	da.times = append(da.times, ns)
 	if q.Blocked {
 		d.blocked++
 		da.blocked++

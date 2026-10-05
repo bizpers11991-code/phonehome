@@ -10,7 +10,8 @@ up its content-recognition server 1,440 times a day, all night, every
 minute*.
 
 That is useful even when everything is blocked. A blocked lookup is still an
-attempt, so phonehome counts it ([why](grading.md#the-terms)). It also shows
+attempt, so phonehome counts it, but only once however often the device
+retries within 30 seconds ([why](grading.md#the-terms)). It also shows
 which devices try to get around your blocker, and which fixes in the
 device's own settings turn the behaviour off at the source, which survives
 the device being moved to another network.

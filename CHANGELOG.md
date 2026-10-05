@@ -9,6 +9,17 @@
   libraries), each linked to the line of code that names it.
 
 ### Fixed
+- **Lookup counts and grades change: a lookup is now counted once, not once
+  per query.** A device asking for the same name again within 30 seconds of
+  a counted lookup (A, AAAA and HTTPS records together, retries, re-queries
+  of a blocked name answered with Pi-hole's 2-second TTL) makes one lookup,
+  blocked if any of its queries was. Before, iPhones, Macs and Chrome looked
+  up to three times worse than other devices doing the same thing, and
+  blocking a tracker could make a device's grade worse. Totals, categories,
+  snooping per day, hourly and quiet-hours counts, the domain table, blocked
+  counts, comparisons, receipts, `/metrics`, alerts and exports all drop
+  accordingly, and some grades improve; heartbeat detection is unchanged.
+  See [docs/grading.md](docs/grading.md#the-terms).
 - In `pihole.log` without serials, when a client asked A and AAAA for the
   same name, A got a CNAME reply and AAAA was then blocked upstream, the
   block was counted for A instead of AAAA. A blocking verdict now goes to
