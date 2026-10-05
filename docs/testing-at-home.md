@@ -10,8 +10,8 @@ with the one that sees the most devices.
 
 | You run | Read | Why |
 |---|---|---|
-| Pi-hole v6 on the same machine | its database, `pihole-FTL.db` | Complete, and keeps history ([guide](setup/pihole-docker.md)) |
-| Pi-hole v6 on another machine | its API ([guide](setup/pihole-api.md)) | Nothing to mount; also reads device names |
+| Pi-hole v6 on the same machine | its database, `pihole-FTL.db` | Complete, and keeps history ([Docker](setup/pihole-docker.md), [bare metal](setup/pihole-bare-metal.md)) |
+| Pi-hole v6 on another machine | its API ([guide](setup/pihole-api.md)) | Nothing to mount |
 | AdGuard Home | `querylog.json` ([guide](setup/adguard-home.md)) | |
 | A router with dnsmasq (OpenWrt) | its query log ([guide](setup/openwrt.md)) | Holds only what was logged since the last rotation |
 
@@ -30,9 +30,10 @@ a dnsmasq log usually starts empty.
 - **After a week** the 7-day view is a full week. Heartbeats (a device
   calling the same place on a clock) and quiet-hours lookups only show up
   once there are enough nights to see them.
-- **After about two weeks** the 7-day view also compares with the week
-  before ("↓ 25% vs the previous 7 days"). phonehome only compares once at
-  least half of the earlier period has data, and marks a partial one.
+- **From about day 11** the 7-day view also compares with the week before
+  ("↓ 25% vs the previous 7 days"). phonehome only compares once at least
+  half of the earlier week has data, and marks the comparison partial until
+  there are two full weeks.
 
 Change one thing at a time (turn off a TV's viewing-information setting, say),
 note the date, and look at the comparison a week later.
@@ -61,8 +62,8 @@ If you know, or can find out, what an unknown domain is for, open a
 - In the dashboard, a device's "Unclassified" list has a **Suggest a rule**
   link. It opens the GitHub form prefilled with the device's make and kind
   and up to 20 of its unknown domain names. Parts of names that look like
-  serial numbers or account IDs become `*`, and names containing the
-  device's own hostname are left out. Nothing else goes in: no addresses,
+  serial numbers or account IDs become `*`, and names that start with the
+  device's hostname or name, or contain its MAC or IP address, are left out. Nothing else goes in: no addresses,
   MACs, hostnames or labels. The link is off for demo data.
 - From the command line, `phonehome unknown` prints the form's address.
 
@@ -93,7 +94,9 @@ Before you share:
 
    or use **Home receipt**, or **Receipt** on a device's card, in the dashboard.
 3. Look at the image before posting it, for any name, address or MAC you
-   did not mean to share.
+   did not mean to share. phonehome leaves local names and reverse lookups
+   off receipts and masks parts of domain names that look like an ID, but
+   check the domain names too: a vendor can put a serial number in a name
+   in a form that isn't recognised.
 
-A receipt is made on your machine; nothing is uploaded to make it. Domain
-names on it are the vendors' servers, not yours.
+A receipt is made on your machine; nothing is uploaded to make it.
