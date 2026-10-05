@@ -47,6 +47,12 @@ rules:
     evidence:
       - https://developers.google.com/time/faq
       - https://support.google.com/work/android/answer/10513641?hl=en
+  - pattern: time.android.com
+    category: essential
+    purpose: Android's default network time server (config_ntpServers in AOSP), used to set the device clock.
+    confidence: medium
+    evidence:
+      - https://github.com/aosp-mirror/platform_frameworks_base/blob/1cdfff555f4a21f71ccc978290e2e212e2f8b168/core/res/res/values/config.xml#L2693-L2697
   - pattern: time1.google.com
     category: essential
     purpose: Google Public NTP server, used to set the device clock.
@@ -368,6 +374,24 @@ rules:
       - https://www.princeton.edu/~pmittal/publications/tv-tracking-ccs19.pdf
 
   # --- Content --------------------------------------------------------------
+  - pattern: clientservices.googleapis.com
+    category: content
+    purpose: Chrome downloads its variations seed here, the configuration that switches browser features and field trials on or off.
+    confidence: medium
+    evidence:
+      - https://github.com/chromium/chromium/blob/9190d5cbac016aab7a414e24563a216c18747043/components/variations/variations_url_constants.cc#L9-L11
+  - pattern: optimizationguide-pa.googleapis.com
+    category: content
+    purpose: Chrome's Optimization Guide downloads the on-device machine-learning models that some browser features use.
+    confidence: medium
+    evidence:
+      - https://github.com/chromium/chromium/blob/9190d5cbac016aab7a414e24563a216c18747043/components/optimization_guide/core/optimization_guide_features.cc#L235-L246
+  - pattern: home.nest.com
+    category: essential
+    purpose: Nest's account and device API, which Nest clients such as homebridge-nest use to sign in and read or change device state.
+    confidence: medium
+    evidence:
+      - https://github.com/chrisjshull/homebridge-nest/blob/70b224b720f165ee05513342226081d1f31c4a43/lib/nest-endpoints.js#L19-L33
   - pattern: youtube.com
     category: content
     purpose: YouTube website and app.

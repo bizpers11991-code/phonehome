@@ -79,10 +79,11 @@ rules:
   - https://arxiv.org/abs/1911.03447
 - pattern: onesignal.com
   company: onesignal
-  category: telemetry
-  purpose: 'OneSignal push-notification SDK: registers your device and reports message engagement.'
+  category: content
+  purpose: 'OneSignal push notifications: apps register the device here to receive their notifications; it also reports which were opened.'
   confidence: medium
   evidence:
+  - https://github.com/OneSignal/OneSignal-Android-SDK/blob/811c1c466f6465ca01ebf66b5475fb4d38c7c471/OneSignalSDK/onesignal/core/src/main/java/com/onesignal/core/internal/http/OneSignalService.kt#L3-L6
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/onesignal.com.json
 - pattern: launchdarkly.com
   company: launchdarkly
@@ -91,6 +92,27 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/launchdarkly.com.json
+- pattern: app.launchdarkly.com
+  company: launchdarkly
+  category: content
+  purpose: 'LaunchDarkly feature flags: the app fetches which of its features are switched on.'
+  confidence: medium
+  evidence:
+  - https://github.com/launchdarkly/js-sdk-common/blob/2975219e1b5a612f8bd43c0319ac8652b8629926/src/configuration.js#L16-L18
+- pattern: clientstream.launchdarkly.com
+  company: launchdarkly
+  category: content
+  purpose: 'LaunchDarkly feature flags: streams changes to which of the app features are switched on.'
+  confidence: medium
+  evidence:
+  - https://github.com/launchdarkly/js-sdk-common/blob/2975219e1b5a612f8bd43c0319ac8652b8629926/src/configuration.js#L16-L18
+- pattern: events.launchdarkly.com
+  company: launchdarkly
+  category: telemetry
+  purpose: 'LaunchDarkly analytics events: the app reports which feature flags it evaluated for you.'
+  confidence: medium
+  evidence:
+  - https://github.com/launchdarkly/js-sdk-common/blob/2975219e1b5a612f8bd43c0319ac8652b8629926/src/configuration.js#L16-L18
 - pattern: optimizely.com
   company: optimizely
   category: telemetry
@@ -98,6 +120,27 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/optimizely.com.json
+- pattern: cdn.optimizely.com
+  company: optimizely
+  category: content
+  purpose: 'Optimizely configuration ("datafile"): the app downloads which experiments and features are switched on.'
+  confidence: medium
+  evidence:
+  - https://github.com/optimizely/javascript-sdk/blob/07777ce6f62f3af30922e4cb346121fcfd035921/lib/project_config/constant.ts#L30
+- pattern: config.optimizely.com
+  company: optimizely
+  category: content
+  purpose: 'Optimizely configuration ("datafile") for authenticated projects: which experiments and features are switched on.'
+  confidence: medium
+  evidence:
+  - https://github.com/optimizely/javascript-sdk/blob/07777ce6f62f3af30922e4cb346121fcfd035921/lib/project_config/constant.ts#L32
+- pattern: logx.optimizely.com
+  company: optimizely
+  category: telemetry
+  purpose: 'Optimizely event logging: the app reports which experiment variant you saw and what you did.'
+  confidence: medium
+  evidence:
+  - https://github.com/optimizely/javascript-sdk/blob/07777ce6f62f3af30922e4cb346121fcfd035921/lib/event_processor/event_builder/log_event.ts#L28-L31
 - pattern: flurry.com
   company: yahoo
   category: telemetry

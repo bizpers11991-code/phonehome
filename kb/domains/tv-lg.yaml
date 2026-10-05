@@ -22,15 +22,6 @@ rules:
     evidence:
       - https://github.com/samsapti/LG-webOS-Blocklist
       - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
-  - pattern: lgtvcommon.com
-    category: tracking
-    purpose: LG's customer data platform for TVs, used for usage beacons, content profiles and recommendations.
-    confidence: medium
-    kind_hint: tv
-    evidence:
-      - https://github.com/hagezi/dns-blocklists/issues/11412
-      - https://github.com/samsapti/LG-webOS-Blocklist
-      - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.lgwebos.txt
   - pattern: cdpbeacon.lgtvcommon.com
     category: tracking
     purpose: Beacon sent about every five minutes to LG's customer data platform, which profiles TV use for advertising.

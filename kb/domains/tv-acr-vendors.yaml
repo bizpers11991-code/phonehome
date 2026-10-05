@@ -12,16 +12,6 @@ rules:
       - https://arxiv.org/abs/2409.06203
       - https://github.com/SafeNetIoT/ACR
 
-  - pattern: samba.tv
-    company: samba-tv
-    category: acr
-    purpose: Samba TV, a content-recognition and audience-measurement firm built into some Sony, TCL and Philips TVs.
-    confidence: medium
-    kind_hint: tv
-    evidence:
-      - https://www.netify.ai/resources/domains/samba.tv
-      - https://en.wikipedia.org/wiki/Samba_TV
-      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
   - pattern: cid.samba.tv
     company: samba-tv
     category: acr
