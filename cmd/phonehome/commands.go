@@ -488,6 +488,19 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 	for _, d := range r.Devices {
 		fmt.Fprintf(w, "%s  %-28s %8s lookups  %7s snooping/day  (%s)\n",
 			gradeOrDash(d.Grade), printable(d.Device.DisplayName()), thousands(d.Total), thousands(round(d.PerDay)), d.Device.Kind)
+		if why := d.Reason.Text(); why != "" {
+			fmt.Fprintf(w, "     why: %s\n", printable(why))
+		}
+		if s := d.Reason.ProvisionalText(); s != "" {
+			fmt.Fprintf(w, "     %s\n", s)
+		}
+		if d.Total > 0 {
+			fmt.Fprintf(w, "     classified: %d%% of lookups", d.CoveragePercent())
+			if d.CoverageLow() {
+				fmt.Fprint(w, " (grade based on those alone)")
+			}
+			fmt.Fprintln(w)
+		}
 		if c := d.Previous; c != nil {
 			if !c.Seen {
 				fmt.Fprintf(w, "     new: not seen in the %s\n", since)

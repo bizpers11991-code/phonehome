@@ -302,6 +302,14 @@ svg { flex: none; }
 .grade-f { --g: var(--g-f); }
 @media (prefers-color-scheme: dark) { .grade { color: #111; } }
 
+/* Why a device got its grade, under the grade. */
+.why { color: var(--ink-2); font-size: 0.875rem; line-height: 1.45; }
+.why b { color: var(--ink); font-weight: 600; }
+.why code { font-size: 0.8125rem; }
+.why-note { color: var(--ink-3); }
+.why-block { display: grid; gap: 4px; padding-top: 20px; }
+.why-block .why-note { font-size: 0.8125rem; line-height: 1.45; }
+
 .figure { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .figure .big { font-size: 2rem; font-weight: 650; letter-spacing: -0.03em; line-height: 1; }
 .figure .unit { color: var(--ink-2); font-size: 0.9375rem; margin-left: 6px; }

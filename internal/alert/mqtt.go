@@ -88,6 +88,14 @@ func (m *MQTT) Publish(ctx context.Context, r model.HomeReport) error {
 			continue
 		}
 		slug := topicSlug(d.Device.ID)
+		if d.Reason.Provisional {
+			// Too little data to trust the grade: leave the published one
+			// (if any) as it is.
+			if old, ok := m.grades[slug]; ok {
+				grades[slug] = old
+			}
+			continue
+		}
 		state := m.stateTopic(slug)
 		if m.Discovery {
 			cfg := discoveryConfig{

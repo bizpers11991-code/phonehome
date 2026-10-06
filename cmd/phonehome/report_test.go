@@ -44,6 +44,24 @@ func TestPrintReportComparison(t *testing.T) {
 
 	r.Previous = nil
 	r.Devices[0].Previous, r.Devices[1].Previous = nil, nil
+	r.Devices[0].Reason = model.GradeReason{Rule: model.ReasonBypass, PerDay: 80, VolumeGrade: "B", Evidence: "8.8.8.8:53"}
+	r.Devices[0].Total, r.Devices[0].ByCategory = 1000, map[model.Category]int{model.CatAds: 300, model.CatUnknown: 700}
+	r.Devices[1].Reason = model.GradeReason{Rule: model.ReasonVolume, PerDay: 3, VolumeGrade: "A", BandTo: 50, Provisional: true, Data: 3 * time.Hour}
+	r.Devices[1].Total, r.Devices[1].ByCategory = 10, map[model.Category]int{model.CatContent: 10}
+	b.Reset()
+	printReport(&b, r, 7)
+	out = b.String()
+	for _, want := range []string{
+		"why: Bypasses your DNS via 8.8.8.8:53: at least D (its 80 snooping lookups a day alone would be B)",
+		"classified: 30% of lookups (grade based on those alone)",
+		"why: 3 snooping lookups a day (A is under 50)",
+		"Provisional: based on 3 hours of data",
+		"classified: 100% of lookups\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("report lacks %q\n%s", want, out)
+		}
+	}
 	b.Reset()
 	printReport(&b, r, 7)
 	if strings.Contains(b.String(), "previous") {

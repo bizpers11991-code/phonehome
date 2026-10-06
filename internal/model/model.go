@@ -4,7 +4,10 @@
 package model
 
 import (
+	"fmt"
+	"math"
 	"net/netip"
+	"strconv"
 	"time"
 )
 
@@ -259,7 +262,9 @@ type DeviceReport struct {
 	Bypasses   []Bypass
 	Fixes      []Fix
 	Grade      string // "A".."F", see docs/grading.md
-	Flows      int    // connections observed (0 in DNS-only mode)
+	// Reason is the rule that decided Grade, with the numbers behind it.
+	Reason GradeReason
+	Flows  int // connections observed (0 in DNS-only mode)
 	// Unknown lists unclassified domains, desc by Count, at most 50. Local
 	// names and reverse lookups are left out: no rule can describe them and
 	// they can identify the household.
@@ -267,6 +272,153 @@ type DeviceReport struct {
 	// Previous compares this device with the period just before Period; nil
 	// when the home has no comparison (see HomeReport.Previous).
 	Previous *Comparison
+}
+
+// Coverage is the share of lookups the knowledge base classified, from 0
+// to 1 (0 when there are none). Unclassified lookups never count against a
+// device, so a grade says less the lower its coverage.
+func (r DeviceReport) Coverage() float64 {
+	if r.Total <= 0 {
+		return 0
+	}
+	known := r.Total - r.ByCategory[CatUnknown]
+	return min(max(float64(known)/float64(r.Total), 0), 1)
+}
+
+// LowCoverage is the coverage under which a grade is flagged as resting on
+// a minority of the device's lookups.
+const LowCoverage = 0.5
+
+// CoverageLow reports whether r's grade rests on less than LowCoverage of
+// its lookups.
+func (r DeviceReport) CoverageLow() bool {
+	return r.Total > 0 && r.Coverage() < LowCoverage
+}
+
+// CoveragePercent is Coverage as a whole percentage, rounded down so that
+// 49.6% never reads as the 50% it falls short of.
+func (r DeviceReport) CoveragePercent() int {
+	return int(math.Floor(r.Coverage() * 100))
+}
+
+// CoverageNote is "Graded on the 40% of lookups phonehome recognises" when
+// coverage is low, else "".
+func (r DeviceReport) CoverageNote() string {
+	if !r.CoverageLow() {
+		return ""
+	}
+	return fmt.Sprintf("Graded on the %d%% of lookups phonehome recognises", r.CoveragePercent())
+}
+
+// ACRUnseenNote is printed for a TV or streaming player when ACRUnseen.
+const ACRUnseenNote = "No known content-recognition server seen. Not all TV platforms' ACR servers are known."
+
+// ACRUnseen reports whether r is a TV or streaming player that looked up no
+// known content-recognition server. That is no proof it has no ACR: not
+// every platform's ACR servers are in the knowledge base.
+func (r DeviceReport) ACRUnseen() bool {
+	return (r.Device.Kind == KindTV || r.Device.Kind == KindStreamer) && r.ByCategory[CatACR] == 0
+}
+
+// Grade reason rules, in GradeReason.Rule. See docs/grading.md.
+const (
+	ReasonVolume       = "volume"        // snooping lookups per day decided the grade
+	ReasonACRHeartbeat = "acr-heartbeat" // content recognition on a clock: F
+	ReasonACR          = "acr"           // any content-recognition lookup: at least D
+	ReasonBypass       = "bypass"        // a high-confidence DNS bypass: at least D
+)
+
+// GradeReason says why a device got its grade: the rule that decided it and
+// the numbers that triggered it, so every grade can explain itself.
+type GradeReason struct {
+	Rule   string  // one of the Reason constants; "" when not graded
+	PerDay float64 // snooping lookups per day
+	// VolumeGrade is the grade PerDay alone earns, and [BandFrom, BandTo)
+	// its range of lookups per day (BandTo 0: no upper limit). It differs
+	// from the device's grade when content recognition or a bypass raised it.
+	VolumeGrade      string
+	BandFrom, BandTo int
+	Count            int           // ReasonACR: content-recognition lookups
+	Evidence         string        // ReasonACRHeartbeat: the domain; ReasonBypass: the server, e.g. "8.8.8.8:443"
+	Every            time.Duration // ReasonACRHeartbeat: the heartbeat's interval
+	// Data is how much of the period has data for the device. Provisional
+	// is true when that is too little for a rate per day to mean much: the
+	// grade is still shown, marked provisional, and alerts ignore it.
+	Data        time.Duration
+	Provisional bool
+}
+
+// Text is the reason as one short English line, e.g. "1,359 snooping
+// lookups a day (C is 300–1,499)". The dashboard words it in its own
+// languages from the same fields.
+func (g GradeReason) Text() string {
+	switch g.Rule {
+	case ReasonACRHeartbeat:
+		return "Content recognition (ACR) on a clock, " + everyText(g.Every) + ": always F"
+	case ReasonACR:
+		return fmt.Sprintf("Contacts content-recognition (ACR) servers (%s %s): at least D",
+			thousands(g.Count), plural(g.Count, "lookup", "lookups"))
+	case ReasonBypass:
+		return fmt.Sprintf("Bypasses your DNS via %s: at least D (its %s snooping lookups a day alone would be %s)",
+			g.Evidence, thousands(int(math.Round(g.PerDay))), g.VolumeGrade)
+	case ReasonVolume:
+		n := int(math.Round(g.PerDay))
+		return fmt.Sprintf("%s snooping %s a day (%s)", thousands(n), plural(n, "lookup", "lookups"), g.Band())
+	}
+	return ""
+}
+
+// Band describes VolumeGrade's range, e.g. "C is 300–1,499".
+func (g GradeReason) Band() string {
+	switch {
+	case g.VolumeGrade == "":
+		return ""
+	case g.BandFrom == 0:
+		return fmt.Sprintf("%s is under %s", g.VolumeGrade, thousands(g.BandTo))
+	case g.BandTo == 0:
+		return fmt.Sprintf("%s is %s or more", g.VolumeGrade, thousands(g.BandFrom))
+	}
+	return fmt.Sprintf("%s is %s–%s", g.VolumeGrade, thousands(g.BandFrom), thousands(g.BandTo-1))
+}
+
+// ProvisionalText is "Provisional: based on 3 hours of data", or "" when
+// the grade is not provisional.
+func (g GradeReason) ProvisionalText() string {
+	if !g.Provisional {
+		return ""
+	}
+	if h := int(g.Data.Hours()); h >= 1 {
+		return fmt.Sprintf("Provisional: based on %d %s of data", h, plural(h, "hour", "hours"))
+	}
+	return "Provisional: based on less than an hour of data"
+}
+
+func everyText(d time.Duration) string {
+	switch {
+	case d <= 0:
+		return "regularly"
+	case d < time.Minute:
+		return fmt.Sprintf("every %d s", int(d.Round(time.Second).Seconds()))
+	case d < time.Hour:
+		return fmt.Sprintf("every %d min", int(d.Round(time.Minute).Minutes()))
+	}
+	return fmt.Sprintf("every %d h", int(d.Round(time.Hour).Hours()))
+}
+
+func plural(n int, one, other string) string {
+	if n == 1 {
+		return one
+	}
+	return other
+}
+
+// thousands formats a non-negative n with comma separators: 12345 → "12,345".
+func thousands(n int) string {
+	s := strconv.Itoa(n)
+	for i := len(s) - 3; i > 0; i -= 3 {
+		s = s[:i] + "," + s[i:]
+	}
+	return s
 }
 
 // Comparison sets a period's figures beside those of the period of equal

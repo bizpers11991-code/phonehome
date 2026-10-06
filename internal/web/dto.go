@@ -102,22 +102,56 @@ type deviceDTO struct {
 	SnoopShare  float64          `json:"snoopShare"`
 	PerDay      float64          `json:"perDay"`
 	Grade       string           `json:"grade"`
-	Flows       int              `json:"flows"`
-	Hourly      [24]int          `json:"hourly"`
-	Quiet       quietDTO         `json:"quiet"`
-	Categories  []categoryDTO    `json:"categories"`
-	TopDomains  []domainDTO      `json:"topDomains"`
-	Companies   []companyDTO     `json:"companies"`
-	Heartbeats  []heartbeatDTO   `json:"heartbeats"`
-	Bypasses    []bypassDTO      `json:"bypasses"`
-	Fixes       []fixDTO         `json:"fixes"`
-	Unknown     []unknownDTO     `json:"unknown"`
+	Reason      reasonDTO        `json:"reason"`
+	// Coverage is the share of lookups the knowledge base classified;
+	// LowCoverage flags a grade resting on less than half of them.
+	Coverage    float64 `json:"coverage"`
+	LowCoverage bool    `json:"lowCoverage"`
+	// ACRUnseen: a TV or streaming player with no known content-recognition
+	// server seen, which is not proof it has none.
+	ACRUnseen  bool           `json:"acrUnseen"`
+	Flows      int            `json:"flows"`
+	Hourly     [24]int        `json:"hourly"`
+	Quiet      quietDTO       `json:"quiet"`
+	Categories []categoryDTO  `json:"categories"`
+	TopDomains []domainDTO    `json:"topDomains"`
+	Companies  []companyDTO   `json:"companies"`
+	Heartbeats []heartbeatDTO `json:"heartbeats"`
+	Bypasses   []bypassDTO    `json:"bypasses"`
+	Fixes      []fixDTO       `json:"fixes"`
+	Unknown    []unknownDTO   `json:"unknown"`
 	// SuggestURL opens a prefilled GitHub issue for the unknown domains;
 	// empty for demo data or when nothing can be shared. See suggestURL.
 	SuggestURL string `json:"suggestUrl,omitempty"`
 	// Previous compares the device with the period before; omitted when
 	// the home has no comparison.
 	Previous *compareDTO `json:"previous,omitempty"`
+}
+
+// reasonDTO says what decided a device's grade (model.GradeReason). Text is
+// the English line; the dashboard words it from the other fields. BandTo
+// is 0 when VolumeGrade's band has no upper limit.
+type reasonDTO struct {
+	Rule         string  `json:"rule"`
+	Text         string  `json:"text"`
+	PerDay       float64 `json:"perDay"`
+	VolumeGrade  string  `json:"volumeGrade"`
+	BandFrom     int     `json:"bandFrom"`
+	BandTo       int     `json:"bandTo"`
+	Count        int     `json:"count"`
+	Evidence     string  `json:"evidence"`
+	EverySeconds float64 `json:"everySeconds"`
+	DataHours    float64 `json:"dataHours"`
+	Provisional  bool    `json:"provisional"`
+}
+
+func newReason(g model.GradeReason) reasonDTO {
+	return reasonDTO{
+		Rule: g.Rule, Text: g.Text(), PerDay: g.PerDay,
+		VolumeGrade: g.VolumeGrade, BandFrom: g.BandFrom, BandTo: g.BandTo,
+		Count: g.Count, Evidence: g.Evidence, EverySeconds: g.Every.Seconds(),
+		DataHours: g.Data.Hours(), Provisional: g.Provisional,
+	}
 }
 
 // quietDTO is the quiet-hours window; StartHour/EndHour are local hours
@@ -381,6 +415,10 @@ func newDeviceDTO(r model.DeviceReport) deviceDTO {
 		SnoopShare:  r.SnoopShare,
 		PerDay:      r.PerDay,
 		Grade:       r.Grade,
+		Reason:      newReason(r.Reason),
+		Coverage:    r.Coverage(),
+		LowCoverage: r.CoverageLow(),
+		ACRUnseen:   r.ACRUnseen(),
 		Flows:       r.Flows,
 		Hourly:      r.Hourly,
 		Quiet:       newQuiet(r.QuietLabel, r.QuietHours),

@@ -409,6 +409,46 @@ function gradeBadge(g) {
     'aria-label': t('grade.aria', { grade: g }), title: t('grade.aria', { grade: g }), text: g });
 }
 
+// ---------- Why a grade ----------
+// The server sends the rule that decided the grade and its numbers
+// (docs/grading.md); these word it. Its English text is the fallback for
+// rules the catalog does not know.
+
+function band(r) {
+  if (!r.bandFrom) return t('band.under', { grade: r.volumeGrade, to: fmt(r.bandTo) });
+  if (!r.bandTo) return t('band.over', { grade: r.volumeGrade, from: fmt(r.bandFrom) });
+  return t('band.range', { grade: r.volumeGrade, from: fmt(r.bandFrom), last: fmt(r.bandTo - 1) });
+}
+
+function reasonParts(r) {
+  const n = Math.round(r.perDay);
+  switch (r.rule) {
+    case 'volume': return tn('why.volume', { n: fmt(n), count: n, band: band(r) });
+    case 'acr-heartbeat': return tn('why.acrBeat', { every: every(r.everySeconds) });
+    case 'acr': return tn('why.acr', { n: fmt(r.count), count: r.count });
+    case 'bypass': return tn('why.bypass', { evidence: h('code', { text: r.evidence }), n: fmt(n), count: n, volume: r.volumeGrade });
+  }
+  return r.text ? [r.text + '.'] : [];
+}
+
+// coveragePct rounds down, so 49.6% never reads as the 50% it falls short of.
+const coveragePct = (x) => pf.format(Math.floor(x * 100) / 100);
+
+// gradeWhy is the one line under a grade: what decided it, and whether it
+// rests on too little data or on a minority of the device's lookups.
+function gradeWhy(d) {
+  const parts = reasonParts(d.reason);
+  if (!parts.length) return null;
+  const notes = [];
+  if (d.reason.provisional) {
+    const hours = Math.floor(d.reason.dataHours);
+    notes.push(hours >= 1 ? t('why.provisional', { n: fmt(hours), count: hours }) : t('why.provisionalSoon'));
+  }
+  if (d.lowCoverage) notes.push(t('why.coverage', { pct: coveragePct(d.coverage) }));
+  return h('p', { class: 'why' }, h('b', { text: t('why.label', { grade: d.grade }) }), ' ', ...parts,
+    notes.length ? h('span', { class: 'why-note', text: ' ' + notes.join(' ') }) : null);
+}
+
 function nameButton(d) {
   const btn = h('button', { type: 'button', class: 'name', 'aria-label': t('rename.aria', { name: d.name }), title: t('rename.title') },
     h('span', { text: d.name }), icon('pencil'));
@@ -423,6 +463,7 @@ function card(d, i) {
       h('span', { class: 'kind' }, icon(KINDS.has(d.kind) ? d.kind : 'unknown')),
       h('div', { class: 'dev-title' }, nameButton(d), h('p', { class: 'dev-sub', text: subtitle(d) })),
       gradeBadge(d.grade)),
+    gradeWhy(d),
     h('div', { class: 'figure' },
       h('p', {}, h('span', { class: 'big', text: fmt(d.perDay) }), h('span', { class: 'unit', text: t('card.perDay') })),
       h('p', { class: 'share' }, ...tn('card.share', { share: h('b', { text: pct(d.snoopShare) }) }))),
@@ -502,8 +543,13 @@ function bypassText(b) {
 
 function details(d) {
   const sections = [];
+  const why = gradeWhy(d);
+  if (why) {
+    sections.push(h('div', { class: 'why-block' }, why,
+      d.acrUnseen ? h('p', { class: 'why-note', text: t('why.acrUnseen') }) : null));
+  }
   sections.push(h('dl', { class: 'stats' },
-    stat(t('stat.lookups'), fmt(d.total)),
+    stat(t('stat.lookups'), fmt(d.total), d.total ? t('stat.recognised', { pct: coveragePct(d.coverage) }) : null),
     stat(t('stat.about'), fmt(d.snooping), pct(d.snoopShare)),
     stat(t('stat.blocked'), fmt(d.blocked), d.total ? pct(d.blocked / d.total) : null),
     stat(t('stat.sleep'), fmt(d.quiet.lookups))));
