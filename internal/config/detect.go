@@ -218,11 +218,18 @@ func problemFor(typ, path string, err error, optional bool) Problem {
 	if name == "" {
 		name = "<group>"
 	}
-	groupReadable := ue.Mode == 0 || ue.Mode.Perm()&0o040 != 0
+	// A mode of 0 is unknown unless the file could be stat'ed (chmod 000).
+	modeKnown := ue.Mode != 0 || ue.GID >= 0
+	groupReadable := !modeKnown || ue.Mode.Perm()&0o040 != 0
 	runWithGroup := fmt.Sprintf(`run phonehome with %s, e.g. Docker group_add: ["%s"] or systemd SupplementaryGroups=%s`, group, gid, name)
 
 	switch typ {
 	case TypePiholeDB:
+		if !groupReadable {
+			p.Hint = fmt.Sprintf("its group may not read it (mode %04o) but Pi-hole v6 keeps it at 0640; "+
+				"restore that (sudo chmod 640 %s) and run phonehome with the file's group", ue.Mode.Perm(), path)
+			break
+		}
 		if ue.Group == "" {
 			name = "pihole"
 		}
@@ -230,9 +237,10 @@ func problemFor(typ, path string, err error, optional bool) Problem {
 			gid = "1000" // the official pihole/pihole image
 		}
 		p.Hint = fmt.Sprintf(`Pi-hole v6 lets only its group read the database; run phonehome with %s, `+
-			`e.g. Docker group_add: ["%s"] or systemd SupplementaryGroups=%s`, group, gid, name)
+			`e.g. Docker group_add: ["%s"], systemd SupplementaryGroups=%s, `+
+			`or from a shell add yourself to it (sudo usermod -aG %s $USER) and log in again`, group, gid, name, name)
 	case TypeAdGuardQueryLog:
-		if groupReadable && ue.Mode != 0 {
+		if groupReadable && modeKnown {
 			p.Hint = runWithGroup
 		} else {
 			p.Hint = `AdGuard Home writes its query log readable by root only; run phonehome as root with every ` +

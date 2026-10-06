@@ -110,7 +110,7 @@ func Parse(b []byte) (*Config, error) {
 	dec := yaml.NewDecoder(bytes.NewReader(b))
 	dec.KnownFields(true)
 	if err := dec.Decode(c); err != nil && !errors.Is(err, io.EOF) {
-		return nil, err
+		return nil, friendlyYAML(err)
 	}
 	for i := range c.Sources {
 		c.Sources[i].fillDefaults()

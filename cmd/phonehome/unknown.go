@@ -3,7 +3,6 @@ package main
 import (
 	"cmp"
 	"context"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -17,14 +16,14 @@ import (
 const reportURL = "https://github.com/bizpers11991-code/phonehome/issues/new?template=new-device.yml"
 
 func cmdUnknown(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("unknown", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	days := fl.Int("days", 7, "period in days")
+	fl := newFlags("unknown", "[--config FILE | --demo] [--days N] [--device ID] [--limit N]", "List looked-up domains the knowledge base cannot explain yet, to suggest as rules.")
+	cfgPath := fl.String("config", "", configHelp)
+	days := fl.Int("days", 7, "how many days back to cover, ending now")
 	device := fl.String("device", "", "only this device (ID or name)")
 	useDemo := fl.Bool("demo", false, "use the synthetic demo household")
 	limit := fl.Int("limit", 10, "domain groups to show per device (0 = all)")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	if err := parseFlags(fl, args); err != nil {
+		return err
 	}
 	if err := checkDays(*days); err != nil {
 		return err
