@@ -29,7 +29,8 @@ For example:
   configured `auth:`;
 - phonehome writing to, or changing, a source it should only read
   (Pi-hole, AdGuard Home, dnsmasq, leases);
-- any outbound connection other than to the sources you configured;
+- any outbound connection other than to the sources and alert targets you
+  configured;
 - the receipt or a report revealing more than its view is meant to;
 - the install script, release artifacts or container image not matching
   what the source and the published checksums say.
