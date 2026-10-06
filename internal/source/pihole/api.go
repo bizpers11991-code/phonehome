@@ -223,6 +223,11 @@ func (a *API) do(ctx context.Context, method, path string, body, v any) error {
 		if err != nil {
 			return err
 		}
+		if resp.StatusCode == http.StatusUnauthorized && a.password == "" {
+			resp.Body.Close()
+			return fmt.Errorf("pihole: %s asks for a password; set password_file (or password) in this pihole-api source "+
+				"to an app password (Pi-hole: Settings › Web interface / API › Configure app password)", a.base)
+		}
 		if resp.StatusCode == http.StatusUnauthorized && a.password != "" && attempt == 0 {
 			resp.Body.Close()
 			a.mu.Lock()
@@ -249,7 +254,8 @@ func (a *API) session(ctx context.Context) (string, error) {
 	}
 	if resp.StatusCode == http.StatusUnauthorized {
 		resp.Body.Close()
-		return "", errors.New("pihole: login refused: check the app password")
+		return "", fmt.Errorf("pihole: %s refused the password; check password_file (or password) in this pihole-api source "+
+			"and use an app password (Pi-hole: Settings › Web interface / API › Configure app password)", a.base)
 	}
 	var auth struct {
 		Session struct {
@@ -289,6 +295,13 @@ func (a *API) send(ctx context.Context, method, path string, body any, sid strin
 	}
 	resp, err := a.client.Do(req)
 	if err != nil {
+		// "Get "http://pi.hole/api/queries?...": dial tcp …" says the same
+		// thing three times; name the Pi-hole and what to check once.
+		var ue *url.Error
+		if ctx.Err() == nil && errors.As(err, &ue) {
+			return nil, fmt.Errorf("pihole: cannot reach %s: %w; check the url of this pihole-api source and that Pi-hole's web server is running",
+				a.base, ue.Err)
+		}
 		return nil, fmt.Errorf("pihole: %s %s: %w", method, req.URL.Path, err)
 	}
 	return resp, nil

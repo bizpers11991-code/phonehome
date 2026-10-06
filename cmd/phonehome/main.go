@@ -13,9 +13,11 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 )
 
@@ -25,26 +27,95 @@ var version = "dev"
 const usage = `phonehome — see what your devices say about you.
 
 Usage:
-  phonehome serve   [--config FILE]           dashboard + continuous ingest
-  phonehome demo    [--listen ADDR]           try it with a synthetic household
-  phonehome ingest  [--config FILE] [--once]  pull records from your sources
-  phonehome report  [--config FILE] [--days N]
-  phonehome receipt [--config FILE] [--days N] [--device ID] [-o FILE]
-  phonehome unknown [--config FILE] [--days N] [--device ID] [--limit N]
-                                              unclassified domains, to report
-  phonehome kb lint | stats
+  phonehome serve   [--config FILE] [--listen ADDR]   dashboard + continuous ingest
+  phonehome demo    [--listen ADDR] [--days N] [--seed N] [--metrics]
+                                                      try it with a synthetic household
+  phonehome ingest  [--config FILE] [--once]          read your sources, no dashboard
+  phonehome report  [--config FILE | --demo] [--days N]
+                                                      plain-text report of every device
+  phonehome receipt [--config FILE | --demo] [--days N] [--device ID] [-o FILE]
+                                                      Privacy Receipt image (PNG or SVG)
+  phonehome unknown [--config FILE | --demo] [--days N] [--device ID] [--limit N]
+                                                      domains the knowledge base can't explain
+  phonehome kb lint | stats                           check the knowledge base
   phonehome version
 
-Config is read from --config, $PHONEHOME_CONFIG, or ./phonehome.yaml, then
-/etc/phonehome/phonehome.yaml. With no config, sources are auto-detected.
+Flags:
+  --config FILE  config file; must exist. Default: $PHONEHOME_CONFIG, else
+                 ./phonehome.yaml, else /etc/phonehome/phonehome.yaml, else
+                 none: sources are auto-detected
+  --listen ADDR  address to serve on. Default: $PHONEHOME_LISTEN, else for
+                 serve listen: in the config or :8099, for demo 127.0.0.1:8099
+  --demo         use the synthetic demo household instead of your data
+  --days N       how many days back to cover, ending now (report, receipt,
+                 unknown: 7; demo: days of synthetic history, 30)
+  --device ID    one device, by ID (mac:aa:bb:cc:dd:ee:ff) or name
+  -o FILE        receipt file to write, .png or .svg (default receipt.png)
+  --limit N      domain groups to show per device, 0 for all (default 10)
+  --once         read what is available now and exit, instead of polling
+  --seed N       random seed for the demo household (default 7)
+  --metrics      demo only: also serve /metrics for Prometheus
+
+"phonehome COMMAND -h" shows a command's flags.
 Docs: https://github.com/bizpers11991-code/phonehome
 `
+
+// configHelp describes --config, which most commands take.
+const configHelp = "config file; must exist (default: $PHONEHOME_CONFIG, else ./phonehome.yaml, else /etc/phonehome/phonehome.yaml, else auto-detect sources)"
+
+// newFlags is a subcommand's flag set; its -h shows the synopsis, what the
+// command does and every flag.
+func newFlags(name, synopsis, about string) *flag.FlagSet {
+	fl := flag.NewFlagSet(name, flag.ContinueOnError)
+	fl.Usage = func() {
+		fmt.Fprintf(fl.Output(), "Usage: phonehome %s %s\n\n%s\n\nFlags:\n", name, synopsis, about)
+		fl.PrintDefaults()
+	}
+	return fl
+}
+
+// errHelp ends a command that only printed its help: exit status 0.
+var errHelp = errors.New("help shown")
+
+// parseFlags parses a subcommand's arguments. -h is errHelp; a bad flag or
+// a stray argument (such as a config file named without --config) prints
+// the command's usage and is errUsage.
+func parseFlags(fl *flag.FlagSet, args []string) error {
+	err := fl.Parse(args)
+	switch {
+	case errors.Is(err, flag.ErrHelp):
+		return errHelp
+	case err != nil:
+		return errUsage
+	case fl.NArg() > 0:
+		fmt.Fprintf(fl.Output(), "unexpected argument %q\n", fl.Arg(0))
+		fl.Usage()
+		return errUsage
+	}
+	return nil
+}
+
+// init fills in version for builds without -ldflags, such as
+// "go install …@v0.3.0", from the module version Go records.
+func init() { version = buildVersion(version, debug.ReadBuildInfo) }
+
+// buildVersion is v unless it is "dev" and the build info names a module
+// version; "(devel)" means a build from a local checkout.
+func buildVersion(v string, read func() (*debug.BuildInfo, bool)) string {
+	if v != "dev" {
+		return v
+	}
+	if bi, ok := read(); ok && bi.Main.Version != "" && bi.Main.Version != "(devel)" {
+		return bi.Main.Version
+	}
+	return v
+}
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, os.Args[1:]); err != nil {
+	if err := run(ctx, os.Args[1:]); err != nil && !errors.Is(err, errHelp) {
 		if !errors.Is(err, errUsage) {
 			fmt.Fprintln(os.Stderr, "phonehome:", err)
 		}

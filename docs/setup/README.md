@@ -80,7 +80,8 @@ so it does not matter which container starts first:
 Anything else needs a config file. phonehome reads `--config FILE`, then
 `$PHONEHOME_CONFIG`, then `./phonehome.yaml`, then
 `/etc/phonehome/phonehome.yaml`. The Docker image looks at
-`/config/phonehome.yaml`. Every setting is described in
+`/config/phonehome.yaml`. A file named with `--config` or `$PHONEHOME_CONFIG`
+must exist, except these default locations. Every setting is described in
 [packaging/phonehome.example.yaml](../../packaging/phonehome.example.yaml);
 unknown keys are rejected, so a typo fails loudly instead of being ignored.
 
@@ -116,7 +117,8 @@ addresses automatically.
   ```
   found /etc/pihole/pihole-FTL.db but permission denied: Pi-hole v6 lets only
   its group read the database; run phonehome with the file's group (GID 1000),
-  e.g. Docker group_add: ["1000"] or systemd SupplementaryGroups=pihole
+  e.g. Docker group_add: ["1000"], systemd SupplementaryGroups=pihole, or from
+  a shell add yourself to it (sudo usermod -aG pihole $USER) and log in again
   ```
 
   Each guide explains the permissions involved. Once fixed, `serve` picks

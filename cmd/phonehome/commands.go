@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/fs"
@@ -14,9 +13,11 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 	"unicode/utf8"
 
@@ -41,19 +42,24 @@ import (
 
 var logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 
-// loadConfig finds and validates the configuration. A missing file is fine:
-// defaults plus auto-detected sources get most Pi-hole users going. The
-// detection is returned (and logged) when sources were auto-detected; it is
-// nil when the config lists them.
+// defaultConfigs are the files phonehome reads without being told to. The
+// Docker image and the systemd unit name one with --config; an absent file
+// there just means "use defaults", while any other --config or
+// $PHONEHOME_CONFIG must exist.
+var defaultConfigs = []string{"phonehome.yaml", "/etc/phonehome/phonehome.yaml", "/config/phonehome.yaml"}
+
+// loadConfig finds and validates the configuration. A missing default file
+// is fine: defaults plus auto-detected sources get most Pi-hole users going.
+// The detection is returned (and logged) when sources were auto-detected; it
+// is nil when the config lists them.
 func loadConfig(path string) (*config.Config, *config.Detection, error) {
-	explicit := path != ""
-	if !explicit {
-		path = os.Getenv("PHONEHOME_CONFIG")
-		explicit = path != ""
+	from := "--config"
+	if path == "" {
+		path, from = os.Getenv("PHONEHOME_CONFIG"), "$PHONEHOME_CONFIG"
 	}
 	candidates := []string{path}
-	if !explicit {
-		candidates = []string{"phonehome.yaml", "/etc/phonehome/phonehome.yaml"}
+	if path == "" {
+		candidates = defaultConfigs[:2]
 	}
 
 	cfg := config.Default()
@@ -63,10 +69,11 @@ func loadConfig(path string) (*config.Config, *config.Detection, error) {
 			cfg = c
 			break
 		}
-		// The Docker image always passes --config; an absent file there just
-		// means "use defaults".
 		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, nil, err
+		}
+		if !slices.Contains(defaultConfigs, p) {
+			return nil, nil, fmt.Errorf("%s %s: no such file; fix the path, or leave it out to auto-detect sources", from, p)
 		}
 	}
 	cfg.ApplyEnv(os.Getenv)
@@ -79,6 +86,9 @@ func loadConfig(path string) (*config.Config, *config.Detection, error) {
 	}
 	if err := cfg.Validate(); err != nil {
 		return nil, nil, fmt.Errorf("config:\n%w", err)
+	}
+	if det == nil { // configured files get the hints auto-detection gives
+		logDetection(logger, config.Detection{}, config.Detection{Problems: config.CheckSources(cfg.Sources, config.Check)})
 	}
 	return cfg, det, nil
 }
@@ -107,7 +117,8 @@ func buildSources(list []config.Source) (_ *sources, err error) {
 			if err != nil {
 				return nil, err
 			}
-			s.dns, s.devices = append(s.dns, db), append(s.devices, db)
+			s.dns = append(s.dns, explainedDNS{db, c.Type, c.Path})
+			s.devices = append(s.devices, explainedDevices{db, c.Type, c.Path})
 			s.closers = append(s.closers, db)
 			s.local = true
 		case config.TypePiholeAPI:
@@ -122,10 +133,10 @@ func buildSources(list []config.Source) (_ *sources, err error) {
 			s.dns, s.devices = append(s.dns, api), append(s.devices, api.Network())
 			s.closers = append(s.closers, api)
 		case config.TypeAdGuardQueryLog:
-			s.dns = append(s.dns, adguard.NewQueryLog(c.Path, adguard.WithName(c.Name)))
+			s.dns = append(s.dns, explainedDNS{adguard.NewQueryLog(c.Path, adguard.WithName(c.Name)), c.Type, c.Path})
 			s.local = true
 		case config.TypeDnsmasqLog:
-			s.dns = append(s.dns, dnsmasq.NewLog(c.Path, dnsmasq.WithName(c.Name)))
+			s.dns = append(s.dns, explainedDNS{dnsmasq.NewLog(c.Path, dnsmasq.WithName(c.Name)), c.Type, c.Path})
 			s.local = true
 		case config.TypeLeases:
 			s.devices = append(s.devices, leases.New(c.Path))
@@ -136,6 +147,66 @@ func buildSources(list []config.Source) (_ *sources, err error) {
 		}
 	}
 	return s, nil
+}
+
+// explainedDNS and explainedDevices give a file source's errors the hints
+// auto-detection gives: SQLite's "unable to open database file (14)" says
+// neither that the file is missing nor which group may read it.
+type explainedDNS struct {
+	source.DNSSource
+	typ, path string
+}
+
+func (e explainedDNS) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DNSQuery, string, error) {
+	qs, next, err := e.DNSSource.FetchDNS(ctx, cursor, limit)
+	return qs, next, explain(e.typ, e.path, err)
+}
+
+type explainedDevices struct {
+	source.DeviceSource
+	typ, path string
+}
+
+func (e explainedDevices) Devices(ctx context.Context) ([]model.Device, error) {
+	ds, err := e.DeviceSource.Devices(ctx)
+	return ds, explain(e.typ, e.path, err)
+}
+
+// explain replaces err with what is wrong with the file at path, and how to
+// fix it, when the file is missing or unreadable.
+func explain(typ, path string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if cerr := config.Check(path); cerr != nil {
+		return errors.New(config.ProblemFor(typ, path, cerr).String())
+	}
+	return err
+}
+
+// onePerCause reduces ingest's errors, one per reader and each wrapped in
+// its context ("pihole-db/dns: fetching: found …", "pihole-db/devices:
+// found …"), to one line per distinct cause. Only ingest's two wrappers,
+// which merely prefix the error they wrap, are peeled off.
+func onePerCause(err error) error {
+	j, ok := err.(interface{ Unwrap() []error })
+	if !ok {
+		return err
+	}
+	var lines []string
+	for _, e := range j.Unwrap() {
+		for range 2 {
+			u := errors.Unwrap(e)
+			if u == nil || !strings.HasSuffix(e.Error(), ": "+u.Error()) {
+				break
+			}
+			e = u
+		}
+		if !slices.Contains(lines, e.Error()) {
+			lines = append(lines, e.Error())
+		}
+	}
+	return errors.New(strings.Join(lines, "\n"))
 }
 
 func (s *sources) Close() {
@@ -163,10 +234,26 @@ func analyzeOptions(cfg *config.Config, local bool) (analyze.Options, error) {
 
 // openStore opens the database and applies `labels:` from the config.
 func openStore(ctx context.Context, cfg *config.Config) (*store.Store, error) {
+	// The default, /var/lib/phonehome, is where the packages and the Docker
+	// image keep it; someone trying the binary as themselves cannot write
+	// there.
+	elsewhere := "choose a folder you can write to with $PHONEHOME_DB or db: in the config, e.g. PHONEHOME_DB=./phonehome.db"
 	if dir := filepath.Dir(cfg.DB); dir != "" {
 		if err := os.MkdirAll(dir, 0o750); err != nil {
+			if errors.Is(err, fs.ErrPermission) {
+				return nil, fmt.Errorf("cannot create %s for phonehome's database (permission denied); %s", dir, elsewhere)
+			}
 			return nil, fmt.Errorf("create data directory: %w", err)
 		}
+	}
+	// SQLite would only say "unable to open database file". An empty file
+	// is a new database to SQLite.
+	f, err := os.OpenFile(cfg.DB, os.O_RDWR|os.O_CREATE, 0o640)
+	if errors.Is(err, fs.ErrPermission) {
+		return nil, fmt.Errorf("cannot write phonehome's database %s (permission denied); %s", cfg.DB, elsewhere)
+	}
+	if err == nil {
+		f.Close()
 	}
 	st, err := store.Open(cfg.DB)
 	if err != nil {
@@ -190,14 +277,18 @@ func applyLabels(ctx context.Context, st *store.Store, cfg *config.Config) error
 }
 
 func cmdServe(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("serve", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	fl := newFlags("serve", "[--config FILE] [--listen ADDR]", "Run the dashboard and keep reading your DNS sources.")
+	cfgPath := fl.String("config", "", configHelp)
+	listen := fl.String("listen", "", `address to serve on (default: $PHONEHOME_LISTEN, else listen: in the config, else :8099)`)
+	if err := parseFlags(fl, args); err != nil {
+		return err
 	}
 	cfg, det, err := loadConfig(*cfgPath)
 	if err != nil {
 		return err
+	}
+	if *listen != "" {
+		cfg.Listen = *listen
 	}
 	pw, err := cfg.Auth.Secret()
 	if err != nil {
@@ -255,13 +346,19 @@ func loopback(listen string) bool {
 }
 
 func cmdDemo(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("demo", flag.ContinueOnError)
-	listen := fl.String("listen", "127.0.0.1:8099", "address to serve on")
+	fl := newFlags("demo", "[--listen ADDR] [--days N] [--seed N] [--metrics]", "Serve the dashboard for a synthetic household; nothing is read from your network.")
+	listen := fl.String("listen", "", "address to serve on (default: $PHONEHOME_LISTEN, else 127.0.0.1:8099)")
 	days := fl.Int("days", 30, "days of synthetic history")
 	seed := fl.Int64("seed", 7, "random seed for the synthetic household")
 	metrics := fl.Bool("metrics", false, "also serve /metrics for Prometheus")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	if err := parseFlags(fl, args); err != nil {
+		return err
+	}
+	if err := checkDays(*days); err != nil {
+		return err
+	}
+	if *listen == "" {
+		*listen = demoListen(os.Getenv)
 	}
 	st, err := loadDemo(ctx, *seed, *days)
 	if err != nil {
@@ -271,6 +368,15 @@ func cmdDemo(ctx context.Context, args []string) error {
 	h := web.New(newApp(st, kb.Default(), analyze.DefaultOptions(), true), web.Options{Logger: logger, Metrics: *metrics})
 	fmt.Fprintf(os.Stderr, "phonehome demo: a synthetic household — not a measurement.\nOpen http://%s\n", displayAddr(*listen))
 	return listenAndServe(ctx, *listen, h)
+}
+
+// demoListen is where the demo serves without --listen: $PHONEHOME_LISTEN,
+// which the Docker image sets, else this machine only.
+func demoListen(getenv func(string) string) string {
+	if v := getenv("PHONEHOME_LISTEN"); v != "" {
+		return v
+	}
+	return "127.0.0.1:8099"
 }
 
 // loadDemo fills an in-memory store with the synthetic household.
@@ -301,9 +407,18 @@ func loadDemo(ctx context.Context, seed int64, days int) (*store.Store, error) {
 	})
 }
 
+// listenAndServe binds addr before logging that the dashboard listens, so a
+// busy port fails at once with a hint, then serves h until ctx is done.
 func listenAndServe(ctx context.Context, addr string, h http.Handler) error {
+	ln, err := net.Listen("tcp", addr)
+	if errors.Is(err, syscall.EADDRINUSE) {
+		return fmt.Errorf("%s is already in use; is phonehome already running? Choose another address with --listen, e.g. --listen :8100", addr)
+	}
+	if err != nil {
+		return fmt.Errorf("--listen %s: %w", addr, err)
+	}
 	srv := &http.Server{
-		Addr: addr, Handler: h,
+		Handler:           h,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
 		IdleTimeout:       120 * time.Second,
@@ -311,8 +426,8 @@ func listenAndServe(ctx context.Context, addr string, h http.Handler) error {
 		// while to compute.
 	}
 	errc := make(chan error, 1)
-	go func() { errc <- srv.ListenAndServe() }()
-	logger.Info("dashboard listening", "addr", addr)
+	go func() { errc <- srv.Serve(ln) }()
+	logger.Info("dashboard listening", "addr", ln.Addr().String())
 	select {
 	case err := <-errc:
 		return err
@@ -332,11 +447,11 @@ func displayAddr(listen string) string {
 }
 
 func cmdIngest(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("ingest", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	once := fl.Bool("once", false, "ingest what is available and exit")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	fl := newFlags("ingest", "[--config FILE] [--once]", "Read new lookups from your sources into phonehome's database, without the dashboard.")
+	cfgPath := fl.String("config", "", configHelp)
+	once := fl.Bool("once", false, "read what is available now and exit, instead of polling")
+	if err := parseFlags(fl, args); err != nil {
+		return err
 	}
 	cfg, det, err := loadConfig(*cfgPath)
 	if err != nil {
@@ -360,7 +475,10 @@ func cmdIngest(ctx context.Context, args []string) error {
 		Retention: cfg.Retention(), Logger: logger,
 	}
 	if *once {
-		return runner.RunOnce(ctx)
+		if err := runner.RunOnce(ctx); err != nil {
+			return onePerCause(err)
+		}
+		return nil
 	}
 	runner.Run(ctx, cfg.Interval)
 	return nil
@@ -400,12 +518,15 @@ func reportApp(ctx context.Context, cfgPath string, useDemo bool) (*app, func(),
 }
 
 func cmdReport(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("report", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	days := fl.Int("days", 7, "period in days")
+	fl := newFlags("report", "[--config FILE | --demo] [--days N]", "Print a plain-text report of every device.")
+	cfgPath := fl.String("config", "", configHelp)
+	days := fl.Int("days", 7, "how many days back to cover, ending now")
 	useDemo := fl.Bool("demo", false, "report on the synthetic demo household")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	if err := parseFlags(fl, args); err != nil {
+		return err
+	}
+	if err := checkDays(*days); err != nil {
+		return err
 	}
 	a, done, err := reportApp(ctx, *cfgPath, *useDemo)
 	if err != nil {
@@ -422,7 +543,8 @@ func cmdReport(ctx context.Context, args []string) error {
 }
 
 // printSetup explains, after a report, why sources may be missing: files
-// auto-detection found but could not read, with how to fix each. Optional
+// auto-detection found but could not read, and configured files that are
+// missing or unreadable, with how to fix each. Optional
 // sources (leases, conntrack) are only mentioned when the report is empty,
 // so that a working Pi-hole setup is not nagged on every run.
 func printSetup(w io.Writer, s model.Setup, empty bool) {
@@ -434,6 +556,10 @@ func printSetup(w io.Writer, s model.Setup, empty bool) {
 		note := ""
 		if p.Optional {
 			note = " (optional)"
+		}
+		if p.Missing {
+			lines = append(lines, fmt.Sprintf("  ! %s%s does not exist:\n    %s", p.Path, note, p.Hint))
+			continue
 		}
 		lines = append(lines, fmt.Sprintf("  ! found %s%s but %s:\n    %s", p.Path, note, p.Problem, p.Hint))
 	}
@@ -591,14 +717,17 @@ func thousands(n int) string {
 }
 
 func cmdReceipt(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("receipt", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	days := fl.Int("days", 7, "period in days")
+	fl := newFlags("receipt", "[--config FILE | --demo] [--days N] [--device ID] [-o FILE]", "Write a Privacy Receipt image for the home or one device.")
+	cfgPath := fl.String("config", "", configHelp)
+	days := fl.Int("days", 7, "how many days back to cover, ending now")
 	device := fl.String("device", "", `device ID (e.g. "mac:aa:bb:cc:dd:ee:ff") or name; empty = whole home`)
 	out := fl.String("o", "receipt.png", "output file (.png or .svg)")
 	useDemo := fl.Bool("demo", false, "use the synthetic demo household")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	if err := parseFlags(fl, args); err != nil {
+		return err
+	}
+	if err := checkDays(*days); err != nil {
+		return err
 	}
 	format := strings.TrimPrefix(strings.ToLower(filepath.Ext(*out)), ".")
 	if format != "png" && format != "svg" {
@@ -611,14 +740,19 @@ func cmdReceipt(ctx context.Context, args []string) error {
 	defer done()
 	p := lastDays(*days)
 
+	r, err := a.Report(ctx, p)
+	if err != nil {
+		return err
+	}
+	if err := hasLookups(r, "", *days); err != nil {
+		return err
+	}
 	id := *device
 	if id != "" {
-		r, err := a.Report(ctx, p)
-		if err != nil {
+		if id, err = resolveDevice(r, id); err != nil {
 			return err
 		}
-		id, err = resolveDevice(r, id)
-		if err != nil {
+		if err := hasLookups(r, id, *days); err != nil {
 			return err
 		}
 	}
@@ -631,6 +765,20 @@ func cmdReceipt(ctx context.Context, args []string) error {
 	}
 	fmt.Fprintln(os.Stderr, "wrote", *out)
 	return nil
+}
+
+// hasLookups refuses a receipt for a period in which the home, or device id,
+// made no lookups: it would only show a "?" grade.
+func hasLookups(r model.HomeReport, id string, days int) error {
+	total, who := r.Total, ""
+	if id != "" {
+		d, _ := findDevice(r, id)
+		total, who = d.Total, " from "+d.Device.DisplayName()
+	}
+	if total > 0 {
+		return nil
+	}
+	return fmt.Errorf("no lookups%s in the last %d days; check your sources with `phonehome report`", who, days)
 }
 
 // resolveDevice accepts a device ID or a case-insensitive display name.
@@ -651,6 +799,9 @@ func cmdKB(args []string) error {
 		return errUsage
 	}
 	switch args[0] {
+	case "-h", "-help", "--help", "help":
+		fmt.Println("usage: phonehome kb lint | stats\n\n  lint   check every rule's fields and evidence\n  stats  count rules, companies and fixes by category")
+		return nil
 	case "lint":
 		errs := kb.Lint(kbdata.FS)
 		for _, e := range errs {

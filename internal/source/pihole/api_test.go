@@ -338,8 +338,32 @@ func TestAPIErrors(t *testing.T) {
 	f.mu.Lock()
 	f.password = "something-else"
 	f.mu.Unlock()
-	if _, _, err := a.FetchDNS(ctx, "", 10); err == nil || !strings.Contains(err.Error(), "app password") {
+	if _, _, err := a.FetchDNS(ctx, "", 10); err == nil || !strings.Contains(err.Error(), "refused the password; check password_file") {
 		t.Fatalf("wrong password: err = %v", err)
+	}
+
+	// No password configured, but the Pi-hole has one.
+	srv := httptest.NewServer(f)
+	t.Cleanup(srv.Close)
+	nopw, err := NewAPI(srv.URL, "", srv.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := nopw.FetchDNS(ctx, "", 10); err == nil || err.Error() != "pihole: "+srv.URL+" asks for a password; "+
+		"set password_file (or password) in this pihole-api source to an app password "+
+		"(Pi-hole: Settings › Web interface / API › Configure app password)" {
+		t.Fatalf("no password: err = %v", err)
+	}
+
+	// Nothing listening.
+	down, err := NewAPI(srv.URL, "", srv.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.Close()
+	if _, _, err := down.FetchDNS(ctx, "", 10); err == nil || !strings.HasPrefix(err.Error(), "pihole: cannot reach "+srv.URL+": ") ||
+		!strings.HasSuffix(err.Error(), "; check the url of this pihole-api source and that Pi-hole's web server is running") {
+		t.Fatalf("unreachable: err = %v", err)
 	}
 
 	f, a = newFakeFTL(t, []apiQuery{
