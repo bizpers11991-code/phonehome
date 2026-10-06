@@ -188,8 +188,26 @@
     reachable without `--listen :8099`.
   - `phonehome version` shows the module version for `go install …@vX`
     builds instead of `dev`.
-  - `phonehome help` lists `--demo`, `--listen`, `--days` and `--metrics`
-    where they apply, and how `--listen` defaults.
+  - A misspelt config key is reported with its line and the key it was
+    probably meant to be (`line 1: unknown key "listne" (did you mean
+    "listen"?)`) instead of yaml.v3's `field listne not found in type
+    config.Config`.
+  - The permission hint for `pihole-FTL.db` also says how to join the group
+    from a shell (`sudo usermod -aG pihole $USER`), and a database its group
+    may not read (e.g. `chmod 600`) is told to go back to Pi-hole's 0640
+    instead of being told to join a group that would not help.
+  - `pihole-api` sources say what to fix when the Pi-hole wants a password
+    and none is set, refuses the one given, or cannot be reached, instead
+    of `GET /api/queries: 401 Unauthorized` or a dial error.
+  - `phonehome ingest --once` reports each problem (an unreadable file, an
+    unreachable Pi-hole) once, instead of once per reader of that source
+    wrapped in `<name>: fetching:`.
+  - `serve` or `ingest` run as an ordinary user, who cannot create the
+    default `/var/lib/phonehome`, say to set `$PHONEHOME_DB` or `db:`.
+  - `phonehome help` lists every flag with a one-line description, each
+    command's `-h` shows what it does and its flags (and exits 0), and a
+    stray argument (`phonehome serve phonehome.yaml`) is an error instead
+    of being ignored.
   - The root `docker-compose.yml` (Pi-hole on the host) asks for
     `PIHOLE_GID`, the group that may read `pihole-FTL.db`, instead of a
     commented-out GID that was wrong for most hosts.

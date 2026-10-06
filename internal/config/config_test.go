@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -245,7 +246,7 @@ func TestDetectProblems(t *testing.T) {
 	if pi.Type != TypePiholeDB || pi.Err != "permission denied" || pi.Optional {
 		t.Errorf("pihole problem = %+v", pi)
 	}
-	for _, want := range []string{"GID 1000", `group_add: ["1000"]`, "SupplementaryGroups=pihole"} {
+	for _, want := range []string{"GID 1000", `group_add: ["1000"]`, "SupplementaryGroups=pihole", "sudo usermod -aG pihole $USER"} {
 		if !strings.Contains(pi.String(), want) {
 			t.Errorf("pihole hint %q lacks %q", pi, want)
 		}
@@ -369,5 +370,50 @@ func TestCheckSources(t *testing.T) {
 	}
 	if p := got[2]; !p.Missing || !p.Optional || !strings.Contains(p.Hint, "check the path") {
 		t.Errorf("missing leases: %+v", p)
+	}
+}
+
+// TestOwnerOnlyDatabase: a database nobody but its owner may read (chmod
+// 000 or 600) is not fixed by joining its group, so the hint says so.
+func TestOwnerOnlyDatabase(t *testing.T) {
+	for _, mode := range []fs.FileMode{0, 0o600} {
+		p := ProblemFor(TypePiholeDB, "/etc/pihole/pihole-FTL.db",
+			&UnreadableError{GID: 999, Group: "pihole", Mode: mode, Err: fs.ErrPermission})
+		if !strings.HasPrefix(p.Hint, fmt.Sprintf("its group may not read it (mode %04o)", mode)) || !strings.Contains(p.Hint, "sudo chmod 640 /etc/pihole/pihole-FTL.db") {
+			t.Errorf("mode %o: %q", mode, p.Hint)
+		}
+	}
+	// Mode and group unknown (stat failed): assume Pi-hole's usual 0640.
+	p := ProblemFor(TypePiholeDB, "/etc/pihole/pihole-FTL.db", &UnreadableError{GID: -1, Err: fs.ErrPermission})
+	if !strings.Contains(p.Hint, `group_add: ["1000"]`) {
+		t.Errorf("unknown mode: %q", p.Hint)
+	}
+}
+
+func TestUnknownKeyMessages(t *testing.T) {
+	for _, c := range []struct{ yaml, want string }{
+		{"listne: \":9000\"\n", `line 1: unknown key "listne" (did you mean "listen"?)`},
+		{"listen: \":9000\"\nretention-days: 3\n", `line 2: unknown key "retention-days" (did you mean "retention_days"?)`},
+		{"sources:\n  - type: pihole-db\n    pth: /x\n", `line 3: unknown key "pth" (did you mean "path"?)`},
+		{"auth:\n  user: me\n", `line 2: unknown key "user" (valid here: username, password, password_file)`},
+		{"alerts:\n  mqtt:\n    topik: x\n", `line 3: unknown key "topik" (did you mean "topic"?)`},
+		{"listne: x\nlables: {}\n", "line 1: unknown key \"listne\" (did you mean \"listen\"?)\nline 2: unknown key \"lables\" (did you mean \"labels\"?)"},
+	} {
+		_, err := Parse([]byte(c.yaml))
+		if err == nil || err.Error() != c.want {
+			t.Errorf("%q:\n got %v\nwant %s", c.yaml, err, c.want)
+		}
+	}
+	// Other YAML errors keep yaml.v3's line numbers, without its prefix.
+	if _, err := Parse([]byte("listen: [\n")); err == nil || strings.HasPrefix(err.Error(), "yaml:") || !strings.Contains(err.Error(), "line") {
+		t.Errorf("syntax error: %v", err)
+	}
+	// Load names the file.
+	p := filepath.Join(t.TempDir(), "phonehome.yaml")
+	if err := os.WriteFile(p, []byte("listne: x\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(p); err == nil || err.Error() != "config "+p+`: line 1: unknown key "listne" (did you mean "listen"?)` {
+		t.Errorf("Load: %v", err)
 	}
 }

@@ -117,7 +117,8 @@ addresses automatically.
   ```
   found /etc/pihole/pihole-FTL.db but permission denied: Pi-hole v6 lets only
   its group read the database; run phonehome with the file's group (GID 1000),
-  e.g. Docker group_add: ["1000"] or systemd SupplementaryGroups=pihole
+  e.g. Docker group_add: ["1000"], systemd SupplementaryGroups=pihole, or from
+  a shell add yourself to it (sudo usermod -aG pihole $USER) and log in again
   ```
 
   Each guide explains the permissions involved. Once fixed, `serve` picks

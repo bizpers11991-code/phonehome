@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime/debug"
 	"strings"
 	"testing"
@@ -90,7 +94,7 @@ func TestConfiguredSourceProblems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := srcs.dns[0].FetchDNS(ctx, "", 10); err == nil || !strings.Contains(err.Error(), "found "+logPath+" but permission denied: run phonehome with") {
+	if _, _, err := srcs.dns[0].FetchDNS(ctx, "", 10); err == nil || !strings.Contains(err.Error(), "found "+logPath+" but permission denied: only its owner can read it") {
 		t.Errorf("unreadable log: err = %v", err)
 	}
 }
@@ -171,5 +175,122 @@ func TestBuildVersion(t *testing.T) {
 	}
 	if got := buildVersion("dev", func() (*debug.BuildInfo, bool) { return nil, false }); got != "dev" {
 		t.Errorf("no build info: %q", got)
+	}
+}
+
+// stderr runs f and returns what it wrote to os.Stderr.
+func stderr(t *testing.T, f func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := os.Stderr
+	os.Stderr = w
+	out := make(chan string)
+	go func() {
+		var b strings.Builder
+		_, _ = io.Copy(&b, r)
+		out <- b.String()
+	}()
+	defer func() { os.Stderr = old }()
+	f()
+	w.Close()
+	return <-out
+}
+
+// TestHelp: every command's -h succeeds and describes each of its flags,
+// and the top-level help names every one of them too.
+func TestHelp(t *testing.T) {
+	ctx := context.Background()
+	flagLine := regexp.MustCompile(`(?m)^  (-\w+)`)
+	for _, cmd := range []string{"serve", "demo", "ingest", "report", "receipt", "unknown"} {
+		var err error
+		out := stderr(t, func() { err = run(ctx, []string{cmd, "-h"}) })
+		if !errors.Is(err, errHelp) {
+			t.Errorf("%s -h: err = %v", cmd, err)
+		}
+		if !strings.HasPrefix(out, "Usage: phonehome "+cmd+" ") {
+			t.Errorf("%s -h:\n%s", cmd, out)
+		}
+		flags := flagLine.FindAllStringSubmatch(out, -1)
+		if len(flags) == 0 {
+			t.Errorf("%s -h lists no flags:\n%s", cmd, out)
+		}
+		for _, f := range flags {
+			name := f[1]
+			if len(name) > 2 {
+				name = "-" + name // --config, as the usage writes it
+			}
+			if !strings.Contains(usage, "  "+name+" ") {
+				t.Errorf("phonehome help does not describe %s %s", cmd, name)
+			}
+			if !regexp.MustCompile(`[[|] ?` + regexp.QuoteMeta(name) + `[ \]]`).MatchString(usage) {
+				t.Errorf("phonehome help's synopsis for %s lacks %s", cmd, name)
+			}
+		}
+	}
+	// A config file named without --config is not silently ignored.
+	var err error
+	out := stderr(t, func() { err = run(ctx, []string{"report", "phonehome.yaml"}) })
+	if !errors.Is(err, errUsage) || !strings.HasPrefix(out, `unexpected argument "phonehome.yaml"`) {
+		t.Errorf("stray argument: %v\n%s", err, out)
+	}
+	if err := run(ctx, []string{"kb", "-h"}); err != nil {
+		t.Errorf("kb -h: %v", err)
+	}
+}
+
+func TestOpenStoreUnwritable(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root writes anywhere")
+	}
+	dir := t.TempDir()
+	if err := os.Chmod(dir, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(dir, 0o700) })
+	cfg := config.Default()
+	for _, db := range []string{filepath.Join(dir, "phonehome.db"), filepath.Join(dir, "sub", "phonehome.db")} {
+		cfg.DB = db
+		_, err := openStore(context.Background(), cfg)
+		if err == nil || !strings.Contains(err.Error(), "(permission denied); choose a folder you can write to with $PHONEHOME_DB") {
+			t.Errorf("%s: err = %v", db, err)
+		}
+	}
+}
+
+func TestOnePerCause(t *testing.T) {
+	refused := fmt.Errorf("pihole: cannot reach http://pi.hole: %w; check the url", errors.New("connection refused"))
+	err := onePerCause(errors.Join(
+		fmt.Errorf("pihole-api: %w", fmt.Errorf("fetching: %w", refused)),
+		fmt.Errorf("pihole-api-devices: %w", refused),
+		fmt.Errorf("dnsmasq: %w", fmt.Errorf("fetching: %w", errors.New("line too long"))),
+	))
+	want := "pihole: cannot reach http://pi.hole: connection refused; check the url\nline too long"
+	if err == nil || err.Error() != want {
+		t.Errorf("got %v\nwant %s", err, want)
+	}
+	if one := errors.New("x"); onePerCause(one) != one {
+		t.Error("a single error changed")
+	}
+}
+
+// TestIngestOnceUnreadable: one line per unreadable file, not one per
+// reader wrapped in ingest's context.
+func TestIngestOnceUnreadable(t *testing.T) {
+	dir := t.TempDir()
+	db := filepath.Join(dir, "pihole-FTL.db")
+	cfgPath := filepath.Join(dir, "phonehome.yaml")
+	yaml := "db: " + filepath.Join(dir, "phonehome.db") + "\nsources:\n  - type: pihole-db\n    path: " + db + "\n"
+	if err := os.WriteFile(cfgPath, []byte(yaml), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PHONEHOME_CONFIG", "")
+	t.Setenv("PHONEHOME_DB", "")
+	err := cmdIngest(context.Background(), []string{"--once", "--config", cfgPath})
+	want := db + " does not exist: check the path in your config; with Docker, mount the folder that holds the file into the container"
+	if err == nil || err.Error() != want {
+		t.Errorf("err = %v\nwant %s", err, want)
 	}
 }

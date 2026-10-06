@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/fs"
@@ -185,6 +184,31 @@ func explain(typ, path string, err error) error {
 	return err
 }
 
+// onePerCause reduces ingest's errors, one per reader and each wrapped in
+// its context ("pihole-db/dns: fetching: found …", "pihole-db/devices:
+// found …"), to one line per distinct cause. Only ingest's two wrappers,
+// which merely prefix the error they wrap, are peeled off.
+func onePerCause(err error) error {
+	j, ok := err.(interface{ Unwrap() []error })
+	if !ok {
+		return err
+	}
+	var lines []string
+	for _, e := range j.Unwrap() {
+		for range 2 {
+			u := errors.Unwrap(e)
+			if u == nil || !strings.HasSuffix(e.Error(), ": "+u.Error()) {
+				break
+			}
+			e = u
+		}
+		if !slices.Contains(lines, e.Error()) {
+			lines = append(lines, e.Error())
+		}
+	}
+	return errors.New(strings.Join(lines, "\n"))
+}
+
 func (s *sources) Close() {
 	for _, c := range s.closers {
 		c.Close()
@@ -210,10 +234,26 @@ func analyzeOptions(cfg *config.Config, local bool) (analyze.Options, error) {
 
 // openStore opens the database and applies `labels:` from the config.
 func openStore(ctx context.Context, cfg *config.Config) (*store.Store, error) {
+	// The default, /var/lib/phonehome, is where the packages and the Docker
+	// image keep it; someone trying the binary as themselves cannot write
+	// there.
+	elsewhere := "choose a folder you can write to with $PHONEHOME_DB or db: in the config, e.g. PHONEHOME_DB=./phonehome.db"
 	if dir := filepath.Dir(cfg.DB); dir != "" {
 		if err := os.MkdirAll(dir, 0o750); err != nil {
+			if errors.Is(err, fs.ErrPermission) {
+				return nil, fmt.Errorf("cannot create %s for phonehome's database (permission denied); %s", dir, elsewhere)
+			}
 			return nil, fmt.Errorf("create data directory: %w", err)
 		}
+	}
+	// SQLite would only say "unable to open database file". An empty file
+	// is a new database to SQLite.
+	f, err := os.OpenFile(cfg.DB, os.O_RDWR|os.O_CREATE, 0o640)
+	if errors.Is(err, fs.ErrPermission) {
+		return nil, fmt.Errorf("cannot write phonehome's database %s (permission denied); %s", cfg.DB, elsewhere)
+	}
+	if err == nil {
+		f.Close()
 	}
 	st, err := store.Open(cfg.DB)
 	if err != nil {
@@ -237,11 +277,11 @@ func applyLabels(ctx context.Context, st *store.Store, cfg *config.Config) error
 }
 
 func cmdServe(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("serve", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	listen := fl.String("listen", "", `address to serve on (default: $PHONEHOME_LISTEN, else "listen:" in the config, else ":8099")`)
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	fl := newFlags("serve", "[--config FILE] [--listen ADDR]", "Run the dashboard and keep reading your DNS sources.")
+	cfgPath := fl.String("config", "", configHelp)
+	listen := fl.String("listen", "", `address to serve on (default: $PHONEHOME_LISTEN, else listen: in the config, else :8099)`)
+	if err := parseFlags(fl, args); err != nil {
+		return err
 	}
 	cfg, det, err := loadConfig(*cfgPath)
 	if err != nil {
@@ -306,13 +346,13 @@ func loopback(listen string) bool {
 }
 
 func cmdDemo(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("demo", flag.ContinueOnError)
+	fl := newFlags("demo", "[--listen ADDR] [--days N] [--seed N] [--metrics]", "Serve the dashboard for a synthetic household; nothing is read from your network.")
 	listen := fl.String("listen", "", "address to serve on (default: $PHONEHOME_LISTEN, else 127.0.0.1:8099)")
 	days := fl.Int("days", 30, "days of synthetic history")
 	seed := fl.Int64("seed", 7, "random seed for the synthetic household")
 	metrics := fl.Bool("metrics", false, "also serve /metrics for Prometheus")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	if err := parseFlags(fl, args); err != nil {
+		return err
 	}
 	if err := checkDays(*days); err != nil {
 		return err
@@ -407,11 +447,11 @@ func displayAddr(listen string) string {
 }
 
 func cmdIngest(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("ingest", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	once := fl.Bool("once", false, "ingest what is available and exit")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	fl := newFlags("ingest", "[--config FILE] [--once]", "Read new lookups from your sources into phonehome's database, without the dashboard.")
+	cfgPath := fl.String("config", "", configHelp)
+	once := fl.Bool("once", false, "read what is available now and exit, instead of polling")
+	if err := parseFlags(fl, args); err != nil {
+		return err
 	}
 	cfg, det, err := loadConfig(*cfgPath)
 	if err != nil {
@@ -435,7 +475,10 @@ func cmdIngest(ctx context.Context, args []string) error {
 		Retention: cfg.Retention(), Logger: logger,
 	}
 	if *once {
-		return runner.RunOnce(ctx)
+		if err := runner.RunOnce(ctx); err != nil {
+			return onePerCause(err)
+		}
+		return nil
 	}
 	runner.Run(ctx, cfg.Interval)
 	return nil
@@ -475,12 +518,12 @@ func reportApp(ctx context.Context, cfgPath string, useDemo bool) (*app, func(),
 }
 
 func cmdReport(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("report", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	days := fl.Int("days", 7, "period in days")
+	fl := newFlags("report", "[--config FILE | --demo] [--days N]", "Print a plain-text report of every device.")
+	cfgPath := fl.String("config", "", configHelp)
+	days := fl.Int("days", 7, "how many days back to cover, ending now")
 	useDemo := fl.Bool("demo", false, "report on the synthetic demo household")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	if err := parseFlags(fl, args); err != nil {
+		return err
 	}
 	if err := checkDays(*days); err != nil {
 		return err
@@ -674,14 +717,14 @@ func thousands(n int) string {
 }
 
 func cmdReceipt(ctx context.Context, args []string) error {
-	fl := flag.NewFlagSet("receipt", flag.ContinueOnError)
-	cfgPath := fl.String("config", "", "config file")
-	days := fl.Int("days", 7, "period in days")
+	fl := newFlags("receipt", "[--config FILE | --demo] [--days N] [--device ID] [-o FILE]", "Write a Privacy Receipt image for the home or one device.")
+	cfgPath := fl.String("config", "", configHelp)
+	days := fl.Int("days", 7, "how many days back to cover, ending now")
 	device := fl.String("device", "", `device ID (e.g. "mac:aa:bb:cc:dd:ee:ff") or name; empty = whole home`)
 	out := fl.String("o", "receipt.png", "output file (.png or .svg)")
 	useDemo := fl.Bool("demo", false, "use the synthetic demo household")
-	if err := fl.Parse(args); err != nil {
-		return errUsage
+	if err := parseFlags(fl, args); err != nil {
+		return err
 	}
 	if err := checkDays(*days); err != nil {
 		return err
@@ -756,6 +799,9 @@ func cmdKB(args []string) error {
 		return errUsage
 	}
 	switch args[0] {
+	case "-h", "-help", "--help", "help":
+		fmt.Println("usage: phonehome kb lint | stats\n\n  lint   check every rule's fields and evidence\n  stats  count rules, companies and fixes by category")
+		return nil
 	case "lint":
 		errs := kb.Lint(kbdata.FS)
 		for _, e := range errs {
