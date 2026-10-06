@@ -295,11 +295,12 @@ rules:
 
   # --- Telemetry ------------------------------------------------------------
   - pattern: play.googleapis.com
-    category: telemetry
-    purpose: Google Play services logging; measured sending about 1 MB of telemetry at setup even with usage reporting off.
-    confidence: high
+    category: essential
+    purpose: Google Play app downloads, so blocking it can stop installs and updates; the same host takes Play logging, about 1.2 MB at setup even with usage reporting off.
+    confidence: medium
     evidence:
       - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
+      - https://github.com/minecraft-linux/minecraft-linux.github.io/issues/89
   - pattern: firebaselogging.googleapis.com
     category: telemetry
     purpose: Firebase logging and metrics upload from Android and apps that use Firebase.

@@ -195,8 +195,8 @@ rules:
 
   # --- Telemetry ------------------------------------------------------------
   - pattern: xp.apple.com
-    category: telemetry
-    purpose: Apple analytics endpoint; Apple lists it for updates, but it received telemetry even with iPhone Analytics off.
+    category: essential
+    purpose: Apple lists it as needed for software updates, so blocking it can stop them; it also received telemetry even with iPhone Analytics off.
     confidence: high
     evidence:
       - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
@@ -221,10 +221,11 @@ rules:
     evidence:
       - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
   - pattern: ls.apple.com
-    category: telemetry
-    purpose: Apple Maps and Location Services; also receives location data and nearby Wi-Fi details for crowd-sourced positioning.
+    category: content
+    purpose: Apple Maps and location services (maps, search and routing); the geod process also uploads opaque messages that include mobile carrier details.
     confidence: medium
     evidence:
+      - https://developer.apple.com/forums/thread/99015
       - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
 
   # --- Ads ------------------------------------------------------------------

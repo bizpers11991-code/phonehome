@@ -116,6 +116,11 @@
   Guide downloads, Nest's `home.nest.com` API, Apple's Wi-Fi location
   service `gs-loc.apple.com`, and LaunchDarkly's and Optimizely's
   configuration (content) and event (telemetry) hosts. 802 → 810 rules.
+- **Shared hosts no longer marked as pure snooping.** `xp.apple.com` (Apple
+  lists it for software updates) and `play.googleapis.com` (Play app
+  downloads) are essential, as the knowledge base's policy requires for a
+  host shared by updates and telemetry; their purposes keep the measured
+  telemetry. `ls.apple.com`, which serves Apple Maps, is content.
 - 715 → 784 rules and 138 → 146 companies, mined from the open-source
   clients that talk to each vendor's cloud (Home Assistant integrations and
   the libraries behind them). Every new rule links to the exact line of
