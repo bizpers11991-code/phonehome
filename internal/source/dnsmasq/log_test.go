@@ -194,6 +194,45 @@ func TestTruncation(t *testing.T) {
 	})
 }
 
+// A log truncated in place that has grown past the old offset again before
+// the next read (phonehome was stopped, or the log is busy) must still be
+// read from the top, not from the middle of some new line.
+func TestTruncationThenRegrowth(t *testing.T) {
+	path := copyFile(t, "syslog.log")
+	l := newTestLog(path)
+	_, cur := drain(t, l, "", 100)
+	pos, err := parseCursor(cur)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var b strings.Builder
+	var want []string
+	pad := ""
+	for i := 0; b.Len() <= int(pos.offset)+200; i++ {
+		fmt.Fprintf(&b, "Oct  2 14:%02d:00 router dnsmasq[812]: query[A] new%d.example.com from 192.168.1.9%s\n", i%60, i, pad)
+		fmt.Fprintf(&b, "Oct  2 14:%02d:00 router dnsmasq[812]: reply new%d.example.com is 192.0.2.1\n", i%60, i)
+		want = append(want, fmt.Sprintf("14:%02d:00 new%d.example.com A 192.168.1.9 false", i%60, i))
+		if b.Len() >= int(pos.offset) && b.String()[pos.offset-1] == '\n' {
+			pad = " " // keep the old offset off a line boundary
+		}
+	}
+	if b.String()[pos.offset-1] == '\n' {
+		t.Fatal("test log has a line boundary at the old offset")
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.WriteString(b.String()); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+
+	got, _ := drain(t, l, cur, 1000)
+	equal(t, got, want)
+}
+
 func TestRotation(t *testing.T) {
 	path := copyFile(t, "syslog.log")
 	l := newTestLog(path)

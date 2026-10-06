@@ -133,7 +133,7 @@ func (l *Log) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.D
 
 	var segs []segment
 	switch {
-	case cursor != "" && cur.inode == ino && cur.offset <= fi.Size():
+	case cursor != "" && cur.inode == ino && cur.offset <= fi.Size() && lineEnd(f, cur.offset):
 		segs = []segment{{f, cur, true}}
 	case cursor != "" && cur.inode != ino:
 		if old := l.rotated(cur.inode); old != nil {
@@ -159,6 +159,21 @@ func (l *Log) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.D
 		return nil, cursor, nil
 	}
 	return r.out, next.String(), nil
+}
+
+// lineEnd reports whether offset is 0 or just past a newline, as every
+// cursor is. If it is not, the file was truncated in place and has grown
+// past the cursor again since (a busy log, or phonehome was stopped), so
+// the cursor points into some new line and the file must be read from the
+// top. A new line ending exactly there goes unnoticed; that is the
+// documented copytruncate loss, only larger.
+func lineEnd(f *os.File, offset int64) bool {
+	if offset == 0 {
+		return true
+	}
+	var b [1]byte
+	_, err := f.ReadAt(b[:], offset-1)
+	return err == nil && b[0] == '\n'
 }
 
 // rotated opens <path>.1 if it is the file the cursor was reading.
