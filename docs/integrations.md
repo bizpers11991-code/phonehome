@@ -47,6 +47,8 @@ Per device (labels `device`, `name`, `kind`):
 | Metric | Meaning |
 |---|---|
 | `phonehome_device_grade` | The device's grade in grade points: A=4, B=3, C=2, D=1, F=0. See [grading.md](grading.md). |
+| `phonehome_device_grade_provisional` | 1 when the grade rests on less than 20 hours of data ([provisional](grading.md#provisional-grades)), else 0. |
+| `phonehome_device_classified_ratio` | Share of the device's lookups the knowledge base classified, 0 to 1 ([coverage](grading.md#coverage-how-much-of-a-device-phonehome-recognises)). |
 | `phonehome_device_snooping_lookups_per_day` | Snooping lookups (content recognition, ads, tracking, telemetry) per day. |
 | `phonehome_device_lookups{category=…}` | Lookups in the period, one series per category: `acr`, `ads`, `tracking`, `telemetry`, `essential`, `content`, `unknown`. |
 | `phonehome_device_blocked_lookups` | Lookups your DNS filter blocked. |

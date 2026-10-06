@@ -277,6 +277,62 @@ func TestHomeStampUsesHomeGrade(t *testing.T) {
 	}
 }
 
+// The stamp's headline comes from the rule that decided the grade, and the
+// reason is printed under it, so a D for a DNS bypass never claims the
+// device "talks about you a lot".
+func TestGradeExplained(t *testing.T) {
+	lowCoverage := hueBridge()
+	lowCoverage.ByCategory[model.CatUnknown] = 3000
+	lowCoverage.Total += 3000
+	provisional := hueBridge()
+	provisional.Reason.Provisional, provisional.Reason.Data = true, 3*time.Hour
+	tests := []struct {
+		name     string
+		r        model.DeviceReport
+		want, no []string
+	}{
+		{"ACR heartbeat", samsungTV(),
+			[]string{"WATCHES WHAT YOU WATCH,", "ON A CLOCK.", "WHY: Content recognition (ACR) on a clock,", "always F."},
+			[]string{"CAN'T STOP TALKING", "No known content-recognition"}},
+		{"bypass", fixedTV(),
+			[]string{"GOES AROUND", "YOUR DNS FILTER.", "WHY: Bypasses your DNS via 1.1.1.1:853: at", "would be C).",
+				"No known content-recognition server seen;", "not every TV brand's servers are known."},
+			[]string{"TALKS ABOUT YOU"}},
+		{"volume", hueBridge(),
+			[]string{"MINDS ITS OWN", "WHY: 3.6 snooping lookups a day (A is", "SNOOPING PER DAY ....................  3.6"},
+			[]string{"Graded on", "Provisional", "content-recognition"}},
+		{"low coverage", lowCoverage,
+			[]string{"Graded on the 40% of lookups phonehome", "recognises."}, nil},
+		{"provisional", provisional,
+			[]string{"Provisional: based on 3 hours of data."}, nil},
+	}
+	for _, tt := range tests {
+		d := Device(tt.r, Options{Now: printed})
+		checkGrid(t, d)
+		s := d.plain()
+		for _, w := range tt.want {
+			if !strings.Contains(s, w) {
+				t.Errorf("%s: receipt lacks %q\n%s", tt.name, w, s)
+			}
+		}
+		for _, w := range tt.no {
+			if strings.Contains(s, w) {
+				t.Errorf("%s: receipt has %q\n%s", tt.name, w, s)
+			}
+		}
+		if a, b := strings.Index(s, "GRADE: "), strings.Index(s, "WHY: "); a < 0 || b < a {
+			t.Errorf("%s: reason not under the stamp\n%s", tt.name, s)
+		}
+	}
+	for _, rule := range []string{model.ReasonACRHeartbeat, model.ReasonACR, model.ReasonBypass} {
+		for _, l := range headline("D", model.GradeReason{Rule: rule}) {
+			if width(l) > stampAside {
+				t.Errorf("%s headline %q is wider than %d", rule, l, stampAside)
+			}
+		}
+	}
+}
+
 func TestSinceBlock(t *testing.T) {
 	d := Device(fixedTV(), Options{Now: printed})
 	checkGrid(t, d)

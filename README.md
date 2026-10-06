@@ -45,8 +45,11 @@ Open <http://localhost:8099>.
 | **Tell me when it changes** | Optional alerts to your own webhook, ntfy, Gotify or MQTT (with Home Assistant sensors) for a new device, a worse grade, a new heartbeat or DNS bypass, plus a Prometheus `/metrics` endpoint. All off by default. |
 | **Every domain, your language** | A sortable table of every domain a device looked up, CSV/JSON export, and a dashboard in English, German, French, Spanish and Dutch. |
 
-Every device gets a grade from A to F based on how much of its traffic is
-about you rather than for you. [The rules are short and public.](docs/grading.md)
+Every device gets a grade from A to F based on how many lookups a day are
+about you, plus penalties for content recognition on TVs and streaming
+players and for bypassing your DNS. Each grade says which rule decided it,
+and how much of the device's traffic phonehome could classify.
+[The rules are short and public.](docs/grading.md)
 
 <details>
 <summary><b>More screenshots</b></summary>

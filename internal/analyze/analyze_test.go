@@ -413,3 +413,76 @@ func TestPerDayUsesCoveredPeriod(t *testing.T) {
 		}
 	}
 }
+
+// A grade on less than a day of data is provisional: a fresh install, or a
+// device that joined an established home an hour ago. The grade itself is
+// still computed the usual way.
+func TestProvisionalGrade(t *testing.T) {
+	end := time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC)
+	phone := netip.MustParseAddr("192.168.1.30")
+	lookups := func(from time.Time, n int, every time.Duration) []model.DNSQuery {
+		var qs []model.DNSQuery
+		for i := range n {
+			qs = append(qs, model.DNSQuery{Time: from.Add(time.Duration(i) * every), ClientIP: phone, Domain: "log.google.example"})
+		}
+		return qs
+	}
+	c := newFakeKB()
+	week := model.Period{From: end.Add(-7 * 24 * time.Hour), To: end}
+	day := model.Period{From: end.Add(-24 * time.Hour), To: end}
+	tests := []struct {
+		name        string
+		p           model.Period
+		qs          []model.DNSQuery
+		dev         *model.Device
+		provisional bool
+		data        time.Duration
+	}{
+		{"fresh install, 3 hours", week, lookups(end.Add(-3*time.Hour), 63, time.Minute), nil, true, 3 * time.Hour},
+		{"exactly 20 hours", week, lookups(end.Add(-20*time.Hour), 20, time.Hour), nil, false, 20 * time.Hour},
+		{"a second under 20 hours", week, lookups(end.Add(-20*time.Hour+time.Second), 20, time.Hour), nil, true, 20*time.Hour - time.Second},
+		{"a week of data", week, lookups(week.From, 70, 2*time.Hour), nil, false, 7 * 24 * time.Hour},
+		{"24-hour view, first lookup minutes in", day, lookups(day.From.Add(5*time.Minute), 24, time.Hour), nil, false, 24*time.Hour - 5*time.Minute},
+		{"new device in an established home", week, lookups(week.From, 70, 2*time.Hour),
+			&model.Device{ID: "mac:aa", IPs: []netip.Addr{phone}, FirstSeen: end.Add(-2 * time.Hour)}, true, 2 * time.Hour},
+	}
+	for _, tt := range tests {
+		var devs []model.Device
+		if tt.dev != nil {
+			devs = append(devs, *tt.dev)
+		}
+		r := Analyze(c, tt.p, devs, tt.qs, nil, Options{}).Devices[0]
+		if r.Reason.Provisional != tt.provisional || r.Reason.Data != tt.data {
+			t.Errorf("%s: provisional %v on %v of data, want %v on %v", tt.name, r.Reason.Provisional, r.Reason.Data, tt.provisional, tt.data)
+		}
+		if r.Grade != Grade(r) {
+			t.Errorf("%s: grade %s, want %s whether provisional or not", tt.name, r.Grade, Grade(r))
+		}
+	}
+}
+
+// A laptop that opens an ACR company's site is graded on volume alone; a
+// TV making the same lookups gets at least D.
+func TestACRRulesOnlyForScreens(t *testing.T) {
+	var qs []model.DNSQuery
+	for i := range 7 * 24 {
+		at := time.Duration(i) * time.Hour
+		qs = append(qs, q(at, "192.168.1.20", "video.netflix.example"), q(at, "192.168.1.21", "video.netflix.example"))
+	}
+	for i := range 3 {
+		at := time.Duration(i)*24*time.Hour + 30*time.Minute
+		qs = append(qs, q(at, "192.168.1.20", "acr.samsung.example"), q(at, "192.168.1.21", "acr.samsung.example"))
+	}
+	devs := []model.Device{
+		{ID: "mac:laptop", IPs: []netip.Addr{ip("192.168.1.20")}, Kind: model.KindComputer},
+		{ID: "mac:tv", IPs: []netip.Addr{ip("192.168.1.21")}, Kind: model.KindTV},
+	}
+	rep := Analyze(newFakeKB(), week, devs, qs, nil, utcOpt)
+	laptop, tv := findDevice(t, rep, "mac:laptop"), findDevice(t, rep, "mac:tv")
+	if laptop.ByCategory[model.CatACR] != 3 || laptop.Grade != "A" || laptop.Reason.Rule != model.ReasonVolume {
+		t.Errorf("laptop: %d ACR lookups, grade %s by %q, want A by volume", laptop.ByCategory[model.CatACR], laptop.Grade, laptop.Reason.Rule)
+	}
+	if tv.Grade != "D" || tv.Reason.Rule != model.ReasonACR || tv.Reason.Count != 3 {
+		t.Errorf("TV: grade %s by %q (%d), want D by ACR (3)", tv.Grade, tv.Reason.Rule, tv.Reason.Count)
+	}
+}

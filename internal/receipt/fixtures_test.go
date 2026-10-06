@@ -69,6 +69,10 @@ func samsungTV() model.DeviceReport {
 			{ID: "samsung-tv-voice", Title: "Turn off voice recognition"},
 		},
 		Grade: "F",
+		Reason: model.GradeReason{
+			Rule: model.ReasonACRHeartbeat, PerDay: 1402.4, VolumeGrade: "C", BandFrom: 300, BandTo: 1500,
+			Evidence: "acr-eu-prd.samsungcloudsolution.com", Every: 15 * time.Second, Data: 7 * 24 * time.Hour,
+		},
 	}
 }
 
@@ -88,7 +92,8 @@ func hueBridge() model.DeviceReport {
 		Heartbeats: []model.Heartbeat{
 			{Domain: "time.meethue.com", Category: model.CatEssential, Count: 2016, Every: 5 * time.Minute},
 		},
-		Grade: "A",
+		Grade:  "A",
+		Reason: model.GradeReason{Rule: model.ReasonVolume, PerDay: 3.6, VolumeGrade: "A", BandTo: 50, Data: 7 * 24 * time.Hour},
 	}
 }
 
@@ -99,6 +104,8 @@ func longName() model.DeviceReport {
 	r.Device.Kind = model.KindAppliance
 	r.Device.Vendor = "LG Electronics"
 	r.Grade = "C"
+	r.PerDay = 412
+	r.Reason = model.GradeReason{Rule: model.ReasonVolume, PerDay: 412, VolumeGrade: "C", BandFrom: 300, BandTo: 1500}
 	r.Companies[0].Name = "An Extremely Long Company Name Holdings International Limited"
 	return r
 }
@@ -150,7 +157,11 @@ func fixedTV() model.DeviceReport {
 	acr := r.Heartbeats[0]
 	r.Heartbeats = r.Heartbeats[1:]
 	r.Fixes = r.Fixes[1:]
-	r.Grade = "D"
+	r.Grade = "D" // C by volume, D for the bypass
+	r.Reason = model.GradeReason{
+		Rule: model.ReasonBypass, PerDay: r.PerDay, VolumeGrade: "C", BandFrom: 300, BandTo: 1500,
+		Evidence: "1.1.1.1:853", Data: 7 * 24 * time.Hour,
+	}
 	r.Previous = &model.Comparison{
 		Period:     r.Period.Previous(),
 		Days:       r.Period.Days(),

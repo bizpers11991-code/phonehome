@@ -491,6 +491,16 @@ func TestReportJSON(t *testing.T) {
 			}
 			TopDomains []struct{ CategoryLabel string }
 			Bypasses   []struct{ Evidence string }
+			Reason     struct {
+				Rule, Text, VolumeGrade   string
+				Lookups, BandFrom, BandTo int
+				EverySeconds, DataHours   float64
+				Provisional               bool
+			}
+			Coverage        float64
+			CoveragePercent int  `json:"coveragePercent"`
+			LowCoverage     bool `json:"lowCoverage"`
+			ACRUnseen       bool `json:"acrUnseen"`
 		}
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &rep); err != nil {
@@ -530,10 +540,27 @@ func TestReportJSON(t *testing.T) {
 	if !phone {
 		t.Error("iPhone's randomised MAC not flagged as private")
 	}
+	if r := tv.Reason; r.Rule != "acr-heartbeat" || r.EverySeconds != 15 || !strings.Contains(r.Text, "always F") || r.Provisional || r.DataHours != 7*24 {
+		t.Errorf("reason = %+v", r)
+	}
+	if tv.Coverage != 1 || tv.CoveragePercent != 100 || tv.LowCoverage || tv.ACRUnseen {
+		t.Errorf("coverage %v (%d%%), low %v, ACR unseen %v", tv.Coverage, tv.CoveragePercent, tv.LowCoverage, tv.ACRUnseen)
+	}
+	for _, d := range rep.Devices {
+		if d.Kind != "streamer" {
+			continue
+		}
+		// The fixture's Roku: graded on volume, with no ACR seen.
+		r := d.Reason
+		if d.Grade != "D" || r.Rule != "volume" || r.VolumeGrade != "D" || r.Lookups != 2360 || r.BandFrom != 1500 || r.BandTo != 5000 ||
+			r.Text != "2,360 snooping lookups a day (D is 1,500–4,999)" || !d.ACRUnseen {
+			t.Errorf("streamer: grade %s, reason %+v, ACR unseen %v", d.Grade, r, d.ACRUnseen)
+		}
+	}
 
 	// Go field names must not leak into the wire format.
 	raw := get(t, newServer(b, web.Options{}), "/api/report").Body.String()
-	for _, k := range []string{`"Device"`, `"ByCategory"`, `"TopDomains"`, `"Every"`} {
+	for _, k := range []string{`"Device"`, `"ByCategory"`, `"TopDomains"`, `"Every"`, `"Reason"`, `"VolumeGrade"`} {
 		if strings.Contains(raw, k) {
 			t.Errorf("Go field %s leaked into JSON", k)
 		}

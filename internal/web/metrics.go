@@ -108,6 +108,8 @@ func writeMetrics(rep model.HomeReport, st model.Status, days int) []byte {
 		homeTotal  = g("phonehome_home_lookups", "DNS lookups in the period, by category.")
 		homeSnoop  = g("phonehome_home_snooping_lookups_per_day", "Snooping lookups (content recognition, ads, tracking, telemetry) per day, whole home.")
 		devGrade   = g("phonehome_device_grade", "Device grade in grade points (A=4, B=3, C=2, D=1, F=0). See docs/grading.md.")
+		devProv    = g("phonehome_device_grade_provisional", "1 when the device's grade rests on under 20 hours of data and is provisional, else 0.")
+		devCover   = g("phonehome_device_classified_ratio", "Share of the device's lookups the knowledge base classified, 0 to 1; the grade rests on these alone.")
 		devSnoop   = g("phonehome_device_snooping_lookups_per_day", "Snooping lookups per day for the device.")
 		devLookups = g("phonehome_device_lookups", "DNS lookups by the device in the period, by category.")
 		devBlocked = g("phonehome_device_blocked_lookups", "Lookups by the device that the DNS filter blocked in the period.")
@@ -144,7 +146,9 @@ func writeMetrics(rep model.HomeReport, st model.Status, days int) []byte {
 		with := func(k, v string) [][2]string { return append(slices.Clone(id), [2]string{k, v}) }
 		if v, ok := gradePoints[d.Grade]; ok {
 			devGrade.add(v, id...)
+			devProv.add(boolValue(d.Reason.Provisional), id...)
 		}
+		devCover.add(d.Coverage(), id...)
 		devSnoop.add(d.PerDay, id...)
 		for _, c := range model.Categories() {
 			devLookups.add(float64(d.ByCategory[c]), with("category", string(c))...)
@@ -177,7 +181,7 @@ func writeMetrics(rep model.HomeReport, st model.Status, days int) []byte {
 
 	var b strings.Builder
 	for _, f := range []*family{info, demo, window, generated, homeGrade, homeDevs, homeTotal, homeSnoop,
-		devGrade, devSnoop, devLookups, devBlocked, devQuiet, devBeats, devBypass,
+		devGrade, devProv, devCover, devSnoop, devLookups, devBlocked, devQuiet, devBeats, devBypass,
 		srcUp, srcRecords, srcLastRun, srcLastOK} {
 		fmt.Fprintf(&b, "# HELP %s %s\n# TYPE %s %s\n", f.name, f.help, f.name, f.typ)
 		for _, s := range f.samples {
