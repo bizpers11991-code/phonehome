@@ -329,12 +329,13 @@ func (a *analysis) domain(name string) *domainInfo {
 // blocking a tracker worsen the device's grade.
 //
 // The window starts at the counted lookup and is not extended by the
-// queries it absorbs, so a name queried non-stop counts once a minute. A
-// clock ticking close to once a minute counts each beat that comes at least
-// a minute after the last counted one, so with jitter some of its beats are
-// absorbed and its count is a lower bound. Heartbeat detection does not
-// depend on the window: it sees every burst (domainAcc.times), as before.
-const countWindow = 60 * time.Second
+// queries it absorbs, so a name queried non-stop counts twice a minute. It
+// is half a minute rather than a minute so that a clock ticking once a
+// minute, the commonest heartbeat (Samsung's content recognition, for one),
+// counts every beat even when a beat comes a few seconds early. Heartbeat
+// detection does not depend on the window: it sees every burst
+// (domainAcc.times), as before.
+const countWindow = 30 * time.Second
 
 // addQuery adds one stored query. Queries must arrive oldest first (byTime).
 // A query for a name the device already looked up less than countWindow ago

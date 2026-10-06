@@ -114,8 +114,8 @@
 
 ### Fixed
 - **Lookup counts and grades change: a lookup is now counted once, not once
-  per query.** A device asking for the same name again within a minute of a
-  counted lookup (A, AAAA and HTTPS records together, retries, re-queries of
+  per query.** A device asking for the same name again within 30 seconds of
+  a counted lookup (A, AAAA and HTTPS records together, retries, re-queries of
   a blocked name answered with Pi-hole's 2-second TTL) makes one lookup,
   blocked if any of its queries was. Before, iPhones, Macs and Chrome looked
   up to three times worse than other devices doing the same thing, and

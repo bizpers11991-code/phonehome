@@ -53,7 +53,7 @@ func TestBlockedRequeriesCountOncePerWindow(t *testing.T) {
 	for at := time.Duration(0); at < 10*time.Minute; at += 2 * time.Second {
 		qs = append(qs, qt(time.Hour+at, "10.0.0.5", "ads.samsung.example", "A", true))
 	}
-	const want = 10 // one a minute
+	const want = 20 // two a minute
 	if len(qs) != 300 {
 		t.Fatalf("%d queries, want 300", len(qs))
 	}
@@ -83,9 +83,9 @@ func TestLookupsApartCountSeparately(t *testing.T) {
 		apart time.Duration
 		want  int
 	}{
-		{61 * time.Second, 2},
-		{60 * time.Second, 2},
-		{59 * time.Second, 1},
+		{31 * time.Second, 2},
+		{30 * time.Second, 2},
+		{29 * time.Second, 1},
 	} {
 		qs := []model.DNSQuery{
 			q(time.Hour, "10.0.0.5", "log.google.example"),
@@ -99,11 +99,11 @@ func TestLookupsApartCountSeparately(t *testing.T) {
 	// The window runs from the counted lookup, not from the latest query.
 	qs := []model.DNSQuery{
 		q(time.Hour, "10.0.0.5", "log.google.example"),
+		q(time.Hour+25*time.Second, "10.0.0.5", "log.google.example"),
 		q(time.Hour+50*time.Second, "10.0.0.5", "log.google.example"),
-		q(time.Hour+100*time.Second, "10.0.0.5", "log.google.example"),
 	}
 	if d := Analyze(newFakeKB(), week, nil, qs, nil, utcOpt).Devices[0]; d.Total != 2 {
-		t.Errorf("0, 50 s, 100 s: Total = %d, want 2", d.Total)
+		t.Errorf("0, 25 s, 50 s: Total = %d, want 2", d.Total)
 	}
 }
 
@@ -175,7 +175,7 @@ func sameDomainStat(x, y model.DomainStat) bool {
 func TestHeartbeatsUnchangedByCounting(t *testing.T) {
 	// Clocks with ±10% jitter for a day, each beat an A + AAAA pair. The
 	// clock is reported exactly as the queries alone show it, including one
-	// faster than the window and one at it.
+	// faster than the window.
 	for _, every := range []time.Duration{15 * time.Second, time.Minute, 2 * time.Minute, 5 * time.Minute} {
 		rng := rand.New(rand.NewPCG(5, uint64(every)))
 		var qs []model.DNSQuery
@@ -204,11 +204,6 @@ func TestHeartbeatsUnchangedByCounting(t *testing.T) {
 		}
 		if every < countWindow && (d.Total >= beats || d.Total > int(24*time.Hour/countWindow)+1) {
 			t.Errorf("every %v: Total = %d for %d beats, want at most one per %v", every, d.Total, beats, countWindow)
-		}
-		// A clock at the window counts the beats at least a minute after
-		// the last counted one: with jitter, between half and all of them.
-		if every == countWindow && (d.Total > beats || d.Total < beats/2) {
-			t.Errorf("every %v: Total = %d for %d beats, want between half and all", every, d.Total, beats)
 		}
 		t.Logf("every %v: %d beats, %d lookups counted", every, beats, d.Total)
 	}
