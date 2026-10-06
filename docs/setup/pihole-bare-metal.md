@@ -24,7 +24,9 @@ The script:
 2. installs `/usr/local/bin/phonehome`;
 3. with `--systemd`, installs `/etc/systemd/system/phonehome.service`, copies
    the example config to `/etc/phonehome/phonehome.yaml` (if none exists) and
-   starts the service.
+   starts the service. The config can hold the dashboard password, so it is
+   readable only by root and a `phonehome` system group the script creates
+   and adds to the unit.
 
 Open `http://<pi-hole-host>:8099`. Lookups appear a minute or two after they
 happen, because Pi-hole writes its database about once a minute.
@@ -82,6 +84,7 @@ Run the installer again to update. To remove:
 sudo systemctl disable --now phonehome
 sudo rm /etc/systemd/system/phonehome.service /usr/local/bin/phonehome
 sudo rm -r /etc/phonehome /var/lib/phonehome /var/lib/private/phonehome
+sudo groupdel phonehome
 sudo systemctl daemon-reload
 ```
 

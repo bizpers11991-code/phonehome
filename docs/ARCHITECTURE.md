@@ -8,8 +8,10 @@ which device made each lookup, classifies every destination with a
 community-maintained knowledge base, and turns that into plain-English reports
 and a shareable **Privacy Receipt**.
 
-It never sends anything anywhere. No telemetry, no cloud, no accounts. A
-privacy tool that phones home would be a joke at our own expense.
+It sends nothing anywhere on its own: no telemetry, no cloud, no accounts.
+The only outbound connections are to sources you configure (the Pi-hole API)
+and to alert targets you configure (off by default). A privacy tool that
+phones home would be a joke at our own expense.
 
 ```
   Pi-hole DB/API ─┐
@@ -100,7 +102,7 @@ kinds: [tv]                # model.DeviceKind; empty = any
 when: [acr]                # only shown when this finding is present: a category
                            # or "bypass"; empty = always
 steps:
-  - Settings › All Settings › General & Privacy › Terms & Privacy
+  - Settings › All Settings › General & Privacy › Privacy Choices
   - Viewing Information Services → Off
 notes: Menu names vary by model year (2022+ shown).
 evidence:
@@ -153,7 +155,8 @@ func (s *Store) Prune(ctx, before time.Time) (int64, error)
 type Options struct {
     QuietStart, QuietEnd int   // local hours, default 1 and 6
     Location *time.Location    // default time.Local
-    MinHeartbeat int           // min lookups to consider a heartbeat, default 20
+    MinHeartbeat int           // min distinct lookup moments to test for a heartbeat, default 20
+    Resolvers []netip.Addr     // your own DNS servers: exempt from connection-based bypass findings
 }
 // Classifier is satisfied by *kb.KB; analyze does not import kb.
 type Classifier interface {
@@ -171,7 +174,9 @@ func HomeGrade(devs []model.DeviceReport) string   // worst device grade; "" wit
 func Registrable(domain string) string      // best-effort eTLD+1, for grouping only
 ```
 Lookups are attributed to devices by `ClientIP ∈ Device.IPs`; unattributed
-client IPs become synthetic devices `ip:<addr>`. Heartbeats, quiet-hours
+client IPs become synthetic devices `ip:<addr>`. Queries for the same name by
+the same device within 30 seconds of a counted lookup count as one lookup
+(`countWindow` in `analyze.go`; see [grading.md](grading.md#the-terms)). Heartbeats, quiet-hours
 counts, DNS-bypass detection, grading: see `docs/grading.md` and
 `docs/detectors.md`.
 
@@ -185,9 +190,9 @@ func (d Doc) PNG() ([]byte, error)                   // pure Go, embedded Go Mon
 ```
 Receipts are made to be shared, so the domain names they print (heartbeats,
 heartbeats that stopped) go through `internal/redact`, as the **Suggest a
-rule** link's do: ID-like labels become `*`, and local names, reverse lookups
-and names containing the device's hostname, label, MAC or address are left
-out.
+rule** link's do: ID-like labels become `*`, and local names, reverse lookups,
+names starting with the device's hostname or label, and names containing its
+MAC or address are left out.
 
 ### `internal/web`: dashboard + JSON API
 ```go
@@ -208,8 +213,8 @@ unknown` prints them grouped by registrable domain, and the dashboard's device
 view lists them with a **Suggest a rule** link (`suggestUrl` in the report
 JSON, built in `internal/web/suggest.go`). The link opens GitHub's
 `new-device.yml` issue form prefilled with domain names and the device's
-vendor and kind only; ID-like labels become `*`, and names containing the
-device's hostname, label, MAC or address are dropped. phonehome never fetches
+vendor and kind only; ID-like labels become `*`, and names starting with the
+device's hostname or label, or containing its MAC or address, are dropped. phonehome never fetches
 it; the person clicks it, and the UI says GitHub will see the names. Demo
 reports get no link.
 
@@ -238,10 +243,12 @@ a device looked up, with first/last seen and the classifying rule), `GET /receip
   `serve` / `ingest`, and at the end of every `ingest --once`. Prune
   deletes in 5000-row transactions so ingestion is never blocked for long.
   Measured sizes and timings are in `docs/performance.md`.
-- `demo`: deterministic synthetic household (seeded), clearly labelled.
+- `demo`: synthetic household, deterministic for a given seed and start time
+  (it is generated back from `time.Now()`, so counts shift slightly between
+  runs), clearly labelled.
 - `alert`: opt-in notifications (`alerts:` in the config). An `Engine`
   checks the 7-day report every interval, compares it with a snapshot kept
   in the store (`alert_state`), and sends new events to webhook, ntfy,
   Gotify and MQTT targets (a minimal MQTT 3.1.1 client, with Home Assistant
   discovery). Nothing runs unless a target is configured. docs/alerts.md.
-- CLI: `phonehome serve | ingest --once | report | receipt | unknown | demo | kb lint | version`.
+- CLI: `phonehome serve | ingest [--once] | report | receipt | unknown | demo | kb lint | kb stats | version`.
