@@ -439,6 +439,8 @@ func TestProvisionalGrade(t *testing.T) {
 		data        time.Duration
 	}{
 		{"fresh install, 3 hours", week, lookups(end.Add(-3*time.Hour), 63, time.Minute), nil, true, 3 * time.Hour},
+		{"exactly 20 hours", week, lookups(end.Add(-20*time.Hour), 20, time.Hour), nil, false, 20 * time.Hour},
+		{"a second under 20 hours", week, lookups(end.Add(-20*time.Hour+time.Second), 20, time.Hour), nil, true, 20*time.Hour - time.Second},
 		{"a week of data", week, lookups(week.From, 70, 2*time.Hour), nil, false, 7 * 24 * time.Hour},
 		{"24-hour view, first lookup minutes in", day, lookups(day.From.Add(5*time.Minute), 24, time.Hour), nil, false, 24*time.Hour - 5*time.Minute},
 		{"new device in an established home", week, lookups(week.From, 70, 2*time.Hour),
@@ -456,5 +458,31 @@ func TestProvisionalGrade(t *testing.T) {
 		if r.Grade != Grade(r) {
 			t.Errorf("%s: grade %s, want %s whether provisional or not", tt.name, r.Grade, Grade(r))
 		}
+	}
+}
+
+// A laptop that opens an ACR company's site is graded on volume alone; a
+// TV making the same lookups gets at least D.
+func TestACRRulesOnlyForScreens(t *testing.T) {
+	var qs []model.DNSQuery
+	for i := range 7 * 24 {
+		at := time.Duration(i) * time.Hour
+		qs = append(qs, q(at, "192.168.1.20", "video.netflix.example"), q(at, "192.168.1.21", "video.netflix.example"))
+	}
+	for i := range 3 {
+		at := time.Duration(i)*24*time.Hour + 30*time.Minute
+		qs = append(qs, q(at, "192.168.1.20", "acr.samsung.example"), q(at, "192.168.1.21", "acr.samsung.example"))
+	}
+	devs := []model.Device{
+		{ID: "mac:laptop", IPs: []netip.Addr{ip("192.168.1.20")}, Kind: model.KindComputer},
+		{ID: "mac:tv", IPs: []netip.Addr{ip("192.168.1.21")}, Kind: model.KindTV},
+	}
+	rep := Analyze(newFakeKB(), week, devs, qs, nil, utcOpt)
+	laptop, tv := findDevice(t, rep, "mac:laptop"), findDevice(t, rep, "mac:tv")
+	if laptop.ByCategory[model.CatACR] != 3 || laptop.Grade != "A" || laptop.Reason.Rule != model.ReasonVolume {
+		t.Errorf("laptop: %d ACR lookups, grade %s by %q, want A by volume", laptop.ByCategory[model.CatACR], laptop.Grade, laptop.Reason.Rule)
+	}
+	if tv.Grade != "D" || tv.Reason.Rule != model.ReasonACR || tv.Reason.Count != 3 {
+		t.Errorf("TV: grade %s by %q (%d), want D by ACR (3)", tv.Grade, tv.Reason.Rule, tv.Reason.Count)
 	}
 }

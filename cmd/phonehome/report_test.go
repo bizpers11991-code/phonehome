@@ -44,27 +44,44 @@ func TestPrintReportComparison(t *testing.T) {
 
 	r.Previous = nil
 	r.Devices[0].Previous, r.Devices[1].Previous = nil, nil
-	r.Devices[0].Reason = model.GradeReason{Rule: model.ReasonBypass, PerDay: 80, VolumeGrade: "B", Evidence: "8.8.8.8:53"}
-	r.Devices[0].Total, r.Devices[0].ByCategory = 1000, map[model.Category]int{model.CatAds: 300, model.CatUnknown: 700}
-	r.Devices[1].Reason = model.GradeReason{Rule: model.ReasonVolume, PerDay: 3, VolumeGrade: "A", BandTo: 50, Provisional: true, Data: 3 * time.Hour}
-	r.Devices[1].Total, r.Devices[1].ByCategory = 10, map[model.Category]int{model.CatContent: 10}
 	b.Reset()
 	printReport(&b, r, 7)
-	out = b.String()
+	if strings.Contains(b.String(), "previous") {
+		t.Errorf("report without a comparison mentions one:\n%s", b.String())
+	}
+}
+
+// Each device says why it got its grade, whether the grade is provisional,
+// and how much of its traffic the knowledge base recognised.
+func TestPrintReportReason(t *testing.T) {
+	to := time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)
+	r := model.HomeReport{
+		Period: model.Period{From: to.Add(-7 * 24 * time.Hour), To: to}, Grade: "D",
+		Devices: []model.DeviceReport{
+			{Device: model.Device{ID: "a", Label: "TV", Kind: model.KindTV}, PerDay: 80, Grade: "D",
+				Reason: model.GradeReason{Rule: model.ReasonBypass, PerDay: 80, VolumeGrade: "B", BandFrom: 50, BandTo: 300, Evidence: "8.8.8.8:53"},
+				Total:  1000, ByCategory: map[model.Category]int{model.CatAds: 300, model.CatUnknown: 700}},
+			{Device: model.Device{ID: "b", Label: "Phone", Kind: model.KindPhone}, PerDay: 3, Grade: "A",
+				Reason: model.GradeReason{Rule: model.ReasonVolume, PerDay: 3, VolumeGrade: "A", BandTo: 50, Provisional: true, Data: 3 * time.Hour},
+				Total:  10, ByCategory: map[model.Category]int{model.CatContent: 10}},
+		},
+	}
+	var b strings.Builder
+	printReport(&b, r, 7)
+	out := b.String()
 	for _, want := range []string{
-		"why: Bypasses your DNS via 8.8.8.8:53: at least D (its 80 snooping lookups a day alone would be B)",
-		"classified: 30% of lookups (grade based on those alone)",
-		"why: 3 snooping lookups a day (A is under 50)",
-		"Provisional: based on 3 hours of data",
-		"classified: 100% of lookups\n",
+		"     why: Bypasses your DNS via 8.8.8.8:53: at least D (its 80 snooping lookups a day alone would be B)\n" +
+			"     Graded on the 30% of lookups phonehome recognises\n" +
+			"     note: No known content-recognition server seen; not every TV brand's servers are known.\n",
+		"     why: 3 snooping lookups a day (A is under 50)\n" +
+			"     Provisional: based on 3 hours of data\n" +
+			"     recognised: 100% of lookups\n",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("report lacks %q\n%s", want, out)
 		}
 	}
-	b.Reset()
-	printReport(&b, r, 7)
-	if strings.Contains(b.String(), "previous") {
-		t.Errorf("report without a comparison mentions one:\n%s", b.String())
+	if strings.Count(out, "note: No known content-recognition") != 1 {
+		t.Errorf("ACR note not on the TV alone:\n%s", out)
 	}
 }

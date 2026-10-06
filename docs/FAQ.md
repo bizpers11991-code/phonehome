@@ -71,9 +71,12 @@ with your evidence.
 
 From one number: *snooping* lookups (content recognition, advertising,
 tracking, telemetry) per day, plus two automatic downgrades: content
-recognition, and a device bypassing your DNS. Under 50 a day is an A; 5,000
-a day or an ACR heartbeat is an F. The rules are short enough to check by
-hand: [grading.md](grading.md).
+recognition (on TVs, streaming players and devices of unknown kind), and a
+device bypassing your DNS. Under 50 a day is an A; 5,000 a day or an ACR
+heartbeat is an F. Every grade says which rule decided it, is marked
+provisional when it rests on less than 20 hours of data, and shows how much
+of the device's traffic phonehome recognised. The rules are short enough to
+check by hand: [grading.md](grading.md).
 
 ### Will it run on a Raspberry Pi Zero?
 

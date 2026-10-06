@@ -35,6 +35,65 @@ func TestCoverage(t *testing.T) {
 	}
 }
 
+// CoveragePercent rounds down, in integers: 29 of 100 is 29%, not the
+// 28% that floor(0.29 * 100) gives in floating point.
+func TestCoveragePercent(t *testing.T) {
+	tests := []struct {
+		total, unknown, want int
+	}{
+		{0, 0, 0},
+		{100, 71, 29},
+		{100, 43, 57},
+		{1000, 504, 49}, // 49.6%
+		{1000, 500, 50},
+		{3, 1, 66},
+		{3, 0, 100},
+		{7, 7, 0},
+	}
+	for _, tt := range tests {
+		r := DeviceReport{Total: tt.total, ByCategory: map[Category]int{CatUnknown: tt.unknown}}
+		if got := r.CoveragePercent(); got != tt.want {
+			t.Errorf("CoveragePercent(%d of %d unknown) = %d, want %d", tt.unknown, tt.total, got, tt.want)
+		}
+	}
+}
+
+func TestGradeReasonText(t *testing.T) {
+	tests := []struct {
+		g    GradeReason
+		want string
+	}{
+		{GradeReason{}, ""},
+		{GradeReason{Rule: ReasonVolume, PerDay: 0, VolumeGrade: "A", BandTo: 50}, "0 snooping lookups a day (A is under 50)"},
+		{GradeReason{Rule: ReasonVolume, PerDay: 1.4, VolumeGrade: "A", BandTo: 50}, "1 snooping lookup a day (A is under 50)"},
+		// Rounding never carries a rate across its band's edge.
+		{GradeReason{Rule: ReasonVolume, PerDay: 49.6, VolumeGrade: "A", BandTo: 50}, "49 snooping lookups a day (A is under 50)"},
+		{GradeReason{Rule: ReasonVolume, PerDay: 1499.5, VolumeGrade: "C", BandFrom: 300, BandTo: 1500}, "1,499 snooping lookups a day (C is 300–1,499)"},
+		{GradeReason{Rule: ReasonVolume, PerDay: 12345, VolumeGrade: "F", BandFrom: 5000}, "12,345 snooping lookups a day (F is 5,000 or more)"},
+		{GradeReason{Rule: ReasonACR, Count: 1}, "Contacts content-recognition (ACR) servers (1 lookup): at least D"},
+		{GradeReason{Rule: ReasonACR, Count: 1204}, "Contacts content-recognition (ACR) servers (1,204 lookups): at least D"},
+		{GradeReason{Rule: ReasonBypass, PerDay: 1, VolumeGrade: "A", BandTo: 50, Evidence: "1.1.1.1:853"},
+			"Bypasses your DNS via 1.1.1.1:853: at least D (its 1 snooping lookup a day alone would be A)"},
+		{GradeReason{Rule: ReasonACRHeartbeat, Every: 15 * time.Second}, "Content recognition (ACR) on a clock, every 15s: always F"},
+		{GradeReason{Rule: ReasonACRHeartbeat, Every: time.Minute}, "Content recognition (ACR) on a clock, every 1 min: always F"},
+		{GradeReason{Rule: ReasonACRHeartbeat, Every: 2 * time.Minute}, "Content recognition (ACR) on a clock, every 2 min: always F"},
+		{GradeReason{Rule: ReasonACRHeartbeat, Every: 2 * time.Hour}, "Content recognition (ACR) on a clock, every 2 h: always F"},
+		{GradeReason{Rule: ReasonACRHeartbeat, Every: 48 * time.Hour}, "Content recognition (ACR) on a clock, every 2 days: always F"},
+		{GradeReason{Rule: ReasonACRHeartbeat}, "Content recognition (ACR) on a clock, regularly: always F"},
+	}
+	for _, tt := range tests {
+		if got := tt.g.Text(); got != tt.want {
+			t.Errorf("Text(%+v) = %q, want %q", tt.g, got, tt.want)
+		}
+	}
+
+	// The receipt prints small rates to a decimal place.
+	g := GradeReason{Rule: ReasonVolume, PerDay: 1.4, VolumeGrade: "A", BandTo: 50}
+	if got, want := g.TextRate("1.4"), "1.4 snooping lookups a day (A is under 50)"; got != want {
+		t.Errorf("TextRate = %q, want %q", got, want)
+	}
+}
+
 func TestProvisionalText(t *testing.T) {
 	tests := []struct {
 		g    GradeReason

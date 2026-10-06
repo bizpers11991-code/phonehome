@@ -79,7 +79,7 @@ const MESSAGES = {
     'why.provisional': { one: 'Provisional: based on {n} hour of data.', other: 'Provisional: based on {n} hours of data.' },
     'why.provisionalSoon': 'Provisional: based on less than an hour of data.',
     'why.coverage': 'Graded on the {pct} of lookups phonehome recognises.',
-    'why.acrUnseen': "No known content-recognition server seen. Not all TV platforms' ACR servers are known.",
+    'why.acrUnseen': "No known content-recognition server seen; not every TV brand's servers are known.",
     'stat.recognised': '{pct} recognised',
 
     'reg.clockwork': 'like clockwork', 'reg.very': 'very regular', 'reg.rough': 'roughly regular',

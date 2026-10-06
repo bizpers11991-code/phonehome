@@ -217,11 +217,12 @@ func (e *Engine) Check(ctx context.Context) error {
 		cur := snapshot(d)
 		cur.Seen = day
 		prev := st.Devices[d.Device.ID]
-		grade := d.Grade
 		if d.Reason.Provisional {
 			// Too little data to trust the grade: keep the one known
-			// before, so it is neither alerted nor learnt.
-			grade, cur.Grade = "", ""
+			// before (none for a new device), so it is neither alerted
+			// nor learnt. Heartbeats and bypasses are findings, not
+			// rates, and are still reported.
+			cur.Grade = ""
 			if prev != nil {
 				cur.Grade = prev.Grade
 			}
@@ -232,7 +233,7 @@ func (e *Engine) Check(ctx context.Context) error {
 		}
 		dev := device(d.Device)
 		if prev == nil {
-			add(NewDevice+":"+dev.ID, Event{Kind: NewDevice, Device: dev, Grade: grade})
+			add(NewDevice+":"+dev.ID, Event{Kind: NewDevice, Device: dev, Grade: cur.Grade})
 			continue
 		}
 		if prev.Pending {

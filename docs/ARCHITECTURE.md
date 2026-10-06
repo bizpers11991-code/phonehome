@@ -167,6 +167,9 @@ func Analyze(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQu
 func AnalyzeCompared(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQuery, fl []model.Flow, o Options, dataFrom time.Time) model.HomeReport
 func InferKind(d model.Device, hints map[model.DeviceKind]int) model.DeviceKind
 func Grade(r model.DeviceReport) string
+// GradeWhy also returns the rule that decided the grade (model.GradeReason);
+// Analyze fills in its Data and Provisional.
+func GradeWhy(r model.DeviceReport) (string, model.GradeReason)
 func HomeGrade(devs []model.DeviceReport) string   // worst device grade; "" with no devices
 func Registrable(domain string) string      // best-effort eTLD+1, for grouping only
 ```

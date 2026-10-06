@@ -494,12 +494,13 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 		if s := d.Reason.ProvisionalText(); s != "" {
 			fmt.Fprintf(w, "     %s\n", s)
 		}
-		if d.Total > 0 {
-			fmt.Fprintf(w, "     classified: %d%% of lookups", d.CoveragePercent())
-			if d.CoverageLow() {
-				fmt.Fprint(w, " (grade based on those alone)")
-			}
-			fmt.Fprintln(w)
+		if s := d.CoverageNote(); s != "" {
+			fmt.Fprintf(w, "     %s\n", s)
+		} else if d.Total > 0 {
+			fmt.Fprintf(w, "     recognised: %d%% of lookups\n", d.CoveragePercent())
+		}
+		if d.ACRUnseen() {
+			fmt.Fprintf(w, "     note: %s\n", model.ACRUnseenNote)
 		}
 		if c := d.Previous; c != nil {
 			if !c.Seen {

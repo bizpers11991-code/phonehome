@@ -170,13 +170,17 @@ func TestEngineProvisional(t *testing.T) {
 		return r
 	}
 
+	// A bypass is a finding, not a rate: it is reported however little
+	// data there is.
 	h.now = h.now.Add(5 * time.Minute)
-	h.devs = []model.DeviceReport{provisional(dev("mac:1", "TV", "D")), provisional(dev("mac:2", "Phone", "D"))}
+	tv := provisional(dev("mac:1", "TV", "D"))
+	tv.Bypasses = []model.Bypass{{Kind: "doh-flow", Evidence: "8.8.8.8:443", Confidence: "high"}}
+	h.devs = []model.DeviceReport{tv, provisional(dev("mac:2", "Phone", "D"))}
 	check(t, e)
-	if len(rec.batches) != 1 || kinds(rec.batches[0]) != "new_device:Phone" {
-		t.Fatalf("batches %v, want only the new phone", rec.batches)
+	if len(rec.batches) != 1 || kinds(rec.batches[0]) != "bypass:TV new_device:Phone" {
+		t.Fatalf("batches %v, want the bypass and the new phone, no grade change", rec.batches)
 	}
-	if g := rec.batches[0].Events[0].Grade; g != "" {
+	if g := rec.batches[0].Events[1].Grade; g != "" {
 		t.Errorf("new device announced with provisional grade %q", g)
 	}
 
