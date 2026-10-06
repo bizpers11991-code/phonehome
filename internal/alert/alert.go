@@ -216,14 +216,23 @@ func (e *Engine) Check(ctx context.Context) error {
 	for _, d := range rep.Devices {
 		cur := snapshot(d)
 		cur.Seen = day
+		prev := st.Devices[d.Device.ID]
+		grade := d.Grade
+		if d.Reason.Provisional {
+			// Too little data to trust the grade: keep the one known
+			// before, so it is neither alerted nor learnt.
+			grade, cur.Grade = "", ""
+			if prev != nil {
+				cur.Grade = prev.Grade
+			}
+		}
 		next[d.Device.ID] = cur
 		if baseline {
 			continue
 		}
 		dev := device(d.Device)
-		prev := st.Devices[d.Device.ID]
 		if prev == nil {
-			add(NewDevice+":"+dev.ID, Event{Kind: NewDevice, Device: dev, Grade: d.Grade})
+			add(NewDevice+":"+dev.ID, Event{Kind: NewDevice, Device: dev, Grade: grade})
 			continue
 		}
 		if prev.Pending {

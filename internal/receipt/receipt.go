@@ -249,13 +249,55 @@ func kindLabel(d model.Device) string {
 	return k
 }
 
+// verdicts are the stamp's headlines for a grade decided by volume alone.
 var verdicts = map[string][]string{
 	"A": {"MINDS ITS OWN", "BUSINESS."},
 	"B": {"MOSTLY MINDS ITS", "OWN BUSINESS."},
 	"C": {"CHATTY ABOUT YOU."},
 	"D": {"TALKS ABOUT YOU", "A LOT."},
-	"E": {"TALKS ABOUT YOU", "A LOT."},
 	"F": {"CAN'T STOP TALKING", "ABOUT YOU."},
+}
+
+// headline is the stamp's verdict, taken from the rule that decided the
+// grade so it is never wrong: a TV graded D for a DNS bypass does not
+// "talk about you a lot".
+func headline(grade string, why model.GradeReason) []string {
+	switch why.Rule {
+	case model.ReasonACRHeartbeat:
+		return []string{"WATCHES WHAT YOU WATCH,", "ON A CLOCK."}
+	case model.ReasonACR:
+		return []string{"TALKS TO CONTENT-", "RECOGNITION SERVERS."}
+	case model.ReasonBypass:
+		return []string{"GOES AROUND", "YOUR DNS FILTER."}
+	}
+	return verdicts[grade]
+}
+
+// why prints, under the stamp, what decided the grade and how far to trust
+// it.
+func (b *builder) why(r model.DeviceReport) {
+	if s := r.Reason.Text(); s != "" {
+		b.note("WHY: ", s+".")
+	}
+	if s := r.Reason.ProvisionalText(); s != "" {
+		b.note("", s+".")
+	}
+	if s := r.CoverageNote(); s != "" {
+		b.note("", s+".")
+	}
+	if r.ACRUnseen() {
+		b.note("", model.ACRUnseenNote)
+	}
+}
+
+// note wraps s after a hanging prefix, like para but not bold.
+func (b *builder) note(prefix, s string) {
+	for i, l := range wrap(clean(s), Cols-width(prefix)) {
+		if i > 0 {
+			prefix = strings.Repeat(" ", width(prefix))
+		}
+		b.text(prefix + l)
+	}
 }
 
 func bypassLine(bp model.Bypass) string {
@@ -340,7 +382,8 @@ func Device(r model.DeviceReport, o Options) Doc {
 	}
 	b.kind(Rule)
 	aside := []string{"PRIVACY GRADE", "A QUIET ... F LOUD", ""}
-	b.stamp(r.Grade, append(aside, verdicts[r.Grade]...))
+	b.stamp(r.Grade, append(aside, headline(r.Grade, r.Reason)...))
+	b.why(r)
 	b.fix(r.Fixes)
 	return *b.footer()
 }
