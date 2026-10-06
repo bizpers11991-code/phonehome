@@ -11,11 +11,91 @@ The first row that matches wins.
 
 | Grade | When |
 |---|---|
-| **F** | It reports what is on screen on a clock (a content-recognition *heartbeat*), **or** it makes 5,000+ snooping lookups a day. |
-| **D** | It contacts content-recognition (ACR) servers at all, **or** it makes 1,500+ snooping lookups a day, **or** it routes DNS around your filter (a high-confidence bypass). |
+| **F** | It reports what is on screen on a clock (a content-recognition *heartbeat*)\*, **or** it makes 5,000+ snooping lookups a day. |
+| **D** | It contacts content-recognition (ACR) servers at all\*, **or** it makes 1,500+ snooping lookups a day, **or** it routes DNS around your filter (a high-confidence bypass). |
 | **C** | 300+ snooping lookups a day. |
 | **B** | 50+ snooping lookups a day. |
 | **A** | Fewer than 50 snooping lookups a day. |
+
+\* Only for TVs, streaming players and devices of unknown kind; see
+[which devices the ACR rules apply to](#which-devices-the-acr-rules-apply-to).
+
+## Why a device got its grade
+
+Every grade names the rule that decided it, with the numbers behind it, so
+you never have to work backwards from a letter. The report prints it as
+`why:`, the dashboard as **Why D:** under the grade, the receipt as `WHY:`
+under the stamp, and `/api/report` as each device's `reason`. There are four
+rules, matching the table above:
+
+| Rule (`reason.rule`) | Example |
+|---|---|
+| `volume` | 1,282 snooping lookups a day (C is 300–1,499) |
+| `acr-heartbeat` | Content recognition (ACR) on a clock, every 15s: always F |
+| `acr` | Contacts content-recognition (ACR) servers (120 lookups): at least D |
+| `bypass` | Bypasses your DNS via 8.8.8.8:443: at least D (its 520 snooping lookups a day alone would be C) |
+
+"At least D" is literal: a device with an ACR lookup or a bypass that also
+makes 5,000+ snooping lookups a day is an F, and its reason is then the
+volume. The rate in a reason is rounded but never across a band's edge, so
+49.6 a day reads "49 (A is under 50)", not 50.
+
+### Which devices the ACR rules apply to
+
+The two content-recognition rules (F for an ACR heartbeat, D for any ACR
+lookup) apply only to **TVs, streaming players and devices whose kind
+phonehome could not tell**. ACR fingerprints what is on a screen, and only
+those devices have one to fingerprint (or might). A laptop or phone that
+looks up an ACR company's host, say because someone opened its website or an
+app embeds its analytics, is not watching what you watch. For every other
+kind those lookups still count as snooping, like advertising or telemetry,
+so they still raise the device's lookups per day; they just do not trigger
+the ACR penalty on their own.
+
+The kind is shown on every device card. It comes from the hosts the device
+looks up, its name and its vendor (`internal/analyze/kind.go`); if phonehome
+has one wrong, please open an issue.
+
+For a TV or streaming player that looked up no known ACR server, the report,
+the dashboard's details, the receipt and the API (`acrUnseen`) add a note: "No known content-recognition server seen; not every TV
+brand's servers are known." The knowledge base has ACR servers for Samsung,
+Vizio, LG (Alphonso) and Samba TV (used by Sony, TCL, Philips and others),
+but not seeing one is not proof a TV has no ACR.
+
+### Provisional grades
+
+A rate per day needs enough days behind it. A grade based on **less than 20
+hours of data** for the device is marked **provisional**: "Provisional:
+based on 3 hours of data". The data counted runs from the first lookup in
+the period (or from when the device was first seen, if that is later) to the
+end of the period. That covers a fresh install, and a device that joined an
+established home an hour ago, whose few lookups would otherwise be spread
+over the whole week and look quieter than they are. The threshold is 20
+hours rather than 24 so that a 24-hour view whose first lookup came a few
+minutes in is not flagged.
+
+A provisional grade is still computed by the same rules and still shown,
+and it still counts toward the home grade. Alerts ignore it: a provisional
+grade never sends a "grade got worse" alert, a new device is announced
+without one, and the MQTT grade sensor keeps its last real value (a new
+device's sensor appears once it has one). Heartbeats and bypasses are
+findings rather than rates, so they are alerted however little data there
+is.
+
+### Coverage: how much of a device phonehome recognises
+
+Only lookups the knowledge base recognises can count against a device;
+unknown destinations never do. So every device also shows the **share of
+its lookups the knowledge base classified**: "recognised: 81% of lookups" in
+the report, "81% recognised" beside Lookups in the dashboard's details,
+`coverage` (0 to 1) and `coveragePercent` in `/api/report`. The percentage is
+rounded down, so 49.6% reads 49%.
+
+When fewer than half of a device's lookups are recognised, the grade says
+so: "Graded on the 40% of lookups phonehome recognises". Such a grade errs
+on the kind side: a rule for one of its unknown domains can only add
+snooping, never take it away. The device's details list those unknown
+domains, with a button to suggest rules for them.
 
 ## The home grade
 

@@ -322,28 +322,43 @@ func TestMQTTRemembers(t *testing.T) {
 }
 
 // TestMQTTProvisional: a provisional grade is not published, and the grade
-// published before it stays.
+// and discovery config published before it stay as they are, neither
+// cleared nor sent again.
 func TestMQTTProvisional(t *testing.T) {
 	b := &broker{}
-	m := &MQTT{Broker: "mqtt://b.lan", Topic: "phonehome", Dial: b.dial}
-	rep := model.HomeReport{Devices: []model.DeviceReport{{Device: model.Device{ID: "mac:01"}, Grade: "B"}}}
-	if err := m.Publish(context.Background(), rep); err != nil {
-		t.Fatal(err)
+	m := &MQTT{Broker: "mqtt://b.lan", Topic: "phonehome", Dial: b.dial, Discovery: true, DiscoveryPrefix: "homeassistant"}
+	publish := func(devs ...model.DeviceReport) (sent bool) {
+		t.Helper()
+		b.messages = nil
+		before := b.done
+		if err := m.Publish(context.Background(), model.HomeReport{Devices: devs}); err != nil {
+			t.Fatal(err)
+		}
+		if b.done != before {
+			if err := <-b.done; err != nil {
+				t.Fatal(err)
+			}
+			return true
+		}
+		return false
 	}
-	<-b.done
-	b.messages = nil
 	provisional := model.GradeReason{Provisional: true, Data: time.Hour}
-	rep.Devices = []model.DeviceReport{
-		{Device: model.Device{ID: "mac:01"}, Grade: "D", Reason: provisional},
-		{Device: model.Device{ID: "mac:02"}, Grade: "F", Reason: provisional},
-	}
-	before := b.done
-	if err := m.Publish(context.Background(), rep); err != nil {
-		t.Fatal(err)
-	}
-	if b.done != before {
-		<-b.done
+	tv := model.DeviceReport{Device: model.Device{ID: "mac:01"}, Grade: "B"}
+	phone := model.DeviceReport{Device: model.Device{ID: "mac:02"}, Grade: "F", Reason: provisional}
+	publish(tv)
+
+	tvNow := tv
+	tvNow.Grade, tvNow.Reason = "D", provisional
+	if publish(tvNow, phone) {
 		t.Fatalf("provisional grades published: %+v", b.messages)
+	}
+	if publish(tv, phone) {
+		t.Fatalf("unchanged grade sent again after a provisional one: %+v", b.messages)
+	}
+
+	phone.Reason.Provisional = false
+	if !publish(tv, phone) || len(b.messages) != 2 || string(b.messages[1].payload) != "F" {
+		t.Fatalf("first real grade: %+v", b.messages)
 	}
 }
 

@@ -421,7 +421,7 @@ function band(r) {
 }
 
 function reasonParts(r) {
-  const n = Math.round(r.perDay);
+  const n = r.lookups;
   switch (r.rule) {
     case 'volume': return tn('why.volume', { n: fmt(n), count: n, band: band(r) });
     case 'acr-heartbeat': return tn('why.acrBeat', { every: every(r.everySeconds) });
@@ -431,8 +431,9 @@ function reasonParts(r) {
   return r.text ? [r.text + '.'] : [];
 }
 
-// coveragePct rounds down, so 49.6% never reads as the 50% it falls short of.
-const coveragePct = (x) => pf.format(Math.floor(x * 100) / 100);
+// coveragePct formats the server's coveragePercent, rounded down there so
+// that 49.6% never reads as the 50% it falls short of.
+const coveragePct = (d) => pf.format(d.coveragePercent / 100);
 
 // gradeWhy is the one line under a grade: what decided it, and whether it
 // rests on too little data or on a minority of the device's lookups.
@@ -444,7 +445,7 @@ function gradeWhy(d) {
     const hours = Math.floor(d.reason.dataHours);
     notes.push(hours >= 1 ? t('why.provisional', { n: fmt(hours), count: hours }) : t('why.provisionalSoon'));
   }
-  if (d.lowCoverage) notes.push(t('why.coverage', { pct: coveragePct(d.coverage) }));
+  if (d.lowCoverage) notes.push(t('why.coverage', { pct: coveragePct(d) }));
   return h('p', { class: 'why' }, h('b', { text: t('why.label', { grade: d.grade }) }), ' ', ...parts,
     notes.length ? h('span', { class: 'why-note', text: ' ' + notes.join(' ') }) : null);
 }
@@ -549,7 +550,7 @@ function details(d) {
       d.acrUnseen ? h('p', { class: 'why-note', text: t('why.acrUnseen') }) : null));
   }
   sections.push(h('dl', { class: 'stats' },
-    stat(t('stat.lookups'), fmt(d.total), d.total ? t('stat.recognised', { pct: coveragePct(d.coverage) }) : null),
+    stat(t('stat.lookups'), fmt(d.total), d.total ? t('stat.recognised', { pct: coveragePct(d) }) : null),
     stat(t('stat.about'), fmt(d.snooping), pct(d.snoopShare)),
     stat(t('stat.blocked'), fmt(d.blocked), d.total ? pct(d.blocked / d.total) : null),
     stat(t('stat.sleep'), fmt(d.quiet.lookups))));

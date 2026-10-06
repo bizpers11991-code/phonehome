@@ -20,6 +20,13 @@ shows. The very first check only records what is there, including every
 device phonehome already knows but that was quiet that week: turning
 alerts on does not announce every device you own.
 
+**Provisional grades are not alerted.** A grade based on less than 20 hours
+of data ([provisional](grading.md#provisional-grades)) never triggers
+`grade_worse`, and a new device with one is announced without a grade. The
+grade known before stays the one later grades are compared with, so a fresh
+install or a device that joined an hour ago does not page anyone. Heartbeat
+and bypass alerts are findings, not rates, and are sent as usual.
+
 **No repeats.** The same alert (same device and the same grade, domain or
 finding) is not sent again within 24 hours, however often it flaps. A
 device that drops out of the week and comes back is not "new" (one known
@@ -150,7 +157,9 @@ config to `<discovery_prefix>/sensor/phonehome/phonehome_<id>_grade/config`:
 ```
 
 Home Assistant then shows one device per phonehome device, each with a
-"Privacy grade" sensor. A check publishes only what changed since the last
+"Privacy grade" sensor. A provisional grade is not published: the sensor
+keeps its last real grade, and a new device's sensor appears once its grade
+is no longer provisional. A check publishes only what changed since the last
 one (plus everything once an hour, in case the broker lost its retained
 messages), and connects to the broker only when there is something to send.
 When a device drops out of the week, its retained grade becomes `None`,

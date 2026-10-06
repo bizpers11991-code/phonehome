@@ -261,10 +261,9 @@ type DeviceReport struct {
 	QuietLabel string // e.g. "01:00–06:00"
 	Bypasses   []Bypass
 	Fixes      []Fix
-	Grade      string // "A".."F", see docs/grading.md
-	// Reason is the rule that decided Grade, with the numbers behind it.
-	Reason GradeReason
-	Flows  int // connections observed (0 in DNS-only mode)
+	Grade      string      // "A".."F", see docs/grading.md
+	Reason     GradeReason // the rule that decided Grade, with its numbers
+	Flows      int         // connections observed (0 in DNS-only mode)
 	// Unknown lists unclassified domains, desc by Count, at most 50. Local
 	// names and reverse lookups are left out: no rule can describe them and
 	// they can identify the household.
@@ -296,9 +295,14 @@ func (r DeviceReport) CoverageLow() bool {
 }
 
 // CoveragePercent is Coverage as a whole percentage, rounded down so that
-// 49.6% never reads as the 50% it falls short of.
+// 49.6% never reads as the 50% it falls short of. It is worked out in
+// integers: in floating point 29 of 100 would come to 28.999…%.
 func (r DeviceReport) CoveragePercent() int {
-	return int(math.Floor(r.Coverage() * 100))
+	if r.Total <= 0 {
+		return 0
+	}
+	known := min(max(r.Total-r.ByCategory[CatUnknown], 0), r.Total)
+	return known * 100 / r.Total
 }
 
 // CoverageNote is "Graded on the 40% of lookups phonehome recognises" when
@@ -311,7 +315,7 @@ func (r DeviceReport) CoverageNote() string {
 }
 
 // ACRUnseenNote is printed for a TV or streaming player when ACRUnseen.
-const ACRUnseenNote = "No known content-recognition server seen. Not all TV platforms' ACR servers are known."
+const ACRUnseenNote = "No known content-recognition server seen; not every TV brand's servers are known."
 
 // ACRUnseen reports whether r is a TV or streaming player that looked up no
 // known content-recognition server. That is no proof it has no ACR: not
@@ -352,6 +356,16 @@ type GradeReason struct {
 // lookups a day (C is 300–1,499)". The dashboard words it in its own
 // languages from the same fields.
 func (g GradeReason) Text() string {
+	return g.TextRate(thousands(g.Lookups()))
+}
+
+// TextRate is Text with the lookups per day already formatted, for a
+// surface that prints small rates to a decimal place ("3.6").
+func (g GradeReason) TextRate(perDay string) string {
+	lookups := "lookups"
+	if perDay == "1" {
+		lookups = "lookup"
+	}
 	switch g.Rule {
 	case ReasonACRHeartbeat:
 		return "Content recognition (ACR) on a clock, " + everyText(g.Every) + ": always F"
@@ -359,13 +373,23 @@ func (g GradeReason) Text() string {
 		return fmt.Sprintf("Contacts content-recognition (ACR) servers (%s %s): at least D",
 			thousands(g.Count), plural(g.Count, "lookup", "lookups"))
 	case ReasonBypass:
-		return fmt.Sprintf("Bypasses your DNS via %s: at least D (its %s snooping lookups a day alone would be %s)",
-			g.Evidence, thousands(int(math.Round(g.PerDay))), g.VolumeGrade)
+		return fmt.Sprintf("Bypasses your DNS via %s: at least D (its %s snooping %s a day alone would be %s)",
+			g.Evidence, perDay, lookups, g.VolumeGrade)
 	case ReasonVolume:
-		n := int(math.Round(g.PerDay))
-		return fmt.Sprintf("%s snooping %s a day (%s)", thousands(n), plural(n, "lookup", "lookups"), g.Band())
+		return fmt.Sprintf("%s snooping %s a day (%s)", perDay, lookups, g.Band())
 	}
 	return ""
+}
+
+// Lookups is PerDay as a whole number for print: rounded, but kept inside
+// VolumeGrade's band so that 49.6 a day reads 49, not the 50 that
+// "A is under 50" rules out.
+func (g GradeReason) Lookups() int {
+	n := int(math.Round(g.PerDay))
+	if g.BandTo > 0 {
+		n = min(n, g.BandTo-1)
+	}
+	return max(n, g.BandFrom)
 }
 
 // Band describes VolumeGrade's range, e.g. "C is 300–1,499".
@@ -393,16 +417,21 @@ func (g GradeReason) ProvisionalText() string {
 	return "Provisional: based on less than an hour of data"
 }
 
+// everyText words a heartbeat's interval as the Privacy Receipt's heartbeat
+// lines do ("every 15s", "every 5 min"), so the reason printed under them
+// matches.
 func everyText(d time.Duration) string {
-	switch {
+	switch s := d.Seconds(); {
 	case d <= 0:
 		return "regularly"
-	case d < time.Minute:
-		return fmt.Sprintf("every %d s", int(d.Round(time.Second).Seconds()))
-	case d < time.Hour:
-		return fmt.Sprintf("every %d min", int(d.Round(time.Minute).Minutes()))
+	case s < 59.5:
+		return fmt.Sprintf("every %ds", max(1, int(math.Round(s))))
+	case s < 90*60:
+		return fmt.Sprintf("every %d min", int(math.Round(s/60)))
+	case s < 36*3600:
+		return fmt.Sprintf("every %d h", int(math.Round(s/3600)))
 	}
-	return fmt.Sprintf("every %d h", int(d.Round(time.Hour).Hours()))
+	return fmt.Sprintf("every %d days", int(math.Round(d.Hours()/24)))
 }
 
 func plural(n int, one, other string) string {
