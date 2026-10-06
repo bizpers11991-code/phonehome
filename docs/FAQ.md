@@ -18,15 +18,17 @@ the device being moved to another network.
 
 ### Does phonehome itself phone home?
 
-No. It makes no network connections except to the sources you configure (in
-practice, only the Pi-hole API source talks over the network at all). No
+No. It connects only to the sources you configure (of those, only the
+Pi-hole API source talks over the network) and to the
+[alert](alerts.md) targets you configure, which are off by default. No
 telemetry, no update checks, no accounts, no fonts or scripts from a CDN; the
 dashboard works offline. The knowledge base ships inside the binary.
 
-You can check: the only outgoing HTTP client is the Pi-hole API source in
-[`internal/source/pihole/api.go`](../internal/source/pihole/api.go), and the
-release binaries are built by a public
-[workflow](../.github/workflows/release.yml) from tagged source.
+You can check: the only outgoing connections are made by the Pi-hole API
+source in [`internal/source/pihole/api.go`](../internal/source/pihole/api.go)
+and the alert targets in [`internal/alert/`](../internal/alert/) (webhook,
+ntfy and Gotify over HTTP, MQTT over TCP). The release binaries are built by a
+public [workflow](../.github/workflows/release.yml) from tagged source.
 
 ### What about DNS-over-HTTPS? Devices can just skip my Pi-hole.
 
@@ -80,9 +82,9 @@ hand: [grading.md](grading.md).
 There is an armv6 build for the Pi Zero and Pi 1, and the binary is about
 14 MB with no dependencies. We have not measured it on a Zero yet. The thing
 to watch is RAM: a report loads the lookups for the period you view into
-memory. For scale, analysing one million lookups (a busy week for a large
-home) takes about 0.2 s and 56 MB of allocations on a desktop CPU in our
-benchmark; a Zero will be many times slower. Shorter retention and shorter
+memory. For scale, analysing one million logged DNS queries (a busy week for
+a large home) takes about 0.25 s and 75 MB of allocations on a laptop CPU in
+our benchmark (`BenchmarkAnalyze`); a Zero will be many times slower. Shorter retention and shorter
 report periods keep it light. The systemd unit and Docker image set
 `GOMEMLIMIT=128MiB`, which holds a 30-day report for a busy home near 128 MiB
 on 32-bit instead of ~200 MiB ([measurements](performance.md)); change it

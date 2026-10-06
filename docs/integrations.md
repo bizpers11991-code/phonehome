@@ -1,8 +1,10 @@
 # Prometheus, Grafana and Home Assistant
 
 phonehome can hand its figures to the monitoring you already run. Nothing
-is pushed anywhere: Prometheus and Home Assistant fetch the numbers from
-phonehome, with the same password as the dashboard.
+on this page is pushed anywhere: Prometheus and Home Assistant fetch the
+numbers from phonehome, with the same password as the dashboard. (To have
+phonehome push instead, to an MQTT broker with Home Assistant discovery or
+to a webhook, see [alerts.md](alerts.md).)
 
 ## Prometheus
 
@@ -16,7 +18,9 @@ metrics: true
 `/metrics` then serves the
 [Prometheus text format](https://prometheus.io/docs/instrumenting/exposition_formats/).
 It sits behind the same basic auth as the dashboard (`auth:` in the config),
-so set a password if phonehome is reachable from more than your own LAN.
+so set a password if phonehome is reachable from more than your own LAN, and
+behind the same host-name check: scrape it by IP address or a local name
+(`pihole.lan`), or add the name you use to `allowed_hosts:`.
 
 A scrape job:
 
