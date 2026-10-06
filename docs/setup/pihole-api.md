@@ -100,9 +100,10 @@ container runs as UID 65532, so give the file to that user:
 
 - **DNS lookups**, with the client IP Pi-hole logged and whether Pi-hole
   blocked them.
-- **No device names or MAC addresses.** The API source reads lookups only.
-  Name devices with `labels:` (by IP), or add a `leases` source if phonehome
-  can read your DHCP server's lease file.
+- **Device names and MAC addresses** from Pi-hole's network table
+  (`/api/network/devices`), for the devices Pi-hole has seen. Devices it
+  has no name for appear by IP: name them with `labels:`, or add a `leases`
+  source if phonehome can read your DHCP server's lease file.
 
 ## Security notes
 

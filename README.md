@@ -4,12 +4,31 @@
 
 **See what your devices say about you.**
 
-phonehome reads the DNS logs your Pi-hole, AdGuard Home or router already keeps
-and tells you, in plain English, what your smart TV, speakers, cameras and robot
-vacuum send home: to whom, how often, and whether it happens while you sleep.
-Then it hands you a receipt.
+phonehome reads the DNS logs your Pi-hole, AdGuard Home or dnsmasq router
+already keeps and tells you, in plain English, what your smart TV, speakers,
+cameras and robot vacuum send home: to whom, how often, and whether it happens
+while you sleep. Then it hands you a receipt.
 
-<img src="docs/img/receipt-tv.png" width="340" alt="A Privacy Receipt for a Samsung smart TV over 30 days: 38,914 content-recognition lookups, a heartbeat every minute around the clock, grade F">&nbsp;&nbsp;<img src="docs/img/receipt-tv-since.png" width="340" alt="The same TV's receipt for the week after Viewing Information Services was turned off: content-recognition heartbeats stopped, 1,966 to 541 snooping lookups a day, grade F to D">
+</div>
+
+It is for anyone who already runs one of those DNS servers at home. It is a
+single self-hosted binary that only reads your logs and sends nothing anywhere
+unless you turn on [alerts](docs/alerts.md). It sees **who and when, never
+what**: never the contents of any traffic, and not lookups that skip your DNS
+server ([what it can't see](#what-phonehome-can-and-cannot-see)).
+
+**Try it in ten seconds**, no Pi-hole needed (a synthetic household):
+
+```sh
+docker run --rm -p 8099:8099 ghcr.io/bizpers11991-code/phonehome demo --listen :8099
+```
+
+Then open <http://localhost:8099>. With Go 1.27 or later instead:
+`go run github.com/bizpers11991-code/phonehome/cmd/phonehome@latest demo`.
+
+<div align="center">
+
+<img src="docs/img/receipt-tv.png" width="340" alt="A Privacy Receipt for a Samsung smart TV over 30 days: about 39,000 content-recognition lookups, a heartbeat every minute around the clock, grade F">&nbsp;&nbsp;<img src="docs/img/receipt-tv-since.png" width="340" alt="The same TV's receipt for the week after Viewing Information Services was turned off: content-recognition heartbeats stopped, snooping lookups a day down by about 70%, grade F to D">
 
 <sub>The same TV before and after one setting was switched off. Receipts from the built-in demo household: the numbers are synthetic, which is why they are stamped DEMO DATA.<br>Yours will be real.</sub>
 
@@ -17,36 +36,24 @@ Then it hands you a receipt.
 
 ---
 
-## Try it in ten seconds
-
-No Pi-hole needed. This runs a synthetic household on your machine:
-
-```sh
-docker run --rm -p 8099:8099 ghcr.io/bizpers11991-code/phonehome demo --listen :8099
-# or, with Go 1.27+
-go run github.com/bizpers11991-code/phonehome/cmd/phonehome@latest demo
-```
-
-Open <http://localhost:8099>.
-
-![The phonehome dashboard](docs/img/dashboard-light.png)
-
 ## What it finds
 
 | | |
 |---|---|
-| **Content recognition (ACR)** | Smart TVs that fingerprint what is on screen, including HDMI inputs, and report it. phonehome knows the documented ACR endpoints of Samsung, LG (Alphonso), Vizio (Inscape), Samba TV and others. |
-| **Heartbeats** | Devices that call a server on a clock, every 60 seconds, around the clock, whether anyone is using them or not. |
+| **Content recognition (ACR)** | Smart TVs that fingerprint what is on screen, including HDMI inputs, and report it. phonehome knows the documented ACR endpoints of Samsung, LG (Alphonso), Vizio (Inscape) and Samba TV, which several other TV brands build in. |
+| **Heartbeats** | Devices that call a server on a clock (every minute, every five minutes) around the clock, whether anyone is using them or not. |
 | **While you slept** | How much each device talked between 01:00 and 06:00 (you can set the window). |
 | **DNS bypass** | Devices that can, or do, route around your Pi-hole with DNS-over-HTTPS, DNS-over-TLS or a hard-coded resolver. |
-| **Who gets your data** | Every lookup is classified by a [knowledge base](kb/) of **810 rules across 147 companies**. Each rule cites its evidence and states a confidence level. |
-| **What to do about it** | 41 researched, step-by-step fixes, such as *Settings › General & Privacy › Terms & Privacy › Viewing Information Services → Off*. Each fix is shown only for the devices it applies to. |
-| **Since you fixed it** | Every report is compared with the period before it: grade F → D, ↓ 73% a day, which heartbeats stopped. Fix a setting, then come back next week for the second receipt. |
+| **Who gets your data** | Lookups are classified by a [knowledge base](kb/) of **810 rules across 147 companies**. Each rule cites its evidence and states a confidence level; a domain it can't explain stays *unknown*. |
+| **What to do about it** | 41 researched, step-by-step fixes, such as *Settings › All Settings › General & Privacy › Privacy Choices › Viewing Information Services → Off*. Each fix is shown only for the devices it applies to. |
+| **Since you fixed it** | Every report is compared with the period before it: grade F → D, *snooping* lookups (content recognition, ads, tracking, telemetry) a day ↓ 71%, which heartbeats stopped. Fix a setting, then come back next week for the second receipt. |
 | **Tell me when it changes** | Optional alerts to your own webhook, ntfy, Gotify or MQTT (with Home Assistant sensors) for a new device, a worse grade, a new heartbeat or DNS bypass, plus a Prometheus `/metrics` endpoint. All off by default. |
 | **Every domain, your language** | A sortable table of every domain a device looked up, CSV/JSON export, and a dashboard in English, German, French, Spanish and Dutch. |
 
 Every device gets a grade from A to F based on how much of its traffic is
 about you rather than for you. [The rules are short and public.](docs/grading.md)
+
+![The phonehome dashboard](docs/img/dashboard-light.png)
 
 <details>
 <summary><b>More screenshots</b></summary>
@@ -67,8 +74,9 @@ about you rather than for you. [The rules are short and public.](docs/grading.md
 
 ## Install
 
-phonehome is a single static binary. It runs on anything from a Raspberry Pi
-Zero to a NAS, and it only ever **reads** your DNS server's files.
+phonehome is a single static binary, built for Linux (amd64, arm64, armv7, and
+armv6 for the Raspberry Pi Zero) and macOS, and as a Docker image. It only
+ever **reads** your DNS server's files or API.
 
 **Step-by-step guides:** [Pi-hole in Docker](docs/setup/pihole-docker.md) ·
 [Pi-hole on the host](docs/setup/pihole-bare-metal.md) ·
@@ -87,6 +95,8 @@ docker compose up -d        # → http://<pi-hole-host>:8099
 ```
 
 The compose file mounts `/etc/pihole` read-only, and phonehome finds the database on its own.
+Pi-hole v6 lets only its own group read that database: uncomment `group_add` in the file and
+set it to the output of `stat -c %g /etc/pihole/pihole-FTL.db`.
 Pi-hole in Docker too? Use [`packaging/compose/pihole.yml`](packaging/compose/pihole.yml)
 ([guide](docs/setup/pihole-docker.md)); AdGuard Home: [`adguard.yml`](packaging/compose/adguard.yml).
 
@@ -176,9 +186,9 @@ no password, which suits a trusted home LAN; anywhere else, set `auth:` in
 the config (phonehome logs a warning at startup when it has no password and
 is reachable from other machines).
 
-It answers only requests addressed to it by an IP address, `localhost`, a
-single-label name (`pi`, `nas`), or a name under `.local`, `.lan`,
-`.home.arpa` or `.internal`. That stops a web page from re-pointing its own
+It answers only requests addressed to it by an IP address, `localhost`,
+`pi.hole`, a single-label name (`pi`, `nas`), or a name under `.local`,
+`.lan`, `.home.arpa` or `.internal`. That stops a web page from re-pointing its own
 domain at your phonehome (DNS rebinding) and reading or changing your data
 through your browser. If you reach phonehome by a real domain name, for
 example through a reverse proxy or Tailscale, list that name in the config:
@@ -187,7 +197,8 @@ example through a reverse proxy or Tailscale, list that name in the config:
 allowed_hosts: [phonehome.example.com, "*.tailnet-name.ts.net"]
 ```
 
-Other names get *421 Misdirected Request*, naming that setting.
+Other names get *421 Misdirected Request*, naming that setting (only
+`/healthz`, which reveals nothing, answers any name).
 
 ## Languages
 

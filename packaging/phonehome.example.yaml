@@ -4,7 +4,7 @@
 # Address the web UI listens on. Overridden by $PHONEHOME_LISTEN.
 listen: ":8099"
 
-# Host names the web UI answers to, beyond IP addresses, localhost,
+# Host names the web UI answers to, beyond IP addresses, localhost, pi.hole,
 # single-label names (pi, nas) and names under .local, .lan, .home.arpa and
 # .internal. List the name you use if you reach phonehome by a real domain,
 # e.g. through a reverse proxy: exact names, or "*.example.com" for every
@@ -18,8 +18,9 @@ db: /var/lib/phonehome/phonehome.db
 
 # Delete lookups and connections older than this many days (at most 36500).
 # Old data is pruned once a day while phonehome runs, and after every
-# `phonehome ingest --once`. 0 keeps everything. A busy home with 25 devices
-# stores about 35 bytes per lookup: roughly 50 MB per month, 150 MB for 90 days.
+# `phonehome ingest --once`. 0 keeps everything. The store takes about 35
+# bytes per logged DNS query: for a busy home with 25 devices (about 50,000
+# queries a day) roughly 50 MB per month, 150 MB for 90 days.
 retention_days: 90
 
 # How often to read new data from the sources.
@@ -67,7 +68,8 @@ alerts: {}
 #    password_file: /etc/phonehome/mqtt-password
 
 # Where to read from. Leave empty (or delete) to auto-detect Pi-hole,
-# AdGuard Home, dnsmasq/OpenWrt leases and conntrack at their usual paths.
+# AdGuard Home, a dnsmasq log, DHCP leases and conntrack at their usual paths
+# (docs/setup/README.md lists them).
 # Each source gets a name (default: its type); keep names stable, they track
 # how far phonehome has read. phonehome never writes to any of these.
 sources: []
@@ -102,11 +104,12 @@ sources: []
 
 # Friendly names, by MAC address or IP. They win over everything else.
 labels: {}
+#  "aa:bb:cc:dd:ee:ff": Living room TV
+#  "192.168.1.23": Kitchen speaker
 
 # The LAN addresses of your own DNS servers (the Pi-hole / AdGuard box).
 # Their upstream forwarding is not reported as "bypassing your DNS".
 # When phonehome runs on the Pi-hole host itself, its own addresses are added
 # automatically.
 resolvers: []
-#  "aa:bb:cc:dd:ee:ff": Living room TV
-#  "192.168.1.23": Kitchen speaker
+#  - 192.168.1.2

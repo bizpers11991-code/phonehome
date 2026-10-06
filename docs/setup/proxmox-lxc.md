@@ -34,8 +34,9 @@ small containers yet; if yours is tight, watch `systemctl status phonehome`.
 
 Keep the DNS container untouched and run phonehome in its own small Debian
 LXC with the [Pi-hole API source](pihole-api.md). This needs Pi-hole v6.
-DNS lookups work the same; device MAC addresses and hostnames from Pi-hole's
-network table do not come over the API, so name devices with `labels:`.
+DNS lookups work the same, and the API source also reads device MAC
+addresses and hostnames from Pi-hole's network table
+(`/api/network/devices`).
 
 Sharing Pi-hole's files between containers with a bind mount (`mp0`) also
 works in principle, but the UIDs differ between unprivileged containers, so

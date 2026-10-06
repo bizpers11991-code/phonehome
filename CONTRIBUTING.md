@@ -22,7 +22,7 @@ C compiler, no Node.
 ```sh
 git clone https://github.com/bizpers11991-code/phonehome
 cd phonehome
-go run ./cmd/phonehome demo          # dashboard with a synthetic household on :8099
+go run ./cmd/phonehome demo          # dashboard with a synthetic household on 127.0.0.1:8099
 go run ./cmd/phonehome report --demo # the same as text
 ```
 
@@ -37,18 +37,22 @@ go run ./cmd/phonehome serve --config dev.yaml
 
 ## Before you open a pull request
 
-CI runs exactly these; run them locally first (`make lint test kb-lint`
-does the same):
+CI runs these; run them locally first (`make lint test kb-lint` does the
+first four):
 
 ```sh
 gofmt -l .                        # must print nothing
 go vet ./...
 go test -race ./...
 go run ./cmd/phonehome kb lint    # knowledge-base rules
+sh scripts/smoke.sh               # end-to-end check of the demo over HTTP (needs curl and jq)
 ```
 
 If you changed the receipt layout, `go test ./internal/receipt -update`
-regenerates the sample images; check them in with the change.
+regenerates the sample images in `internal/receipt/testdata/samples`; check
+them in with the change. The README's images in `docs/img` are made from the
+demo instead (`phonehome receipt --demo`, and screenshots of
+`phonehome demo`).
 
 ## Ground rules
 
@@ -58,7 +62,8 @@ merged, however good the rest is.
 1. **Read-only.** phonehome never writes to Pi-hole, AdGuard Home, the
    router or any other source, and never scans or probes the network.
 2. **Nothing leaves the house.** No telemetry, update checks, CDN fonts or
-   scripts, or any outbound connection except to configured sources.
+   scripts, or any outbound connection except to configured sources and
+   configured alert targets.
 3. **No cgo, few dependencies.** It must cross-compile to a Raspberry Pi
    Zero with `CGO_ENABLED=0`. New third-party modules need a very good reason;
    ask in an issue first.

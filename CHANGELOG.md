@@ -170,6 +170,9 @@
   binary, starts the demo and checks every endpoint, its headers and its
   refusals in CI.
 
+### Docs and tests
+- Every claim in the README, FAQ, setup guides and docs checked against the code: privacy wording names alert targets, the Pi-hole API source's device names, current demo and benchmark figures, and the `allowed_hosts` names (including `pi.hole`).
+
 ## v0.2.0
 
 ### New
