@@ -66,8 +66,10 @@ func TestWriteMetrics(t *testing.T) {
 			{
 				Device:     model.Device{ID: "mac:aa:bb:cc:00:11:22", Label: `Kid's "TV"` + "\n" + `C:\`, Kind: model.KindTV},
 				Grade:      "D",
+				Reason:     model.GradeReason{Rule: model.ReasonACR, Provisional: true},
 				PerDay:     100,
-				ByCategory: map[model.Category]int{model.CatACR: 300},
+				Total:      400,
+				ByCategory: map[model.Category]int{model.CatACR: 300, model.CatUnknown: 100},
 				Blocked:    12,
 				QuietHours: 40,
 				Heartbeats: []model.Heartbeat{{Domain: "acr.example"}},
@@ -95,6 +97,8 @@ func TestWriteMetrics(t *testing.T) {
 		`phonehome_home_snooping_lookups_per_day`:      "100",
 		`phonehome_device_grade` + tv + `}`:            "1",
 		`phonehome_device_grade{device="ip:192.168.1.9",name="ip:192.168.1.9",kind="unknown"}`: "4",
+		`phonehome_device_grade_provisional` + tv + `}`:                                        "1",
+		`phonehome_device_classified_ratio` + tv + `}`:                                         "0.75",
 		`phonehome_device_snooping_lookups_per_day` + tv + `}`:                                 "100",
 		`phonehome_device_lookups` + tv + `,category="acr"}`:                                   "300",
 		`phonehome_device_lookups` + tv + `,category="ads"}`:                                   "0",
@@ -115,9 +119,10 @@ func TestWriteMetrics(t *testing.T) {
 	if _, ok := got[`phonehome_source_last_success_timestamp_seconds{source="leases",kind="devices"}`]; ok {
 		t.Error("a source that never succeeded has a last-success time")
 	}
-	// 7 home categories, per device 1 grade + 1 rate + 7 categories + 3
-	// counts + 3 confidences, 2 sources × 4 (one without a success time).
-	if want := 4 + 1 + 1 + 7 + 1 + 2*(1+1+7+3+3) + 2*4 - 1; len(got) != want {
+	// 7 home categories, per device 1 grade + 1 provisional + 1 classified
+	// + 1 rate + 7 categories + 3 counts + 3 confidences, 2 sources × 4 (one
+	// without a success time).
+	if want := 4 + 1 + 1 + 7 + 1 + 2*(1+1+1+1+7+3+3) + 2*4 - 1; len(got) != want {
 		t.Errorf("%d series, want %d", len(got), want)
 	}
 }

@@ -276,7 +276,13 @@ func headline(grade string, why model.GradeReason) []string {
 // why prints, under the stamp, what decided the grade and how far to trust
 // it.
 func (b *builder) why(r model.DeviceReport) {
-	if s := r.Reason.Text(); s != "" {
+	// The rate as SNOOPING PER DAY prints it when that has a decimal place;
+	// otherwise the reason's own whole number, kept inside its band.
+	perDay := rate(r.Reason.PerDay)
+	if !strings.Contains(perDay, ".") {
+		perDay = thousands(r.Reason.Lookups())
+	}
+	if s := r.Reason.TextRate(perDay); s != "" {
 		b.note("WHY: ", s+".")
 	}
 	if s := r.Reason.ProvisionalText(); s != "" {

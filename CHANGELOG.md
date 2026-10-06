@@ -56,6 +56,24 @@
   target is configured; de-duplicated, rate-limited and remembered across
   restarts. MQTT also keeps a Home Assistant grade sensor per device via MQTT
   discovery. Exactly what is sent: [docs/alerts.md](docs/alerts.md).
+- **Every grade says why.** The report, dashboard, receipt and
+  `/api/report` (`reason`) name the rule that decided each grade, with its
+  numbers: "1,282 snooping lookups a day (C is 300–1,499)", "Bypasses your
+  DNS via 8.8.8.8:443: at least D (its 520 snooping lookups a day alone
+  would be C)", or content recognition. The receipt's verdict follows the
+  rule too, so a D for a DNS bypass reads "GOES AROUND YOUR DNS FILTER"
+  rather than "TALKS ABOUT YOU A LOT". [docs/grading.md](docs/grading.md#why-a-device-got-its-grade)
+- **Provisional grades.** A grade based on less than 20 hours of data for
+  the device (a fresh install, or a device that joined an hour ago) is marked
+  "Provisional: based on 3 hours of data". Alerts and the MQTT grade sensor
+  ignore provisional grades; `/metrics` has
+  `phonehome_device_grade_provisional`.
+- **Coverage.** Each device shows the share of its lookups the knowledge base
+  recognised, and a grade resting on less than half of them says so
+  ("Graded on the 40% of lookups phonehome recognises"). TVs and streaming
+  players with no known content-recognition server seen get a note that not
+  every brand's servers are known. `/metrics` has
+  `phonehome_device_classified_ratio`.
 
 ### Security
 - **The dashboard answers only to local names.** Requests addressed to a
@@ -102,6 +120,9 @@
   contrast, checked by a test for light and dark.
 - The headline no longer shows the word "null" when there is no earlier
   period to compare with.
+- **Why each grade.** Device cards and details show "Why D:" with the rule
+  behind the grade, any provisional or low-coverage note, and in the details
+  the share of lookups recognised, in all five languages.
 
 ### Knowledge base
 - **Fewer false alarms and less overclaiming, checked against sources.**
@@ -141,6 +162,11 @@
   counts, comparisons, receipts, `/metrics`, alerts and exports all drop
   accordingly, and some grades improve; heartbeat detection is unchanged.
   See [docs/grading.md](docs/grading.md#the-terms).
+- **Content-recognition rules apply only to screens.** The ACR rules (F for
+  an ACR heartbeat, at least D for any ACR lookup) now apply only to TVs,
+  streaming players and devices of unknown kind. A laptop or phone opening an
+  ACR company's site was graded D; its ACR lookups now count as snooping
+  like any other. [Why](docs/grading.md#which-devices-the-acr-rules-apply-to)
 - **Readers checked against upstream source.** Each reader was compared
   with the code of the software it reads, and the fixtures now come from
   that code. Supported versions are listed in
