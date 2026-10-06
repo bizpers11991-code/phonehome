@@ -552,8 +552,22 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 		}
 		r.Fixes = relevantFixes(a.c.FixesFor(r.Device, ids), r)
 	}
-	r.Grade = Grade(r)
+	r.Grade, r.Reason = GradeWhy(r)
+	r.Reason.Data = a.dataFor(r.Device)
+	r.Reason.Provisional = r.Reason.Data < provisionalUnder
 	return r
+}
+
+// dataFor is how much of the period has data for dev: from the first
+// lookup in the period, or from when dev was first seen if that is later,
+// to the end of the period. A fresh install, or a device that joined an
+// hour ago, has too little for a rate per day to mean much.
+func (a *analysis) dataFor(dev model.Device) time.Duration {
+	from := a.covered().From
+	if dev.FirstSeen.After(from) {
+		from = dev.FirstSeen
+	}
+	return max(a.p.To.Sub(from), 0)
 }
 
 // relevantFixes drops fixes whose When conditions r does not meet (a generic

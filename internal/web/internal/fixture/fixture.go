@@ -47,7 +47,6 @@ type dom struct {
 type dev struct {
 	model.Device
 	shape   func(h int) float64
-	grade   string
 	doms    []dom
 	beats   []model.Heartbeat
 	bypass  []model.Bypass
@@ -94,7 +93,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:f4:7b:09:3c:a1:2e", MAC: "f4:7b:09:3c:a1:2e", IPs: []netip.Addr{ip("192.168.1.31")},
 				Hostname: "Samsung-QN65Q80B", Vendor: "Samsung", Kind: model.KindTV, Label: "Living room TV"},
-			shape: tvAlwaysOn, grade: "F", flowsPD: 2400,
+			shape: tvAlwaysOn, flowsPD: 2400,
 			doms: []dom{
 				{"acr-eu-prd.samsungcloud.tv", 5760, 0, model.CatACR, "samsung", "Sends fingerprints of what is on screen so Samsung can identify what you watch."},
 				{"log-ingestion.samsungacr.com", 1440, 0.1, model.CatACR, "samsung", "Uploads content-recognition match logs."},
@@ -127,7 +126,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:a8:23:fe:51:0d:77", MAC: "a8:23:fe:51:0d:77", IPs: []netip.Addr{ip("192.168.1.32")},
 				Hostname: "LGwebOSTV", Vendor: "LG Electronics", Kind: model.KindTV},
-			shape: evening, grade: "D", flowsPD: 900,
+			shape: evening, flowsPD: 900,
 			doms: []dom{
 				{"tkacr295.alphonso.tv", 2100, 0.2, model.CatACR, "alphonso", "Live TV content recognition (LG Live Plus)."},
 				{"us.ad.lgsmartad.com", 520, 0.6, model.CatAds, "lg", "Home-screen and in-app ads."},
@@ -146,7 +145,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:d8:31:34:9a:44:02", MAC: "d8:31:34:9a:44:02", IPs: []netip.Addr{ip("192.168.1.40")},
 				Hostname: "Roku-Ultra", Vendor: "Roku", Kind: model.KindStreamer},
-			shape: evening, grade: "D", flowsPD: 640,
+			shape: evening, flowsPD: 640,
 			doms: []dom{
 				{"scribe.logs.roku.com", 1150, 0.3, model.CatTelemetry, "roku", "Detailed usage and channel logs."},
 				{"giga.logs.roku.com", 560, 0.2, model.CatTelemetry, "roku", "Playback analytics."},
@@ -165,7 +164,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:68:54:fd:12:9b:c0", MAC: "68:54:fd:12:9b:c0", IPs: []netip.Addr{ip("192.168.1.51")},
 				Hostname: "amazon-3f2a1b", Vendor: "Amazon", Kind: model.KindSpeaker, Label: "Kitchen Echo"},
-			shape: flat, grade: "C", flowsPD: 1300,
+			shape: flat, flowsPD: 1300,
 			doms: []dom{
 				{"device-metrics-us.amazon.com", 720, 0.4, model.CatTelemetry, "amazon", "Device metrics and usage reporting."},
 				{"unagi-na.amazon.com", 420, 0.3, model.CatTelemetry, "amazon", "Alexa diagnostics stream."},
@@ -183,7 +182,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:20:df:b9:44:10:8a", MAC: "20:df:b9:44:10:8a", IPs: []netip.Addr{ip("192.168.1.52")},
 				Hostname: "Google-Nest-Mini", Vendor: "Google", Kind: model.KindSpeaker},
-			shape: flat, grade: "C", flowsPD: 800,
+			shape: flat, flowsPD: 800,
 			doms: []dom{
 				{"firebaselogging-pa.googleapis.com", 610, 0.2, model.CatTelemetry, "google", "App usage logging."},
 				{"play.googleapis.com", 260, 0, model.CatTelemetry, "google", "Play services check-ins and logs."},
@@ -198,7 +197,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:34:3e:a4:8b:2d:19", MAC: "34:3e:a4:8b:2d:19", IPs: []netip.Addr{ip("192.168.1.60")},
 				Hostname: "RingDoorbell-19", Vendor: "Ring", Kind: model.KindCamera, Label: "Front door"},
-			shape: flat, grade: "B", flowsPD: 500,
+			shape: flat, flowsPD: 500,
 			doms: []dom{
 				{"device-metrics-us.amazon.com", 288, 0.4, model.CatTelemetry, "amazon", "Device metrics and usage reporting."},
 				{"es.ring.com", 340, 0, model.CatContent, "ring", "Motion events and live view."},
@@ -208,7 +207,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:b0:4a:39:6c:e3:51", MAC: "b0:4a:39:6c:e3:51", IPs: []netip.Addr{ip("192.168.1.70")},
 				Hostname: "roborock-vacuum-a15", Vendor: "Roborock", Kind: model.KindVacuum},
-			shape: daytime, grade: "C", flowsPD: 300,
+			shape: daytime, flowsPD: 300,
 			doms: []dom{
 				{"tracking.intl.miui.com", 140, 0.6, model.CatTracking, "xiaomi", "Xiaomi analytics and device tracking."},
 				{"de.api.io.mi.com", 260, 0, model.CatTelemetry, "xiaomi", "Status reports to the Mi Home cloud."},
@@ -223,7 +222,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:ec:b5:fa:0e:7d:42", MAC: "ec:b5:fa:0e:7d:42", IPs: []netip.Addr{ip("192.168.1.80")},
 				Hostname: "Philips-hue", Vendor: "Signify", Kind: model.KindHub},
-			shape: flat, grade: "A", flowsPD: 150,
+			shape: flat, flowsPD: 150,
 			doms: []dom{
 				{"diag.meethue.com", 24, 0, model.CatTelemetry, "signify", "Bridge diagnostics."},
 				{"ws.meethue.com", 288, 0, model.CatEssential, "signify", "Remote control from the Hue app."},
@@ -233,7 +232,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:da:a1:19:5e:62:0b", MAC: "da:a1:19:5e:62:0b", IPs: []netip.Addr{ip("192.168.1.104"), ip("fe80::d8a1:19ff:fe5e:620b")},
 				Hostname: "Marias-iPhone", Kind: model.KindPhone},
-			shape: daytime, grade: "C", flowsPD: 2100,
+			shape: daytime, flowsPD: 2100,
 			doms: []dom{
 				{"app-measurement.com", 310, 0.9, model.CatTracking, "google", "Firebase analytics inside apps."},
 				{"graph.facebook.com", 240, 0.5, model.CatTracking, "meta", "Facebook SDK inside apps."},
@@ -247,7 +246,7 @@ func household() []dev {
 		{
 			Device: model.Device{ID: "mac:3c:22:fb:7e:90:aa", MAC: "3c:22:fb:7e:90:aa", IPs: []netip.Addr{ip("192.168.1.105")},
 				Hostname: "Dans-MacBook-Air", Vendor: "Apple", Kind: model.KindComputer},
-			shape: daytime, grade: "A", flowsPD: 3500,
+			shape: daytime, flowsPD: 3500,
 			doms: []dom{
 				{"xp.apple.com", 60, 0, model.CatTelemetry, "apple", "Apple analytics (opt-in)."},
 				{"gateway.icloud.com", 300, 0, model.CatEssential, "apple", "iCloud."},
@@ -290,7 +289,7 @@ func (b *Backend) Report(_ context.Context, p model.Period) (model.HomeReport, e
 
 func build(d dev, p model.Period, days float64) model.DeviceReport {
 	r := model.DeviceReport{
-		Device: d.Device, Period: p, ByCategory: map[model.Category]int{}, Grade: d.grade,
+		Device: d.Device, Period: p, ByCategory: map[model.Category]int{},
 		QuietLabel: "01:00–06:00", Bypasses: d.bypass, Fixes: d.fixes, Flows: int(float64(d.flowsPD) * days),
 	}
 	byCompany := map[string]int{}
@@ -351,6 +350,9 @@ func build(d dev, p model.Period, days float64) model.DeviceReport {
 		r.SnoopShare = float64(r.Snooping) / float64(r.Total)
 	}
 	r.PerDay = float64(r.Snooping) / days
+	// The real grader, so the grade and its reason agree.
+	r.Grade, r.Reason = analyze.GradeWhy(r)
+	r.Reason.Data = time.Duration(days * 24 * float64(time.Hour))
 	return r
 }
 

@@ -158,6 +158,38 @@ func TestEngine(t *testing.T) {
 	}
 }
 
+// A provisional grade (too little data) is neither alerted nor learnt: a
+// fresh install's first hour must not page anyone, and the grade known
+// before stays the baseline.
+func TestEngineProvisional(t *testing.T) {
+	h := &home{now: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC), devs: []model.DeviceReport{dev("mac:1", "TV", "B")}}
+	e, rec, _ := newEngine(h)
+	check(t, e)
+	provisional := func(r model.DeviceReport) model.DeviceReport {
+		r.Reason.Provisional, r.Reason.Data = true, time.Hour
+		return r
+	}
+
+	h.now = h.now.Add(5 * time.Minute)
+	h.devs = []model.DeviceReport{provisional(dev("mac:1", "TV", "D")), provisional(dev("mac:2", "Phone", "D"))}
+	check(t, e)
+	if len(rec.batches) != 1 || kinds(rec.batches[0]) != "new_device:Phone" {
+		t.Fatalf("batches %v, want only the new phone", rec.batches)
+	}
+	if g := rec.batches[0].Events[0].Grade; g != "" {
+		t.Errorf("new device announced with provisional grade %q", g)
+	}
+
+	// Once the grade is no longer provisional, it is compared with B, the
+	// grade known before; the phone's first real grade is learnt quietly.
+	h.now = h.now.Add(5 * time.Minute)
+	h.devs = []model.DeviceReport{dev("mac:1", "TV", "D"), dev("mac:2", "Phone", "F")}
+	check(t, e)
+	if len(rec.batches) != 2 || kinds(rec.batches[1]) != "grade_worse:TV" || rec.batches[1].Events[0].Before != "B" {
+		t.Fatalf("after the provisional period: %d batches, last %v", len(rec.batches), rec.batches[len(rec.batches)-1])
+	}
+}
+
 func TestEngineRateLimit(t *testing.T) {
 	h := &home{now: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC), devs: []model.DeviceReport{dev("mac:0", "First", "A")}}
 	e, rec, _ := newEngine(h)

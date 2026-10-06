@@ -491,6 +491,14 @@ func TestReportJSON(t *testing.T) {
 			}
 			TopDomains []struct{ CategoryLabel string }
 			Bypasses   []struct{ Evidence string }
+			Reason     struct {
+				Rule, Text              string
+				EverySeconds, DataHours float64
+				Provisional             bool
+			}
+			Coverage    float64
+			LowCoverage bool `json:"lowCoverage"`
+			ACRUnseen   bool `json:"acrUnseen"`
 		}
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &rep); err != nil {
@@ -529,6 +537,12 @@ func TestReportJSON(t *testing.T) {
 	}
 	if !phone {
 		t.Error("iPhone's randomised MAC not flagged as private")
+	}
+	if r := tv.Reason; r.Rule != "acr-heartbeat" || r.EverySeconds != 15 || !strings.Contains(r.Text, "always F") || r.Provisional || r.DataHours != 7*24 {
+		t.Errorf("reason = %+v", r)
+	}
+	if tv.Coverage <= 0 || tv.Coverage > 1 || tv.LowCoverage || tv.ACRUnseen {
+		t.Errorf("coverage %v, low %v, ACR unseen %v", tv.Coverage, tv.LowCoverage, tv.ACRUnseen)
 	}
 
 	// Go field names must not leak into the wire format.

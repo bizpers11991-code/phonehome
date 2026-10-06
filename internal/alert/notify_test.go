@@ -321,6 +321,32 @@ func TestMQTTRemembers(t *testing.T) {
 	}
 }
 
+// TestMQTTProvisional: a provisional grade is not published, and the grade
+// published before it stays.
+func TestMQTTProvisional(t *testing.T) {
+	b := &broker{}
+	m := &MQTT{Broker: "mqtt://b.lan", Topic: "phonehome", Dial: b.dial}
+	rep := model.HomeReport{Devices: []model.DeviceReport{{Device: model.Device{ID: "mac:01"}, Grade: "B"}}}
+	if err := m.Publish(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+	<-b.done
+	b.messages = nil
+	provisional := model.GradeReason{Provisional: true, Data: time.Hour}
+	rep.Devices = []model.DeviceReport{
+		{Device: model.Device{ID: "mac:01"}, Grade: "D", Reason: provisional},
+		{Device: model.Device{ID: "mac:02"}, Grade: "F", Reason: provisional},
+	}
+	before := b.done
+	if err := m.Publish(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+	if b.done != before {
+		<-b.done
+		t.Fatalf("provisional grades published: %+v", b.messages)
+	}
+}
+
 func TestMQTTPackets(t *testing.T) {
 	// Remaining lengths over 127 take more than one byte (2.2.3).
 	p := packet(0x30, make([]byte, 321))
