@@ -26,6 +26,7 @@ type fakeStore struct {
 	cursors   map[string]string
 	runs      map[string]model.SourceStatus
 	pruned    []time.Time
+	prunedAt  []int // len(dns) at each prune
 	failDNS   error
 	failSetCx error
 }
@@ -90,6 +91,7 @@ func (s *fakeStore) Prune(_ context.Context, before time.Time) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.pruned = append(s.pruned, before)
+	s.prunedAt = append(s.prunedAt, len(s.dns))
 	return 0, nil
 }
 
@@ -185,25 +187,76 @@ func TestRunOnceDrains(t *testing.T) {
 	}
 }
 
-func TestRunOnceCapsBacklog(t *testing.T) {
+// orderedDNS records the order in which sources are fetched.
+type orderedDNS struct {
+	*fakeDNS
+	log *[]string
+}
+
+func (o orderedDNS) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DNSQuery, string, error) {
+	*o.log = append(*o.log, o.name)
+	return o.fakeDNS.FetchDNS(ctx, cursor, limit)
+}
+
+// A backlog larger than one run's cap is read in rounds, each source
+// taking at most the cap per round, until everything available is in:
+// `ingest --once` must not stop after the first maxBatchesPerRun batches.
+func TestRunOnceDrainsBacklogInRounds(t *testing.T) {
 	st := newStore()
-	big := &fakeDNS{name: "big", total: 10*maxBatchesPerRun + 5}
-	small := &fakeDNS{name: "small", total: 3}
+	var order []string
+	big := orderedDNS{&fakeDNS{name: "big", total: 10*maxBatchesPerRun*2 + 5}, &order}
+	small := orderedDNS{&fakeDNS{name: "small", total: 3}, &order}
 	r := &Runner{Store: st, DNS: []source.DNSSource{big, small}, Batch: 10, Logger: quiet}
 	if err := r.RunOnce(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if got := st.runs["big"].Records; got != 10*maxBatchesPerRun {
-		t.Errorf("big ingested %d in one run, want cap %d", got, 10*maxBatchesPerRun)
+	if got := st.runs["big"].Records; got != int64(big.total) {
+		t.Errorf("big ingested %d in one RunOnce, want all %d", got, big.total)
 	}
 	if st.runs["small"].Records != 3 {
-		t.Errorf("small starved: %+v", st.runs["small"])
+		t.Errorf("small: %+v", st.runs["small"])
 	}
-	if err := r.RunOnce(context.Background()); err != nil {
-		t.Fatal(err)
+	// small is not starved: it is read after big's first capped round.
+	if len(order) <= maxBatchesPerRun || order[maxBatchesPerRun] != "small" {
+		t.Errorf("small was not read right after big's first %d batches: %v", maxBatchesPerRun, order)
 	}
-	if got := st.runs["big"].Records; got != 10*maxBatchesPerRun+5 {
-		t.Errorf("backlog not finished on next run: %d", got)
+}
+
+// Run does not wait a whole interval between rounds while a source still
+// has a backlog: a Pi-hole database with months of history must reach the
+// dashboard in seconds, not one capped run per minute.
+func TestRunCatchesUpWithoutWaiting(t *testing.T) {
+	st := newStore()
+	big := &fakeDNS{name: "big", total: 10*maxBatchesPerRun*3 + 5}
+	r := &Runner{Store: st, DNS: []source.DNSSource{big}, Batch: 10, Retention: time.Hour, Logger: quiet}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		r.Run(ctx, time.Hour)
+		close(done)
+	}()
+	deadline := time.After(5 * time.Second)
+	for {
+		st.mu.Lock()
+		n := len(st.dns)
+		st.mu.Unlock()
+		if n == big.total {
+			break
+		}
+		select {
+		case <-deadline:
+			cancel()
+			<-done
+			t.Fatalf("after 5s Run had ingested %d of %d; it waits an interval between capped rounds", n, big.total)
+		case <-time.After(time.Millisecond):
+		}
+	}
+	cancel()
+	<-done
+	// The daily prune runs once the backlog is in, so that old history
+	// read during the catch-up does not stay a day past the retention.
+	if len(st.prunedAt) != 1 || st.prunedAt[0] != big.total {
+		t.Errorf("pruned with %v lookups stored, want once with all %d", st.prunedAt, big.total)
 	}
 }
 

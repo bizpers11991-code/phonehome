@@ -31,8 +31,9 @@ type Store interface {
 const (
 	// DefaultBatch is the fetch size used when Runner.Batch is zero.
 	DefaultBatch = 5000
-	// maxBatchesPerRun caps one source's work per run so a huge backlog
-	// cannot starve the others; the rest is picked up next run.
+	// maxBatchesPerRun caps one source's work per round so a huge backlog
+	// cannot starve the others; the rest is picked up in the next round,
+	// which starts straight away while any source still has a backlog.
 	maxBatchesPerRun = 20
 	maxBackoff       = 15 * time.Minute
 	pruneEvery       = 24 * time.Hour
@@ -50,26 +51,36 @@ type Runner struct {
 	Now       func() time.Time
 }
 
-// task is one source's unit of work in a run.
+// task is one source's unit of work in a run. run reports whether the
+// source stopped at the per-round cap with more waiting.
 type task struct {
 	key  string // status name and cursor key
 	kind string // "dns", "flow", "devices"
-	run  func(ctx context.Context, key string) (int64, error)
+	run  func(ctx context.Context, key string) (n int64, more bool, err error)
 }
 
-// RunOnce ingests from every source once, then prunes data older than
+// RunOnce ingests everything the sources have, in rounds of at most
+// maxBatchesPerRun batches per source, then prunes data older than
 // Retention (when set), so that `ingest --once` from cron keeps the store
 // bounded too. Sources are independent: a failing source is recorded and
 // skipped, and the errors of all failing sources are returned joined.
 func (r *Runner) RunOnce(ctx context.Context) error {
 	var errs []error
-	for _, t := range r.tasks() {
-		if err := ctx.Err(); err != nil {
-			return errors.Join(append(errs, err)...)
+	for ts := r.tasks(); len(ts) > 0; {
+		var again []task
+		for _, t := range ts {
+			if err := ctx.Err(); err != nil {
+				return errors.Join(append(errs, err)...)
+			}
+			_, more, err := r.runTask(ctx, t)
+			switch {
+			case err != nil:
+				errs = append(errs, err)
+			case more:
+				again = append(again, t)
+			}
 		}
-		if _, err := r.runTask(ctx, t); err != nil {
-			errs = append(errs, err)
-		}
+		ts = again
 	}
 	if r.Retention > 0 {
 		if err := r.prune(ctx); err != nil {
@@ -79,21 +90,31 @@ func (r *Runner) RunOnce(ctx context.Context) error {
 	return errors.Join(errs...)
 }
 
-// Run ingests every interval until ctx is cancelled. A source that keeps
-// failing is retried with exponential backoff (capped at 15 minutes), and
-// old data is pruned once a day when Retention is set.
+// Run ingests every interval until ctx is cancelled. While a source still
+// has a backlog after its capped round (the first start on months of
+// history), the next round starts at once instead of an interval later. A
+// source that keeps failing is retried with exponential backoff (capped at
+// 15 minutes), and old data is pruned once a day when Retention is set.
 func (r *Runner) Run(ctx context.Context, interval time.Duration) {
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
 	backoffs := map[string]*backoff{}
 	var lastPrune time.Time
 	for {
-		r.cycle(ctx, interval, backoffs)
-		if r.Retention > 0 && r.now().Sub(lastPrune) >= pruneEvery {
+		more := r.cycle(ctx, interval, backoffs)
+		// Prune once caught up, or old history read in later rounds of
+		// the catch-up would outstay the retention by a day.
+		if !more && r.Retention > 0 && r.now().Sub(lastPrune) >= pruneEvery {
 			lastPrune = r.now()
 			if err := r.prune(ctx); err != nil {
 				r.log().Warn("prune failed", "err", err)
 			}
+		}
+		if more {
+			if ctx.Err() != nil {
+				return
+			}
+			continue
 		}
 		select {
 		case <-ctx.Done():
@@ -103,11 +124,12 @@ func (r *Runner) Run(ctx context.Context, interval time.Duration) {
 	}
 }
 
-// cycle runs every task that is not backing off.
-func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map[string]*backoff) {
+// cycle runs every task that is not backing off, and reports whether one
+// of them stopped at the per-round cap with more waiting.
+func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map[string]*backoff) (more bool) {
 	for _, t := range r.tasks() {
 		if ctx.Err() != nil {
-			return
+			return false
 		}
 		b := backoffs[t.key]
 		if b == nil {
@@ -118,10 +140,10 @@ func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map
 			b.skip--
 			continue
 		}
-		n, err := r.runTask(ctx, t)
+		n, again, err := r.runTask(ctx, t)
 		switch {
 		case ctx.Err() != nil:
-			return
+			return false
 		case err != nil:
 			wait := b.fail(interval)
 			r.log().Warn("ingest failed", "source", t.key, "err", err, "failures", b.fails, "retry_in", wait)
@@ -131,7 +153,9 @@ func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map
 		case n > 0:
 			r.log().Info("ingested", "source", t.key, "records", n)
 		}
+		more = more || err == nil && again
 	}
+	return more
 }
 
 // prune deletes data older than Retention.
@@ -147,10 +171,11 @@ func (r *Runner) prune(ctx context.Context) error {
 }
 
 // runTask executes t and records its status. It returns the number of
-// records ingested (even on error) and the error, prefixed with the source.
-func (r *Runner) runTask(ctx context.Context, t task) (int64, error) {
+// records ingested (even on error), whether more are waiting, and the
+// error, prefixed with the source.
+func (r *Runner) runTask(ctx context.Context, t task) (int64, bool, error) {
 	st := model.SourceStatus{Name: t.key, Kind: t.kind, LastRun: r.now()}
-	n, err := t.run(ctx, t.key)
+	n, more, err := t.run(ctx, t.key)
 	st.Records = n
 	if err != nil {
 		err = fmt.Errorf("%s: %w", t.key, err)
@@ -161,7 +186,7 @@ func (r *Runner) runTask(ctx context.Context, t task) (int64, error) {
 	if rerr := r.Store.RecordRun(ctx, st); rerr != nil {
 		err = errors.Join(err, fmt.Errorf("%s: recording status: %w", t.key, rerr))
 	}
-	return n, err
+	return n, more, err
 }
 
 // tasks lists the work for every source. A source's key is its Name, or
@@ -187,35 +212,35 @@ func (r *Runner) tasks() []task {
 
 	var ts []task
 	for _, s := range r.DNS {
-		ts = append(ts, task{key(s.Name(), "dns"), "dns", func(ctx context.Context, k string) (int64, error) {
+		ts = append(ts, task{key(s.Name(), "dns"), "dns", func(ctx context.Context, k string) (int64, bool, error) {
 			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchDNS, r.Store.InsertDNS)
 		}})
 	}
 	for _, s := range r.Flows {
-		ts = append(ts, task{key(s.Name(), "flow"), "flow", func(ctx context.Context, k string) (int64, error) {
+		ts = append(ts, task{key(s.Name(), "flow"), "flow", func(ctx context.Context, k string) (int64, bool, error) {
 			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchFlows, r.Store.InsertFlows)
 		}})
 	}
 	for _, s := range r.Devices {
-		ts = append(ts, task{key(s.Name(), "devices"), "devices", func(ctx context.Context, _ string) (int64, error) {
+		ts = append(ts, task{key(s.Name(), "devices"), "devices", func(ctx context.Context, _ string) (int64, bool, error) {
 			ds, err := s.Devices(ctx)
 			if err != nil {
-				return 0, err
+				return 0, false, err
 			}
 			if len(ds) == 0 {
-				return 0, nil
+				return 0, false, nil
 			}
 			if err := r.Store.UpsertDevices(ctx, ds); err != nil {
-				return 0, err
+				return 0, false, err
 			}
-			return int64(len(ds)), nil
+			return int64(len(ds)), false, nil
 		}})
 	}
 	return ts
 }
 
 // drain fetches and inserts batches until the source has nothing new, the
-// per-run cap is reached, or something fails. The cursor is advanced only
+// per-round cap is reached (more is then true), or something fails. The cursor is advanced only
 // after the batch it covers has been inserted. A saved cursor the source
 // cannot read (source.ErrBadCursor) is dropped and reading starts over,
 // rather than failing on every run until someone edits the database.
@@ -223,46 +248,46 @@ func drain[T any](
 	ctx context.Context, st Store, log *slog.Logger, key string, limit int,
 	fetch func(context.Context, string, int) ([]T, string, error),
 	insert func(context.Context, []T) error,
-) (int64, error) {
+) (int64, bool, error) {
 	cur, err := st.Cursor(ctx, key)
 	if err != nil {
-		return 0, fmt.Errorf("reading cursor: %w", err)
+		return 0, false, fmt.Errorf("reading cursor: %w", err)
 	}
 	var total int64
 	for range maxBatchesPerRun {
 		if err := ctx.Err(); err != nil {
-			return total, err
+			return total, false, err
 		}
 		recs, next, err := fetch(ctx, cur, limit)
 		if errors.Is(err, source.ErrBadCursor) && cur != "" {
 			log.Warn("discarding unreadable cursor; reading the source from the start", "source", key, "err", err)
 			if err := st.SetCursor(ctx, key, ""); err != nil {
-				return total, fmt.Errorf("resetting cursor: %w", err)
+				return total, false, fmt.Errorf("resetting cursor: %w", err)
 			}
 			cur = ""
 			recs, next, err = fetch(ctx, cur, limit)
 		}
 		if err != nil {
-			return total, fmt.Errorf("fetching: %w", err)
+			return total, false, fmt.Errorf("fetching: %w", err)
 		}
 		if len(recs) > 0 {
 			if err := insert(ctx, recs); err != nil {
-				return total, fmt.Errorf("storing: %w", err)
+				return total, false, fmt.Errorf("storing: %w", err)
 			}
 			total += int64(len(recs))
 		}
 		if next == cur {
-			return total, nil
+			return total, false, nil
 		}
 		if err := st.SetCursor(ctx, key, next); err != nil {
-			return total, fmt.Errorf("saving cursor: %w", err)
+			return total, false, fmt.Errorf("saving cursor: %w", err)
 		}
 		cur = next
 		if len(recs) < limit {
-			return total, nil
+			return total, false, nil
 		}
 	}
-	return total, nil
+	return total, true, nil
 }
 
 func (r *Runner) batch() int {

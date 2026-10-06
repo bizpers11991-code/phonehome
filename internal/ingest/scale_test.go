@@ -281,8 +281,8 @@ func TestScale(t *testing.T) {
 		Retention: 90 * 24 * time.Hour, Logger: quiet, Now: func() time.Time { return end },
 	}
 
-	// First ingest: RunOnce caps each source's work per run, so repeat
-	// until the backlog is gone, as successive ticks of `serve` would.
+	// First ingest: RunOnce reads the whole backlog in capped rounds; the
+	// loop is a guard in case it ever stops early.
 	runtime.GC()
 	stop := heapPeak()
 	start = time.Now()
