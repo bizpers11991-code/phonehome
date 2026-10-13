@@ -261,7 +261,14 @@ var verdicts = map[string][]string{
 // headline is the stamp's verdict, taken from the rule that decided the
 // grade so it is never wrong: a TV graded D for a DNS bypass does not
 // "talk about you a lot".
-func headline(grade string, why model.GradeReason) []string {
+//
+// An A on a device whose lookups are mostly unrecognised says little: it
+// only means the recognised ones were few, so it must not claim the device
+// "minds its own business".
+func headline(grade string, why model.GradeReason, lowCoverage bool) []string {
+	if grade == "A" && lowCoverage {
+		return []string{"TOO LITTLE RECOGNISED", "TO SAY MUCH."}
+	}
 	switch why.Rule {
 	case model.ReasonACRHeartbeat:
 		return []string{"WATCHES WHAT YOU WATCH,", "ON A CLOCK."}
@@ -388,7 +395,7 @@ func Device(r model.DeviceReport, o Options) Doc {
 	}
 	b.kind(Rule)
 	aside := []string{"PRIVACY GRADE", "A QUIET ... F LOUD", ""}
-	b.stamp(r.Grade, append(aside, headline(r.Grade, r.Reason)...))
+	b.stamp(r.Grade, append(aside, headline(r.Grade, r.Reason, r.CoverageLow())...))
 	b.why(r)
 	b.fix(r.Fixes)
 	return *b.footer()
