@@ -62,6 +62,14 @@ dashboard does not show left out. They used to be 1.10 s + 0.70 s with a
 292 MiB peak (amd64) and 1.74 s + 0.84 s with 188 MiB (386) for 30 days, as
 the report held every lookup of the period in memory.
 
+A report holds **one read snapshot** of the store for as long as it runs
+(`Store.DNSEach` is a single read transaction, 4 s for 30 days of the
+harder fixture below). Ingest and pruning keep writing meanwhile, since WAL
+readers do not block the writer, but the WAL cannot be reset past the
+snapshot, so it grows until the report finishes. After a large prune the
+file is therefore shrunk with a passive checkpoint, which never waits; if a
+report was open, the last pages go at a later checkpoint.
+
 Ingest memory stays flat however large the backlog: sources are read in
 batches of 5,000 and a run stops after 20 batches.
 
