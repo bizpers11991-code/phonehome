@@ -17,7 +17,7 @@ rules:
     company: nintendo
     category: essential
     purpose: Older Nintendo connection test that checks for internet access and captive portals.
-    confidence: medium
+    confidence: low
     kind_hint: console
     evidence:
       - https://switchbrew.org/wiki/Internet_Browser
@@ -43,14 +43,14 @@ rules:
     company: nintendo
     category: essential
     purpose: Nintendo Account sign-in and management.
-    confidence: medium
+    confidence: low
     evidence:
       - https://github.com/kinnay/NintendoClients/wiki/Server-List
   - pattern: eshop.nintendo.net
     company: nintendo
     category: content
     purpose: Nintendo eShop title information and content delivery.
-    confidence: medium
+    confidence: low
     kind_hint: console
     evidence:
       - https://switchbrew.org/wiki/Network
@@ -67,21 +67,12 @@ rules:
     company: nintendo
     category: telemetry
     purpose: Nintendo Switch error reports.
-    confidence: medium
+    confidence: low
     kind_hint: console
     evidence:
       - https://github.com/kinnay/NintendoClients/wiki/Server-List
 
   # --- PlayStation ----------------------------------------------------------
-  - pattern: update.playstation.net
-    company: sony
-    category: essential
-    purpose: PlayStation system software update downloads.
-    confidence: high
-    kind_hint: console
-    evidence:
-      - https://www.playstation.com/en-us/support/hardware/ps5/system-software/
-      - https://www.playstation.com/en-us/support/hardware/ps4/system-software/
   - pattern: telemetry-console.api.playstation.com
     company: sony
     category: telemetry

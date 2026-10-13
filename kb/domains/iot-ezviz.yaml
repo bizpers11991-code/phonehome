@@ -11,15 +11,16 @@ rules:
   - pattern: litedev.ezvizlife.com
     category: essential
     purpose: "EZVIZ device bootstrap server (TCP 8666) that gives cameras their MQTT, relay and upload servers; cameras go offline if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://seanblanchfield.com/2022/05/ezviz-db1-doorbell-deepdive-homeassistant
   - pattern: apiieu.ezvizlife.com
     category: essential
-    purpose: "EZVIZ app API (Europe) used by the app and integrations; remote access stops if blocked."
+    purpose: EZVIZ app API (Europe), the default host in the pyEzvizApi client used by Home Assistant; remote access stops if blocked.
     confidence: medium
     evidence:
+      - https://github.com/RenierM26/pyEzvizApi/blob/4160bca99352feb8814c74a657d4497339f1fb3d/pyezvizapi/client.py#L610
       - https://www.home-assistant.io/integrations/ezviz/
   - pattern: log.ezvizlife.com
     category: telemetry
@@ -30,7 +31,7 @@ rules:
   - pattern: time.ys7.com
     category: essential
     purpose: "Default time server in EZVIZ firmware; cameras need correct time for TLS and recordings."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://seanblanchfield.com/2022/05/ezviz-db1-doorbell-deepdive-homeassistant

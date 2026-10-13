@@ -310,7 +310,7 @@ rules:
   - pattern: firebaselogging-pa.googleapis.com
     category: telemetry
     purpose: Batch-log upload endpoint built into Firebase's Android data-transport library, which sends SDK logs and metrics to Google.
-    confidence: high
+    confidence: medium
     evidence:
       - https://github.com/firebase/firebase-android-sdk/blob/e51192421f7e05225acd3a568bd30f1e06b8e69d/transport/transport-backend-cct/src/main/java/com/google/android/datatransport/cct/CCTDestination.java
       - https://github.com/firebase/firebase-ios-sdk/issues/5837
@@ -325,7 +325,7 @@ rules:
   - pattern: crashlyticsreports-pa.googleapis.com
     category: telemetry
     purpose: Upload endpoint for Firebase Crashlytics crash reports.
-    confidence: medium
+    confidence: low
     evidence:
       - https://github.com/firebase/flutterfire/issues/9352
 

@@ -162,6 +162,20 @@
   Home Connect (Bosch/Siemens), Miele, SolarEdge, Enphase, SwitchBot, Nuki
   and LIFX. More hosts for Ring, ecobee, Tuya, Xiaomi, Wyze, tado,
   SmartThings, eufy, Govee, Meross, Tapo, Arlo and Netatmo.
+- **Evidence audit before launch.** Every evidence link was requested, and
+  each link behind a commonly seen host was opened and checked for the host
+  and the stated purpose. Citations that did not name the host are replaced
+  or dropped: the SafeNetIoT repository does not mention Alphonso, so that
+  rule keeps the IMC 2024 paper that names `tkacrX.alphonso.tv`. Moved links
+  are updated (Nielsen's FAQ, the Ring library's repository). Rules with no
+  readable source are gone: `update.playstation.net` and `watson.microsoft.com`.
+  Confidence now follows the policy table: rules resting only on a blocklist,
+  a tracker dataset or one forum post are medium or low, not high (about 60
+  rules). `myhomescreen.tv` no longer hides the connectivity hosts that a
+  blocklist keeps reachable; they are listed as essential. Exact-match
+  content rules (apex and `www`) for `alphonso.tv` and 26 ad-tech and
+  analytics vendors' own sites stop a laptop reading their web pages from
+  being flagged. 810 -> 868 rules.
 
 ### Fixed
 - **Lookup counts and grades change: a lookup is now counted once, not once

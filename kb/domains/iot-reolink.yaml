@@ -3,7 +3,7 @@ rules:
   - pattern: reolink.com
     category: essential
     purpose: "Reolink cloud, including the p2p0–p2p15 relay servers (UDP 9999) used for remote viewing; the app cannot connect remotely if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://community.reolink.com/topic/6026/firewall-rules-reolink-host
@@ -18,7 +18,7 @@ rules:
   - pattern: home-cdn.reolink.us
     category: essential
     purpose: "Reolink firmware download host; cameras and recorders stop receiving updates if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://community.reolink.com/topic/6026/firewall-rules-reolink-host

@@ -10,7 +10,7 @@ rules:
   - pattern: devs.tplinkcloud.com
     category: essential
     purpose: "Kasa cloud server that plugs connect to even when set to local only; remote control stops if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: plug
     evidence:
       - https://www.softscheck.com/en/blog/tp-link-reverse-engineering/
@@ -24,14 +24,14 @@ rules:
   - pattern: n-devs-dcipc.tplinkcloud.com
     category: essential
     purpose: "TP-Link cloud endpoint for Tapo cameras, looked up around a thousand times a day per camera."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://community.tp-link.com/en/home/forum/topic/578442
   - pattern: n-deventry-dcipc.tplinkcloud.com
     category: essential
     purpose: "TP-Link cloud entry endpoint for Tapo cameras, looked up hundreds of times a day per camera."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://community.tp-link.com/en/home/forum/topic/578442
@@ -51,14 +51,14 @@ rules:
   - pattern: euw1-relay-dcipc.i.tplinknbu.com
     category: essential
     purpose: "Tapo camera video relay (Europe) for remote viewing; cameras look it up thousands of times a day."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://community.tp-link.com/en/home/forum/topic/578442
   - pattern: rtsp-dcipc.tplinknbu.com
     category: essential
     purpose: "Tapo camera streaming relay host, looked up thousands of times a day per camera."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://community.tp-link.com/en/home/forum/topic/578442

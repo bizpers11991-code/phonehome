@@ -88,6 +88,20 @@ rules:
     confidence: medium
     evidence:
       - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/outbrain.com.json
+  - pattern: =outbrain.com
+    company: outbrain
+    category: content
+    purpose: Outbrain's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+    confidence: medium
+    evidence:
+      - https://www.outbrain.com/
+  - pattern: =www.outbrain.com
+    company: outbrain
+    category: content
+    purpose: Outbrain's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+    confidence: medium
+    evidence:
+      - https://www.outbrain.com/
   - pattern: taboola.com
     company: taboola
     category: ads
@@ -95,6 +109,20 @@ rules:
     confidence: medium
     evidence:
       - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/taboola.com.json
+  - pattern: =taboola.com
+    company: taboola
+    category: content
+    purpose: Taboola's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+    confidence: medium
+    evidence:
+      - https://www.taboola.com/
+  - pattern: =www.taboola.com
+    company: taboola
+    category: content
+    purpose: Taboola's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+    confidence: medium
+    evidence:
+      - https://www.taboola.com/
   - pattern: quantserve.com
     company: quantcast
     category: ads

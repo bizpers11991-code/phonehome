@@ -13,7 +13,6 @@ rules:
     kind_hint: streamer
     evidence:
       - https://arxiv.org/abs/1911.03447
-      - https://blog.nstoler.com/2020/09/05/stop-your-roku-from-tracking-you/
 
   # --- Advertising ----------------------------------------------------------
   - pattern: ads.roku.com
@@ -23,7 +22,6 @@ rules:
     kind_hint: streamer
     evidence:
       - https://arxiv.org/abs/1911.03447
-      - https://blog.nstoler.com/2020/09/05/stop-your-roku-from-tracking-you/
   - pattern: ravm.tv
     category: ads
     purpose: Roku-owned domain that delivers the adverts shown on the Roku home screen.

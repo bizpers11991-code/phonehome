@@ -9,6 +9,20 @@ rules:
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/amplitude.com.json
   - https://amplitude.com/docs/apis/analytics/http-v2
+- pattern: =amplitude.com
+  company: amplitude
+  category: content
+  purpose: Amplitude's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://amplitude.com/
+- pattern: =www.amplitude.com
+  company: amplitude
+  category: content
+  purpose: Amplitude's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://amplitude.com/
 - pattern: mixpanel.com
   company: mixpanel
   category: telemetry
@@ -17,6 +31,20 @@ rules:
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/mixpanel.com.json
   - https://docs.mixpanel.com/docs/tracking-methods/sdks/javascript
+- pattern: =mixpanel.com
+  company: mixpanel
+  category: content
+  purpose: Mixpanel's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://mixpanel.com/home/
+- pattern: =www.mixpanel.com
+  company: mixpanel
+  category: content
+  purpose: Mixpanel's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://mixpanel.com/home/
 - pattern: segment.io
   company: segment
   category: telemetry
@@ -47,6 +75,20 @@ rules:
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/braze.com.json
   - https://www.braze.com/docs/api/basics/
+- pattern: =braze.com
+  company: braze
+  category: content
+  purpose: Braze's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.braze.com/
+- pattern: =www.braze.com
+  company: braze
+  category: content
+  purpose: Braze's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.braze.com/
 - pattern: braze.eu
   company: braze
   category: telemetry
@@ -69,6 +111,20 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/mparticle.com.json
+- pattern: =mparticle.com
+  company: mparticle
+  category: content
+  purpose: mParticle's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.mparticle.com/
+- pattern: =www.mparticle.com
+  company: mparticle
+  category: content
+  purpose: mParticle's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.mparticle.com/
 - pattern: localytics.com
   company: localytics
   category: telemetry
@@ -77,6 +133,20 @@ rules:
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/localytics.com.json
   - https://arxiv.org/abs/1911.03447
+- pattern: =localytics.com
+  company: localytics
+  category: content
+  purpose: Localytics's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://localytics.com/
+- pattern: =www.localytics.com
+  company: localytics
+  category: content
+  purpose: Localytics's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://localytics.com/
 - pattern: onesignal.com
   company: onesignal
   category: content
@@ -92,6 +162,20 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/launchdarkly.com.json
+- pattern: =launchdarkly.com
+  company: launchdarkly
+  category: content
+  purpose: LaunchDarkly's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://launchdarkly.com/
+- pattern: =www.launchdarkly.com
+  company: launchdarkly
+  category: content
+  purpose: LaunchDarkly's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://launchdarkly.com/
 - pattern: app.launchdarkly.com
   company: launchdarkly
   category: content
@@ -120,6 +204,20 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/optimizely.com.json
+- pattern: =optimizely.com
+  company: optimizely
+  category: content
+  purpose: Optimizely's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.optimizely.com/
+- pattern: =www.optimizely.com
+  company: optimizely
+  category: content
+  purpose: Optimizely's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.optimizely.com/
 - pattern: cdn.optimizely.com
   company: optimizely
   category: content
@@ -148,6 +246,20 @@ rules:
   confidence: high
   evidence:
   - https://arxiv.org/abs/1911.03447
+- pattern: =flurry.com
+  company: yahoo
+  category: content
+  purpose: Flurry's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.flurry.com/
+- pattern: =www.flurry.com
+  company: yahoo
+  category: content
+  purpose: Flurry's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.flurry.com/
 - pattern: omtrdc.net
   company: adobe
   category: telemetry

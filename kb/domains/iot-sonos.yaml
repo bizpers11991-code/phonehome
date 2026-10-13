@@ -18,7 +18,7 @@ rules:
   - pattern: msmetrics-test.ws.sonos.com
     category: telemetry
     purpose: "Test instance of Sonos usage-data collection, listed alongside the production host by tracking blocklists."
-    confidence: medium
+    confidence: low
     kind_hint: speaker
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/sonos

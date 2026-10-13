@@ -22,7 +22,6 @@ rules:
     kind_hint: tv
     evidence:
       - https://arxiv.org/abs/2409.06203
-      - https://github.com/SafeNetIoT/ACR
   - pattern: acr-eu-prd.samsungcloud.tv
     category: acr
     purpose: Receives fingerprints of on-screen content from European Samsung TVs so Samsung can identify what is being watched.
@@ -30,7 +29,6 @@ rules:
     kind_hint: tv
     evidence:
       - https://arxiv.org/abs/2409.06203
-      - https://github.com/SafeNetIoT/ACR
   - pattern: acr-au-prd.samsungcloud.tv
     category: acr
     purpose: Regional (Australia) endpoint of Samsung's content-recognition service, which identifies what is being watched.
@@ -116,7 +114,7 @@ rules:
   - pattern: samsungtvads.com
     category: ads
     purpose: Samsung TV advertising domain.
-    confidence: medium
+    confidence: low
     kind_hint: tv
     evidence:
       - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
@@ -131,7 +129,7 @@ rules:
   - pattern: sspapi-prd.samsungrs.com
     category: ads
     purpose: Samsung Ads supply-side platform API used when selling ad space on Samsung devices.
-    confidence: medium
+    confidence: low
     evidence:
       - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.samsung.txt
 

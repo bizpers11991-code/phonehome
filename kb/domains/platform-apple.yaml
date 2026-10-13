@@ -225,7 +225,6 @@ rules:
     purpose: Apple Maps and location services (maps, search and routing); the geod process also uploads opaque messages that include mobile carrier details.
     confidence: medium
     evidence:
-      - https://developer.apple.com/forums/thread/99015
       - https://www.scss.tcd.ie/doug.leith/apple_google.pdf
 
   # --- Ads ------------------------------------------------------------------

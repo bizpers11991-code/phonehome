@@ -93,11 +93,12 @@ rules:
       - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
   - pattern: msftncsi.com
     category: essential
-    purpose: Older Windows connectivity check that tests for internet access.
+    purpose: "Windows connectivity probes: the older web check (www.msftncsi.com) and the DNS check (dns.msftncsi.com) that current Windows still resolves."
     confidence: high
     kind_hint: computer
     evidence:
-      - https://learn.microsoft.com/en-us/windows-server/networking/ncsi/ncsi-overview
+      - https://learn.microsoft.com/en-us/windows-server/networking/ncsi/ncsi-frequently-asked-questions
+      - https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/troubleshoot-ncsi-guidance
 
   # --- Essential: updates ---------------------------------------------------
   - pattern: windowsupdate.com

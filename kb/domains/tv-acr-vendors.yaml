@@ -10,7 +10,20 @@ rules:
     kind_hint: tv
     evidence:
       - https://arxiv.org/abs/2409.06203
-      - https://github.com/SafeNetIoT/ACR
+  - pattern: =alphonso.tv
+    company: alphonso
+    category: content
+    purpose: Alphonso's own website (TV data and advertising pages); opening it in a browser is ordinary web traffic, not LG TV content recognition.
+    confidence: medium
+    evidence:
+      - https://alphonso.tv/
+  - pattern: =www.alphonso.tv
+    company: alphonso
+    category: content
+    purpose: Alphonso's own website address, which redirects to alphonso.tv; ordinary web traffic, not LG TV content recognition.
+    confidence: medium
+    evidence:
+      - https://www.alphonso.tv/
 
   - pattern: cid.samba.tv
     company: samba-tv
