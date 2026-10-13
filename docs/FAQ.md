@@ -83,15 +83,19 @@ check by hand: [grading.md](grading.md).
 ### Will it run on a Raspberry Pi Zero?
 
 There is an armv6 build for the Pi Zero and Pi 1, and the binary is about
-14 MB with no dependencies. We have not measured it on a Zero yet. The thing
-to watch is RAM: a report loads the lookups for the period you view into
-memory. For scale, analysing one million logged DNS queries (a busy week for
-a large home) takes about 0.25 s and 75 MB of allocations on a laptop CPU in
-our benchmark (`BenchmarkAnalyze`); a Zero will be many times slower. Shorter retention and shorter
-report periods keep it light. The systemd unit and Docker image set
-`GOMEMLIMIT=128MiB`, which holds a 30-day report for a busy home near 128 MiB
-on 32-bit instead of ~200 MiB ([measurements](performance.md)); change it
-with the environment variable. Numbers from real Zeros are very welcome.
+15 MB with no dependencies. We have not measured it on a Zero yet. The thing
+to watch is RAM: a report streams the lookups through the analysis, so its
+memory grows with the number of distinct (device, domain) pairs rather than
+with the number of lookups. For scale, analysing one million logged DNS
+queries (a busy week for a large home) takes about 0.2 s and 62 MB of
+allocations on a laptop CPU in our benchmark (`BenchmarkAnalyze`), and a
+30-day report of 1.46 million lookups peaked at 60 MiB on a 32-bit build; a
+Zero will be many times slower. Shorter retention and shorter report periods
+keep it light. The systemd unit and Docker image set `GOMEMLIMIT=128MiB`,
+which holds a 30-day report of a home with hundreds of thousands of distinct
+domains near 128 MiB instead of ~190 MiB ([measurements](performance.md));
+change it with the environment variable. Numbers from real Zeros are very
+welcome.
 
 ### How much does it store, and for how long?
 

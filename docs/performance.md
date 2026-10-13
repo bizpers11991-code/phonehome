@@ -71,7 +71,9 @@ file is therefore shrunk with a passive checkpoint, which never waits; if a
 report was open, the last pages go at a later checkpoint.
 
 Ingest memory stays flat however large the backlog: sources are read in
-batches of 5,000 and a run stops after 20 batches.
+batches of 5,000 and a round stops after 20 batches per source, with the
+next round starting at once while a source has more (`ingest --once` keeps
+going until it has everything).
 
 ## Reports with many distinct domains
 

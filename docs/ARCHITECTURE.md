@@ -254,8 +254,14 @@ shows the first page and says when the list is cut), `GET /receipt/home.svg|png?
   read from the start.
 - Retention: `retention_days` (default 90, max 36500, 0 = keep forever)
   makes ingest call `Store.Prune` for anything older: once a day under
-  `serve` / `ingest`, and at the end of every `ingest --once`. Prune
-  deletes in 5000-row transactions so ingestion is never blocked for long.
+  `serve` / `ingest`, and at the end of every `ingest --once`. On the
+  first read, records already older than that are not stored in the first
+  place: the Pi-hole database and API are asked only for newer rows, other
+  sources are filtered before insert, and the cursor moves past the rest. Prune deletes in 5000-row
+  transactions so ingestion is never blocked for long, and a database made
+  by this version then returns the freed pages to the disk in short
+  `incremental_vacuum` steps (one made by an earlier version only reuses
+  them; ingest logs how to shrink it once).
   Measured sizes and timings are in `docs/performance.md`.
 - `demo`: synthetic household, deterministic for a given seed and start time
   (it is generated back from `time.Now()`, so counts shift slightly between
