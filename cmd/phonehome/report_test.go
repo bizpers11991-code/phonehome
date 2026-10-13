@@ -81,6 +81,16 @@ func TestPrintReportReason(t *testing.T) {
 			t.Errorf("report lacks %q\n%s", want, out)
 		}
 	}
+	if strings.Contains(out, "(home grade)") {
+		t.Errorf("a home grade that is not provisional is marked:\n%s", out)
+	}
+	r.Provisional = true
+	r.Devices[0].Reason.Data = 3 * time.Hour
+	b.Reset()
+	printReport(&b, r, 7)
+	if want := "Home grade: D (as good as its worst device).\nProvisional: based on 3 hours of data (home grade).\n"; !strings.Contains(b.String(), want) {
+		t.Errorf("report lacks %q\n%s", want, b.String())
+	}
 	if strings.Count(out, "note: No known content-recognition") != 1 {
 		t.Errorf("ACR note not on the TV alone:\n%s", out)
 	}

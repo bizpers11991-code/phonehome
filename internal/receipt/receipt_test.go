@@ -407,3 +407,27 @@ func TestSinceBlockVariants(t *testing.T) {
 		}
 	}
 }
+
+// A provisional home grade says so under the stamp, like a device's.
+func TestHomeProvisionalNote(t *testing.T) {
+	r := home()
+	text := func() string {
+		var b strings.Builder
+		for _, l := range Home(r, Options{Now: printed}).Lines {
+			b.WriteString(l.Text + "\n")
+		}
+		return b.String()
+	}
+	if strings.Contains(text(), "PROVISIONAL") || strings.Contains(strings.ToUpper(text()), "PROVISIONAL: BASED") {
+		t.Errorf("a real home grade is marked provisional:\n%s", text())
+	}
+	r.Provisional = true
+	for i := range r.Devices {
+		if r.Devices[i].Grade == r.Grade {
+			r.Devices[i].Reason.Data = 5 * time.Hour
+		}
+	}
+	if got := strings.ToUpper(text()); !strings.Contains(got, "PROVISIONAL: BASED ON 5 HOURS OF DATA.") {
+		t.Errorf("provisional home receipt lacks the note:\n%s", got)
+	}
+}

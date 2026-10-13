@@ -596,6 +596,9 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 		thousands(r.Total), days, share)
 	if r.Grade != "" {
 		fmt.Fprintf(w, "Home grade: %s (as good as its worst device).\n", r.Grade)
+		if s := r.ProvisionalText(); s != "" {
+			fmt.Fprintf(w, "%s (home grade).\n", s)
+		}
 	}
 	since := ""
 	if pc := r.Previous; pc != nil {

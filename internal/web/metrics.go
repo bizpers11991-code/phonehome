@@ -104,6 +104,7 @@ func writeMetrics(rep model.HomeReport, st model.Status, days int) []byte {
 		window     = g("phonehome_window_days", "Length of the period the report figures cover, in days (the days URL parameter).")
 		generated  = g("phonehome_report_generated_timestamp_seconds", "When the report behind these figures was computed.")
 		homeGrade  = g("phonehome_home_grade", "The home's grade in grade points (A=4, B=3, C=2, D=1, F=0): the worst device grade. Absent with no devices.")
+		homeProv   = g("phonehome_home_grade_provisional", "1 when every device at the home's grade has a provisional grade (under 20 hours of data), else 0. Absent with no devices.")
 		homeDevs   = g("phonehome_home_devices", "Devices seen in the period.")
 		homeTotal  = g("phonehome_home_lookups", "DNS lookups in the period, by category.")
 		homeSnoop  = g("phonehome_home_snooping_lookups_per_day", "Snooping lookups (content recognition, ads, tracking, telemetry) per day, whole home.")
@@ -128,6 +129,7 @@ func writeMetrics(rep model.HomeReport, st model.Status, days int) []byte {
 	generated.add(unixSeconds(rep.GeneratedAt))
 	if v, ok := gradePoints[rep.Grade]; ok {
 		homeGrade.add(v)
+		homeProv.add(boolValue(rep.Provisional))
 	}
 	homeDevs.add(float64(len(rep.Devices)))
 	for _, c := range model.Categories() {
@@ -180,7 +182,7 @@ func writeMetrics(rep model.HomeReport, st model.Status, days int) []byte {
 	}
 
 	var b strings.Builder
-	for _, f := range []*family{info, demo, window, generated, homeGrade, homeDevs, homeTotal, homeSnoop,
+	for _, f := range []*family{info, demo, window, generated, homeGrade, homeProv, homeDevs, homeTotal, homeSnoop,
 		devGrade, devProv, devCover, devSnoop, devLookups, devBlocked, devQuiet, devBeats, devBypass,
 		srcUp, srcRecords, srcLastRun, srcLastOK} {
 		fmt.Fprintf(&b, "# HELP %s %s\n# TYPE %s %s\n", f.name, f.help, f.name, f.typ)

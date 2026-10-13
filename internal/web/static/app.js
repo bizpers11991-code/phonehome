@@ -313,6 +313,7 @@ function renderHero() {
       t('hero.snooping', { n: fmt(r.snooping), count: r.snooping }),
       blocked ? t('hero.blocked', { n: fmt(blocked), count: blocked }) : null,
     ].filter(Boolean).join(' · ') }),
+    homeProvisional(r) ?? '',
     sinceHero(r) ?? '', // replaceChildren would print null
     stack(r.categories, r.total),
     h('div', { class: 'legend' },
@@ -435,16 +436,28 @@ function reasonParts(r) {
 // that 49.6% never reads as the 50% it falls short of.
 const coveragePct = (d) => pf.format(d.coveragePercent / 100);
 
+// provisionalText is "Provisional: based on 3 hours of data."
+function provisionalText(dataHours) {
+  const hours = Math.floor(dataHours);
+  return hours >= 1 ? t('why.provisional', { n: fmt(hours), count: hours }) : t('why.provisionalSoon');
+}
+
+// homeProvisional is the headline note when every device at the home grade
+// has a provisional grade (the server's `provisional`): the most data any
+// of them has, as Go's HomeReport.ProvisionalText.
+function homeProvisional(r) {
+  if (!r.provisional) return null;
+  const most = Math.max(0, ...r.devices.filter((d) => d.grade === r.grade).map((d) => d.reason.dataHours));
+  return h('p', { class: 'sub why-note', text: t('hero.homeProv', { grade: r.grade }) + ' ' + provisionalText(most) });
+}
+
 // gradeWhy is the one line under a grade: what decided it, and whether it
 // rests on too little data or on a minority of the device's lookups.
 function gradeWhy(d) {
   const parts = reasonParts(d.reason);
   if (!parts.length) return null;
   const notes = [];
-  if (d.reason.provisional) {
-    const hours = Math.floor(d.reason.dataHours);
-    notes.push(hours >= 1 ? t('why.provisional', { n: fmt(hours), count: hours }) : t('why.provisionalSoon'));
-  }
+  if (d.reason.provisional) notes.push(provisionalText(d.reason.dataHours));
   if (d.lowCoverage) notes.push(t('why.coverage', { pct: coveragePct(d) }));
   return h('p', { class: 'why' }, h('b', { text: t('why.label', { grade: d.grade }) }), ' ', ...parts,
     notes.length ? h('span', { class: 'why-note', text: ' ' + notes.join(' ') }) : null);

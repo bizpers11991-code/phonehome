@@ -428,6 +428,7 @@ func (a *analysis) report() model.HomeReport {
 		)
 	})
 	hr.Grade = HomeGrade(hr.Devices)
+	hr.Provisional = HomeProvisional(hr.Devices)
 	return hr
 }
 

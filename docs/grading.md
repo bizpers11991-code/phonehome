@@ -107,6 +107,13 @@ worst grade among the devices seen in the period (F is worst, then D, C, B,
 A). One loud TV is enough to make a home loud, however quiet the light bulbs
 are, and averaging would hide exactly the device you most need to look at.
 
+The home grade is **provisional** when every device at that worst grade is
+provisional: a real D is not made provisional by a brand-new C, but a home
+whose only D is a device that joined an hour ago is. The report, the home
+receipt and the dashboard then say "Provisional: based on N hours of data"
+(the most data any device at that grade has), `/api/report` has
+`provisional: true`, and `/metrics` has `phonehome_home_grade_provisional`.
+
 A period with no devices has no home grade (the receipt shows `?` and the
 API returns an empty string). The rule lives in `HomeGrade` in
 `internal/analyze/grade.go`.
