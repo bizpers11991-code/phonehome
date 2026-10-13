@@ -1,6 +1,7 @@
 package analyze
 
 import (
+	"iter"
 	"slices"
 	"time"
 
@@ -30,18 +31,29 @@ const partialSlack = time.Minute
 // data in it; when data begins inside it the comparison is marked Partial.
 // See docs/grading.md, "Compared with the previous period".
 func AnalyzeCompared(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQuery, fl []model.Flow, o Options, dataFrom time.Time) model.HomeReport {
+	return AnalyzeStream(c, p, devs, byTime(qs), fl, o, dataFrom)
+}
+
+// AnalyzeStream is AnalyzeCompared fed from a sequence instead of a slice, so
+// a month of lookups never has to be in memory at once: a store can decode
+// them one at a time (store.DNSEach). qs must yield lookups oldest first and
+// is ranged over once; a yielded *DNSQuery is only read before the next
+// one, so the producer may reuse it. Domain strings are kept, so they must
+// not be backed by a buffer the producer overwrites.
+func AnalyzeStream(c Classifier, p model.Period, devs []model.Device, qs iter.Seq[*model.DNSQuery], fl []model.Flow, o Options, dataFrom time.Time) model.HomeReport {
 	o = o.normalized()
 	prevP := p.Previous()
 	coverFrom, ok := previousCoverage(p, dataFrom)
 	if !ok {
-		return Analyze(c, p, devs, qs, fl, o)
+		return analyzeSeq(c, p, devs, qs, fl, o)
 	}
 
 	cur := newAnalysis(c, p, devs, o)
 	prev := newAnalysis(c, prevP, devs, o)
 	prev.cache = cur.cache // classify each domain once across both periods
-	prev.noFixes = true
-	for q := range byTime(qs) {
+	prev.matches = cur.matches
+	prev.noFixes, prev.noDomains = true, true
+	for q := range qs {
 		if cur.inPeriod(q.Time) {
 			cur.addQuery(q)
 		} else {

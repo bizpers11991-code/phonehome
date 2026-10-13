@@ -305,8 +305,8 @@ func build(d dev, p model.Period, days float64) model.DeviceReport {
 		}
 		c := companies[dm.company]
 		ds := model.DomainStat{Domain: dm.name, Count: n, Blocked: blocked,
-			Category: dm.cat, CompanyID: c.ID, CompanyName: c.Name, Purpose: dm.purpose,
-			First: p.From.Add(time.Hour), Last: p.To.Add(-time.Hour)}
+			DomainMatch: &model.DomainMatch{Category: dm.cat, CompanyID: c.ID, CompanyName: c.Name, Purpose: dm.purpose},
+			First:       p.From.Add(time.Hour), Last: p.To.Add(-time.Hour)}
 		if dm.cat != model.CatUnknown {
 			ds.Rule, ds.Confidence = dm.name, "medium" // no evidence links: the fixture is made up
 		}

@@ -32,10 +32,34 @@ type app struct {
 	cache    map[model.Period]cached
 	flights  map[model.Period]*flight
 	receipts map[receiptKey]cachedReceipt
+	domains  map[domainsKey]cachedDomains
 
 	analysing chan struct{} // a slot per analysis running; see maxAnalyses
 	analyses  atomic.Int64  // analyses run, for tests
 }
+
+// domainsKey identifies a report that lists one device's every domain.
+type domainsKey struct {
+	p        model.Period
+	deviceID string
+}
+
+type cachedDomains struct {
+	report model.HomeReport
+	at     time.Time
+}
+
+// domainListBudget is how many entries the domain lists of one cached report
+// may hold in all (about 90 bytes each). Households with 20,000 distinct
+// names fit several times over; one that looks up hundreds of thousands, for
+// which a list per device would take hundreds of MB, gets lists on demand
+// from ReportWithDomains instead.
+const domainListBudget = 250_000
+
+// maxDomainReports bounds how many such reports are kept. Each holds a
+// device's whole domain list, which can be large, and a person looks at one
+// device at a time.
+const maxDomainReports = 2
 
 type cached struct {
 	report model.HomeReport
@@ -76,6 +100,7 @@ func newApp(st *store.Store, k *kb.KB, o analyze.Options, demo bool) *app {
 		cache:     map[model.Period]cached{},
 		flights:   map[model.Period]*flight{},
 		receipts:  map[receiptKey]cachedReceipt{},
+		domains:   map[domainsKey]cachedDomains{},
 		analysing: make(chan struct{}, maxAnalyses),
 	}
 }
@@ -102,6 +127,12 @@ func (a *app) Report(ctx context.Context, p model.Period) (model.HomeReport, err
 			a.flights[p] = f
 			gen, opts := a.gen, a.opts
 			a.mu.Unlock()
+			// A cached report holds the devices' full domain lists only up
+			// to a budget (see domainListBudget); ReportWithDomains lists
+			// the rest on request.
+			if opts.MaxDomainEntries == 0 {
+				opts.MaxDomainEntries = domainListBudget
+			}
 			return a.lead(ctx, p, f, gen, opts)
 		}
 		a.mu.Unlock()
@@ -115,6 +146,51 @@ func (a *app) Report(ctx context.Context, p model.Period) (model.HomeReport, err
 		}
 		return f.report, f.err
 	}
+}
+
+// ReportWithDomains is Report with DeviceReport.Domains filled in for one
+// device (and only that one), however long. Report itself leaves the lists
+// out once they pass domainListBudget (DomainCount says how long each is),
+// so a month of a household with hundreds of thousands of distinct names
+// stays small in the cache; the details view's full domain table asks for
+// its device's here. The result is cached briefly, for reloads and exports.
+func (a *app) ReportWithDomains(ctx context.Context, p model.Period, deviceID string) (model.HomeReport, error) {
+	p = roundPeriod(p)
+	key := domainsKey{p, deviceID}
+	a.mu.Lock()
+	if c, ok := a.domains[key]; ok && time.Since(c.at) < reportTTL {
+		a.mu.Unlock()
+		return c.report, nil
+	}
+	gen, opts := a.gen, a.opts
+	a.mu.Unlock()
+	opts.DomainsFor = func(id string) bool { return id == deviceID }
+	opts.MaxDomainEntries = 0
+	r, err := a.analyse(ctx, p, opts)
+	if err != nil {
+		return model.HomeReport{}, err
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if gen == a.gen {
+		for k, v := range a.domains {
+			if time.Since(v.at) >= reportTTL {
+				delete(a.domains, k)
+			}
+		}
+		for len(a.domains) >= maxDomainReports { // drop the oldest
+			var oldest domainsKey
+			var at time.Time
+			for k, v := range a.domains {
+				if at.IsZero() || v.at.Before(at) {
+					oldest, at = k, v.at
+				}
+			}
+			delete(a.domains, oldest)
+		}
+		a.domains[key] = cachedDomains{report: r, at: time.Now()}
+	}
+	return r, nil
 }
 
 // lead runs the analysis for flight f, caches it and wakes those waiting.
@@ -148,6 +224,7 @@ func (a *app) invalidate() {
 	clear(a.cache)
 	clear(a.flights)
 	clear(a.receipts)
+	clear(a.domains)
 	a.mu.Unlock()
 }
 
@@ -175,15 +252,20 @@ func (a *app) analyse(ctx context.Context, p model.Period, opts analyze.Options)
 	if !st.Oldest.IsZero() && st.Oldest.Before(p.From) {
 		read.From = p.Previous().From
 	}
-	qs, err := a.store.DNSBetween(ctx, read)
-	if err != nil {
-		return model.HomeReport{}, err
-	}
 	fl, err := a.store.FlowsBetween(ctx, read)
 	if err != nil {
 		return model.HomeReport{}, err
 	}
-	r := analyze.AnalyzeCompared(a.kb, p, devs, qs, fl, opts, st.Oldest)
+	// The lookups are streamed from the store into the analysis, never held
+	// as a slice: a month is millions of rows, ~100 bytes each.
+	var scanErr error
+	qs := func(yield func(*model.DNSQuery) bool) {
+		scanErr = a.store.DNSEach(ctx, read, yield)
+	}
+	r := analyze.AnalyzeStream(a.kb, p, devs, qs, fl, opts, st.Oldest)
+	if scanErr != nil {
+		return model.HomeReport{}, scanErr
+	}
 	r.Demo = a.demo
 	return r, nil
 }

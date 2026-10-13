@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -149,5 +150,84 @@ func TestLoopback(t *testing.T) {
 		if got := loopback(listen); got != want {
 			t.Errorf("loopback(%q) = %t, want %t", listen, got, want)
 		}
+	}
+}
+
+// Report keeps each device's domain list until a budget of entries is
+// spent, then leaves lists out (they are most of a report's memory when a
+// household looks up very many names). ReportWithDomains lists one device's,
+// and what it lists is what an unbudgeted analysis would.
+func TestReportDomainsOnDemand(t *testing.T) {
+	ctx := context.Background()
+	st, err := loadDemo(ctx, 7, 7)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	p := roundPeriod(lastDays(7))
+
+	// An ordinary household is well inside the budget.
+	roomy := newApp(st, kb.Default(), analyze.DefaultOptions(), true)
+	r, err := roomy.Report(ctx, p)
+	if err != nil || len(r.Devices) < 2 {
+		t.Fatalf("report: %v, %d devices", err, len(r.Devices))
+	}
+	for _, d := range r.Devices {
+		if len(d.Domains) == 0 || len(d.Domains) != d.DomainCount {
+			t.Errorf("%s: %d domains of %d listed", d.Device.ID, len(d.Domains), d.DomainCount)
+		}
+	}
+	full := r
+
+	o := analyze.DefaultOptions()
+	o.MaxDomainEntries = 1 // nothing fits
+	a := newApp(st, kb.Default(), o, true)
+	lean, err := a.Report(ctx, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, d := range lean.Devices {
+		if d.Domains != nil || len(d.TopDomains) == 0 || d.DomainCount != full.Devices[i].DomainCount {
+			t.Errorf("%s: %d domains listed, %d top, %d counted", d.Device.ID, len(d.Domains), len(d.TopDomains), d.DomainCount)
+		}
+	}
+
+	id := full.Devices[0].Device.ID
+	got, err := a.ReportWithDomains(ctx, p, id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, d := range got.Devices {
+		if (d.Device.ID == id) != (d.Domains != nil) {
+			t.Errorf("%s: %d domains listed", d.Device.ID, len(d.Domains))
+		}
+		if d.Device.ID == id && !reflect.DeepEqual(d.Domains, full.Devices[i].Domains) {
+			t.Errorf("%s: domains differ from an unbudgeted analysis", id)
+		}
+		if !reflect.DeepEqual(d.TopDomains, full.Devices[i].TopDomains) || d.Total != full.Devices[i].Total {
+			t.Errorf("%s: figures differ from an unbudgeted analysis", d.Device.ID)
+		}
+	}
+
+	// Asking again is served from the cache; a change to the data is not.
+	n := a.analyses.Load()
+	if _, err := a.ReportWithDomains(ctx, p, id); err != nil || a.analyses.Load() != n {
+		t.Errorf("second ReportWithDomains: err %v, %d analyses more", err, a.analyses.Load()-n)
+	}
+	a.invalidate()
+	if _, err := a.ReportWithDomains(ctx, p, id); err != nil || a.analyses.Load() != n+1 {
+		t.Errorf("after invalidate: err %v, %d analyses more, want 1", err, a.analyses.Load()-n)
+	}
+	// Only a couple are kept.
+	for _, other := range full.Devices[1:] {
+		if _, err := a.ReportWithDomains(ctx, p, other.Device.ID); err != nil {
+			t.Fatal(err)
+		}
+	}
+	a.mu.Lock()
+	kept := len(a.domains)
+	a.mu.Unlock()
+	if kept > maxDomainReports {
+		t.Errorf("%d domain reports cached, want at most %d", kept, maxDomainReports)
 	}
 }

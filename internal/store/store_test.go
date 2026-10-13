@@ -776,3 +776,43 @@ func TestPruneOldDB(t *testing.T) {
 		t.Fatalf("Prune = %d, %v", n, err)
 	}
 }
+
+// TestDNSEach: the streamed lookups are DNSBetween's, in the same order, and
+// fn can stop the read.
+func TestDNSEach(t *testing.T) {
+	ctx := context.Background()
+	s := openMem(t)
+	var in []model.DNSQuery
+	for i := range 200 {
+		x := q(time.Duration(i/3)*time.Second, fmt.Sprintf("192.168.1.%d", 10+i%4), fmt.Sprintf("d%d.example", i%37))
+		x.QType, x.Blocked, x.Source = []string{"A", "AAAA", "HTTPS"}[i%3], i%11 == 0, "pihole"
+		in = append(in, x)
+	}
+	if err := s.InsertDNS(ctx, in); err != nil {
+		t.Fatal(err)
+	}
+	p := period(10*time.Second, time.Hour)
+	want, err := s.DNSBetween(ctx, p)
+	if err != nil || len(want) == 0 {
+		t.Fatalf("DNSBetween: %d rows, %v", len(want), err)
+	}
+	var got []model.DNSQuery
+	if err := s.DNSEach(ctx, p, func(q *model.DNSQuery) bool { got = append(got, *q); return true }); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("DNSEach gave %d lookups that differ from DNSBetween's %d", len(got), len(want))
+	}
+	n := 0
+	if err := s.DNSEach(ctx, p, func(*model.DNSQuery) bool { n++; return n < 5 }); err != nil || n != 5 {
+		t.Errorf("stopping after 5: called %d times, err %v", n, err)
+	}
+	if err := s.DNSEach(ctx, period(2*time.Hour, 3*time.Hour), func(*model.DNSQuery) bool { t.Error("called for an empty period"); return true }); err != nil {
+		t.Fatal(err)
+	}
+	cctx, cancel := context.WithCancel(ctx)
+	cancel()
+	if err := s.DNSEach(cctx, p, func(*model.DNSQuery) bool { return true }); err == nil {
+		t.Error("cancelled context: no error")
+	}
+}

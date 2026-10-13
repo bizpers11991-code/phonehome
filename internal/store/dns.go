@@ -266,30 +266,63 @@ func insertDNS(n int) string {
 // allocated once instead of grown by doubling. It runs in one read
 // transaction, so the names, the count and the rows are one snapshot even
 // while Prune deletes domains and ingestion inserts.
+//
+// Reports use DNSEach instead, which does not hold the rows in memory.
 func (s *Store) DNSBetween(ctx context.Context, p model.Period) ([]model.DNSQuery, error) {
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, fmt.Errorf("store: dns between: %w", err)
 	}
 	defer tx.Rollback()
-	from, to := nanos(p.From), nanos(p.To)
 
 	var n int
-	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM dns WHERE ts >= ? AND ts < ?`, from, to).Scan(&n); err != nil {
+	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM dns WHERE ts >= ? AND ts < ?`, nanos(p.From), nanos(p.To)).Scan(&n); err != nil {
 		return nil, fmt.Errorf("store: dns between: %w", err)
 	}
 	if n == 0 {
 		return nil, nil
 	}
+	out := make([]model.DNSQuery, 0, n)
+	err = dnsEach(ctx, tx, p, func(q *model.DNSQuery) bool {
+		out = append(out, *q)
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DNSEach calls fn for each lookup in p, oldest first, until fn returns
+// false. It is DNSBetween without the slice: the lookups are decoded one at
+// a time into a single DNSQuery that fn must not keep (copy it to keep it;
+// its strings are safe to keep). Memory is the domain and source name maps
+// (one string per distinct domain in or after p) however many lookups there
+// are, which is what keeps a month-long report on a small machine within
+// its budget.
+//
+// It runs in one read transaction, a consistent snapshot like DNSBetween.
+// fn runs inside it, so it should be quick and must not call the Store.
+func (s *Store) DNSEach(ctx context.Context, p model.Period, fn func(*model.DNSQuery) bool) error {
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return fmt.Errorf("store: dns each: %w", err)
+	}
+	defer tx.Rollback()
+	return dnsEach(ctx, tx, p, fn)
+}
+
+func dnsEach(ctx context.Context, tx *sql.Tx, p model.Period, fn func(*model.DNSQuery) bool) error {
+	from, to := nanos(p.From), nanos(p.To)
 	srcNames, err := names(ctx, tx, `SELECT id, name FROM sources`)
 	if err != nil {
-		return nil, fmt.Errorf("store: dns between: %w", err)
+		return fmt.Errorf("store: dns between: %w", err)
 	}
 	// domains.last_ts is at or after every lookup of the domain, so only
 	// domains with last_ts in or after p can be referred to.
 	domNames, err := names(ctx, tx, `SELECT id, name FROM domains WHERE last_ts >= ?`, from)
 	if err != nil {
-		return nil, fmt.Errorf("store: dns between: %w", err)
+		return fmt.Errorf("store: dns between: %w", err)
 	}
 
 	rows, err := tx.QueryContext(ctx, `
@@ -298,22 +331,24 @@ func (s *Store) DNSBetween(ctx context.Context, p model.Period) ([]model.DNSQuer
 		WHERE ts >= ? AND ts < ?
 		ORDER BY ts, seq`, from, to)
 	if err != nil {
-		return nil, fmt.Errorf("store: dns between: %w", err)
+		return fmt.Errorf("store: dns between: %w", err)
 	}
 	defer rows.Close()
 
 	// qtype strings repeat heavily; interning them keeps a month of
 	// lookups from holding a million copies of "A" and "AAAA".
 	qtypes := make(map[string]string)
-	out := make([]model.DNSQuery, 0, n)
+	// The scan targets are declared once: Scan takes their addresses, so
+	// declaring them in the loop would heap-allocate them for every row.
+	var (
+		q            model.DNSQuery
+		ts, dom, src int64
+		client, qt   sql.RawBytes
+		blocked      bool
+	)
 	for rows.Next() {
-		var (
-			ts, dom, src int64
-			client, qt   sql.RawBytes
-			blocked      bool
-		)
 		if err := rows.Scan(&ts, &client, &dom, &qt, &blocked, &src); err != nil {
-			return nil, fmt.Errorf("store: dns between: %w", err)
+			return fmt.Errorf("store: dns between: %w", err)
 		}
 		qtype, ok := qtypes[string(qt)]
 		if !ok {
@@ -324,24 +359,37 @@ func (s *Store) DNSBetween(ctx context.Context, p model.Period) ([]model.DNSQuer
 		if !ok {
 			// Not expected (InsertDNS keeps last_ts current), but never
 			// return a lookup without its domain.
-			if err := tx.QueryRowContext(ctx, `SELECT name FROM domains WHERE id = ?`, dom).Scan(&domain); err != nil {
-				return nil, fmt.Errorf("store: dns between: domain %d: %w", dom, err)
+			if domain, err = domainName(ctx, tx, dom); err != nil {
+				return err
 			}
 			domNames[dom] = domain
 		}
-		out = append(out, model.DNSQuery{
+		q = model.DNSQuery{
 			Time:     fromNanos(ts),
 			ClientIP: ipFrom(client),
 			Domain:   domain,
 			QType:    qtype,
 			Blocked:  blocked,
 			Source:   srcNames[src],
-		})
+		}
+		if !fn(&q) {
+			return nil
+		}
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("store: dns between: %w", err)
+		return fmt.Errorf("store: dns between: %w", err)
 	}
-	return out, nil
+	return nil
+}
+
+// domainName reads one domain's name, for a lookup whose domain the bulk read
+// in dnsEach did not return.
+func domainName(ctx context.Context, tx *sql.Tx, id int64) (string, error) {
+	var name string
+	if err := tx.QueryRowContext(ctx, `SELECT name FROM domains WHERE id = ?`, id).Scan(&name); err != nil {
+		return "", fmt.Errorf("store: dns between: domain %d: %w", id, err)
+	}
+	return name, nil
 }
 
 // names runs an "id, name" query and returns the result as a map.
