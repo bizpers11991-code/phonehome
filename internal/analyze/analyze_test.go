@@ -514,3 +514,39 @@ func TestACRRulesOnlyForScreens(t *testing.T) {
 		t.Errorf("TV: grade %s by %q (%d), want D by ACR (3)", tv.Grade, tv.Reason.Rule, tv.Reason.Count)
 	}
 }
+
+// Content-recognition hosts hint "TV", but the ACR rules apply by kind, so
+// they cannot also decide the kind: a laptop that hits ACR hosts stays a
+// laptop (and is not penalised as a TV), a nameless box with only ACR hints
+// stays unknown and so still gets the ACR rules, and a TV is still told by its
+// non-ACR hosts.
+func TestKindNotInferredFromACR(t *testing.T) {
+	var qs []model.DNSQuery
+	for i := range 10 {
+		at := time.Duration(i) * time.Hour
+		for _, c := range []string{"192.168.1.20", "192.168.1.21", "192.168.1.22"} {
+			qs = append(qs, q(at, c, "acr.samsung.example"))
+		}
+	}
+	for i := range 10 { // the TV's non-ACR hosts: advertising, hinted TV
+		qs = append(qs, q(time.Duration(i)*time.Hour, "192.168.1.22", "ads.samsung.example"))
+	}
+	devs := []model.Device{
+		{ID: "mac:laptop", IPs: []netip.Addr{ip("192.168.1.20")}, Hostname: "dans-macbook"},
+		{ID: "mac:box", IPs: []netip.Addr{ip("192.168.1.21")}},
+		{ID: "mac:tv", IPs: []netip.Addr{ip("192.168.1.22")}},
+	}
+	rep := Analyze(newFakeKB(), week, devs, qs, nil, utcOpt)
+	for id, want := range map[string]struct {
+		kind  model.DeviceKind
+		grade string
+	}{
+		"mac:laptop": {model.KindComputer, "A"},
+		"mac:box":    {model.KindUnknown, "D"},
+		"mac:tv":     {model.KindTV, "D"},
+	} {
+		if d := findDevice(t, rep, id); d.Device.Kind != want.kind || d.Grade != want.grade {
+			t.Errorf("%s: kind %q grade %s, want %q %s", id, d.Device.Kind, d.Grade, want.kind, want.grade)
+		}
+	}
+}

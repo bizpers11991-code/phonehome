@@ -56,7 +56,11 @@ the ACR penalty on their own.
 
 The kind is shown on every device card. It comes from the hosts the device
 looks up, its name and its vendor (`internal/analyze/kind.go`); if phonehome
-has one wrong, please open an issue.
+has one wrong, please open an issue. Content-recognition hosts never count
+toward the kind: that would be circular, since the kind decides whether the
+ACR rules apply. A laptop that looks up an ACR host stays a laptop; a device
+with no other clue stays "unknown", which still gets the ACR rules, so
+nothing escapes them.
 
 For a TV or streaming player that looked up no known ACR server, the report,
 the dashboard's details, the receipt and the API (`acrUnseen`) add a note: "No known content-recognition server seen; not every TV

@@ -469,7 +469,11 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 		if cls.Category.Snooping() {
 			r.Snooping += da.count
 		}
-		if cls.KindHint != "" && cls.KindHint != model.KindUnknown {
+		// ACR hosts hint "TV" but grading treats a TV as the thing that runs
+		// ACR: letting them decide the kind would be circular, and a laptop
+		// that opens an ACR company's site would be re-inferred as a TV and
+		// penalised. Only other hosts (a TV's app and update servers) count.
+		if cls.KindHint != "" && cls.KindHint != model.KindUnknown && cls.Category != model.CatACR {
 			hints[cls.KindHint] += da.count
 		}
 		ds := model.DomainStat{
