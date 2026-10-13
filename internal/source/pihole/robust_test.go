@@ -59,6 +59,10 @@ func TestDBBadCursor(t *testing.T) {
 // keeps committing to it, as FTL does every DBinterval.
 func TestDBConcurrentWAL(t *testing.T) {
 	path, w := fixture(t, v6Schema)
+	// One writer connection that stays open, as FTL's is: a pool would
+	// open (and recover the WAL for) new connections mid-test and fail
+	// with SQLITE_BUSY_RECOVERY, which the writer has no timeout for.
+	w.SetMaxOpenConns(1)
 	exec(t, w, `PRAGMA journal_mode=WAL`)
 	d := openDB(t, path)
 	ctx := context.Background()

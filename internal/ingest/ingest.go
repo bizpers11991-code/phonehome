@@ -100,8 +100,9 @@ func (r *Runner) Run(ctx context.Context, interval time.Duration) {
 	defer tick.Stop()
 	backoffs := map[string]*backoff{}
 	var lastPrune time.Time
+	ticked := true
 	for {
-		more := r.cycle(ctx, interval, backoffs)
+		more := r.cycle(ctx, interval, backoffs, ticked)
 		// Prune once caught up, or old history read in later rounds of
 		// the catch-up would outstay the retention by a day.
 		if !more && r.Retention > 0 && r.now().Sub(lastPrune) >= pruneEvery {
@@ -114,19 +115,23 @@ func (r *Runner) Run(ctx context.Context, interval time.Duration) {
 			if ctx.Err() != nil {
 				return
 			}
+			ticked = false
 			continue
 		}
 		select {
 		case <-ctx.Done():
 			return
 		case <-tick.C:
+			ticked = true
 		}
 	}
 }
 
 // cycle runs every task that is not backing off, and reports whether one
-// of them stopped at the per-round cap with more waiting.
-func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map[string]*backoff) (more bool) {
+// of them stopped at the per-round cap with more waiting. Only a cycle
+// started by a tick (ticked) counts down backoffs and retries a source that
+// has been failing; the extra rounds of a catch-up leave those to the ticks.
+func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map[string]*backoff, ticked bool) (more bool) {
 	for _, t := range r.tasks() {
 		if ctx.Err() != nil {
 			return false
@@ -135,6 +140,9 @@ func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map
 		if b == nil {
 			b = &backoff{}
 			backoffs[t.key] = b
+		}
+		if !ticked && b.fails > 0 {
+			continue
 		}
 		if b.skip > 0 {
 			b.skip--
