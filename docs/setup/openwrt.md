@@ -140,7 +140,8 @@ machine it runs on (`TZ` in Docker), which must then match the router's.
 Lines from other programs in the file are ignored. phonehome follows the file
 across rotation if your logrotate renames it to `openwrt.log.1` (the default
 without `dateext` and without compressing the newest rotation, i.e. use
-`delaycompress`). The file must be readable by phonehome: with the systemd
+`delaycompress`; phonehome never reads `.gz`, so a log compressed at
+rotation loses the lines written since its last read). The file must be readable by phonehome: with the systemd
 unit, add the file's group with `sudo systemctl edit phonehome` →
 `SupplementaryGroups=adm` (or whichever group owns it).
 
@@ -168,4 +169,8 @@ sources:
 ```
 
 Rotate the log with logrotate (`postrotate` sends `SIGUSR2` so dnsmasq
-reopens it). Pi-hole users don't need this: the `pihole-db` source is better.
+reopens it). Add `delaycompress` (or use `copytruncate` and no immediate
+`compress`): phonehome reads the newest rotation, `dnsmasq.log.1`, only as
+plain text and does not read `.gz` files. If the old file is compressed at
+once, whatever was logged after phonehome's last read and before the
+rotation is lost. Pi-hole users don't need this: the `pihole-db` source is better.

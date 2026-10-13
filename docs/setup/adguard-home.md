@@ -6,7 +6,9 @@ permissions, not against a running bare-metal AdGuard Home.*
 
 phonehome reads AdGuard Home's query log, `querylog.json` (one JSON object
 per line), and the rotated `querylog.json.1` next to it. It never writes to
-either.
+either. AdGuard Home rotates these files itself. If you also run logrotate on
+them, use `delaycompress` (or `copytruncate` without immediate `compress`):
+phonehome does not read `.gz` files.
 
 ## Before you start: the query log must be on disk
 

@@ -274,6 +274,7 @@
     `packaging/compose/adguard.yml` notes it needs Docker Compose v2.23.1+.
 
 ### Docs and tests
+- Rotated `.gz` logs: the dnsmasq, OpenWrt, AdGuard Home and FAQ pages say logrotate needs `delaycompress` (phonehome does not read `.gz`).
 - Every claim in the README, FAQ, setup guides and docs checked against the code: privacy wording names alert targets, the Pi-hole API source's device names, current demo and benchmark figures, and the `allowed_hosts` names (including `pi.hole`).
 - **Launch QA fixes.**
   - A `kill -9`, power cut or shutdown during ingestion no longer stores a
