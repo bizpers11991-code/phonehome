@@ -545,3 +545,20 @@ func TestQuietRouterRelease(t *testing.T) {
 	got, _ = drain(t, l, cur, 10)
 	equal(t, got, nil)
 }
+
+// TestClockStepBack checks that a log clock stepping back (DST fall-back,
+// an NTP step) does not make every later query look stale at once and be
+// released as allowed before its "gravity blocked" line.
+func TestClockStepBack(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dnsmasq.log")
+	l := newTestLog(path)
+	appendFile(t, path, "Oct  2 14:10:00 dnsmasq[9]: query[A] a.example.com from 192.168.1.20\n"+
+		"Oct  2 14:10:00 dnsmasq[9]: reply a.example.com is 1.2.3.4\n"+
+		"Oct  2 13:20:00 dnsmasq[9]: query[A] ads.tracker.example from 192.168.1.20\n"+
+		"Oct  2 13:20:00 dnsmasq[9]: gravity blocked ads.tracker.example is 0.0.0.0\n")
+	got, _ := drain(t, l, "", 10)
+	equal(t, got, []string{
+		"14:10:00 a.example.com A 192.168.1.20 false",
+		"13:20:00 ads.tracker.example A 192.168.1.20 true",
+	})
+}

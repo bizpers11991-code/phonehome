@@ -229,7 +229,7 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 		done    = s.start
 		queue   []pending
 		lineNum int
-		latest  time.Time // newest timestamp on any dnsmasq line so far
+		latest  time.Time // newest timestamp on any dnsmasq line so far (reset by a clock step back)
 	)
 	stale := func(p pending) bool { return latest.Sub(p.e.time) >= quietAfter }
 	// emit hands over queries from the head of the queue that are settled
@@ -271,8 +271,13 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 		lineNum++
 		// A nil line was longer than any real one, and is skipped.
 		e, ok := parseLine(string(line), r.loc, r.now)
-		if line != nil && e.time.After(latest) {
-			latest = e.time // set even for lines that are no query or answer
+		if line != nil && (e.time.After(latest) || latest.Sub(e.time) > quietAfter) {
+			// Set even for lines that are no query or answer. A jump back
+			// of more than quietAfter is a clock step (DST fall-back, NTP,
+			// fake-hwclock), not reordering: restart from the new time, or
+			// every later query would look stale at once and be released
+			// before its "gravity blocked" line.
+			latest = e.time
 		}
 		if line != nil && ok {
 			if e.query {
