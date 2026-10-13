@@ -136,6 +136,16 @@ function formats() {
   dtf = new Intl.DateTimeFormat(LANG, { dateStyle: 'medium', timeStyle: 'short' });
 }
 const fmt = (n) => nf.format(Math.round(n));
+// Snooping lookups per day shown beside a grade are rounded but never up
+// across a grade edge (Go's model.WholePerDay), so 299.6 reads 299 next to
+// a B; the grade's reason carries the same number as reason.lookups.
+const GRADE_EDGES = [50, 300, 1500, 5000];
+const wholePerDay = (n) => {
+  const r = Math.round(n);
+  const edge = GRADE_EDGES.find((e) => n < e && r >= e);
+  return edge === undefined ? r : edge - 1;
+};
+const fmtRate = (n) => nf.format(wholePerDay(n));
 const when = (ts) => (ts ? dtf.format(new Date(ts)) : '—');
 
 function pct(x) {
@@ -344,7 +354,7 @@ function sinceHero(r) {
   if (p.gone.length) notes.push(t('since.gone', { names: p.gone.map((g) => g.name).join(', ') }));
   return h('div', { class: 'since since-hero' },
     h('p', {}, trend(p), t('since.vs', { prev: prevLabel(p) }), ' ',
-      h('span', { class: 'muted', text: t('since.perDay', { before: fmt(p.perDay), now: fmt(p.nowPerDay) }) }),
+      h('span', { class: 'muted', text: t('since.perDay', { before: fmtRate(p.perDay), now: fmtRate(p.nowPerDay) }) }),
       t('since.homeGrade'), gradeShift(p.grade, r.grade)),
     stopped.length ? h('ul', { class: 'stopped', 'aria-label': t('stopped.aria') },
       r.devices.filter((d) => d.previous?.stopped.length).slice(0, 3).map((d) => {
@@ -479,7 +489,7 @@ function card(d, i) {
       gradeBadge(d.grade)),
     gradeWhy(d),
     h('div', { class: 'figure' },
-      h('p', {}, h('span', { class: 'big', text: fmt(d.perDay) }), h('span', { class: 'unit', text: t('card.perDay') })),
+      h('p', {}, h('span', { class: 'big', text: d.reason.lookups != null ? fmt(d.reason.lookups) : fmtRate(d.perDay) }), h('span', { class: 'unit', text: t('card.perDay') })),
       h('p', { class: 'share' }, ...tn('card.share', { share: h('b', { text: pct(d.snoopShare) }) }))),
     sinceCard(d),
     d.total ? stack(d.categories, d.total, true) : null,
@@ -812,7 +822,7 @@ function sinceDetails(d) {
   const perDay = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n));
   return h('section', {}, h('h3', { text: title }),
     h('dl', { class: 'stats' },
-      stat(t('stat.snoopDay'), `${fmt(p.perDay)} → ${fmt(p.nowPerDay)}`),
+      stat(t('stat.snoopDay'), `${fmtRate(p.perDay)} → ${fmtRate(p.nowPerDay)}`),
       stat(t('stat.change'), trend(p)),
       stat(t('stat.grade'), gradeShift(p.grade, d.grade))),
     cats.length ? h('ul', { class: 'deltas', 'aria-label': t('deltas.aria') }, cats.map((c) => h('li', {},

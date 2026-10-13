@@ -177,3 +177,12 @@ func TestHomeProvisional(t *testing.T) {
 		}
 	}
 }
+
+// model.GradeEdges, which the printed rates are kept inside, are the grade
+// thresholds.
+func TestGradeEdgesMatchThresholds(t *testing.T) {
+	want := [...]int{gradeBPerDay, gradeCPerDay, gradeDPerDay, gradeFPerDay}
+	if model.GradeEdges != want {
+		t.Errorf("model.GradeEdges = %v, want %v", model.GradeEdges, want)
+	}
+}

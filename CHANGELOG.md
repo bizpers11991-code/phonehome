@@ -62,7 +62,9 @@
   DNS via 8.8.8.8:443: at least D (its 520 snooping lookups a day alone
   would be C)", or content recognition. The receipt's verdict follows the
   rule too, so a D for a DNS bypass reads "GOES AROUND YOUR DNS FILTER"
-  rather than "TALKS ABOUT YOU A LOT". [docs/grading.md](docs/grading.md#why-a-device-got-its-grade)
+  rather than "TALKS ABOUT YOU A LOT". The per-day figure beside a grade is
+  rounded the same way as the reason, never across a grade edge (299.6 reads
+  299 beside a B). [docs/grading.md](docs/grading.md#why-a-device-got-its-grade)
 - **Provisional grades.** A grade based on less than 20 hours of data for
   the device (a fresh install, or a device that joined an hour ago) is marked
   "Provisional: based on 3 hours of data". Alerts and the MQTT grade sensor

@@ -431,3 +431,28 @@ func TestHomeProvisionalNote(t *testing.T) {
 		t.Errorf("provisional home receipt lacks the note:\n%s", got)
 	}
 }
+
+// SNOOPING PER DAY never rounds up across a grade edge: 299.6 beside a B
+// reads 299, like the reason under the stamp.
+func TestPerDayStaysInBand(t *testing.T) {
+	for f, want := range map[float64]string{49.6: "49", 299.6: "299", 300: "300", 3.6: "3.6", 1402.4: "1,402"} {
+		if got := perDay(f); got != want {
+			t.Errorf("perDay(%v) = %q, want %q", f, got, want)
+		}
+	}
+	r := hueBridge()
+	r.Grade, r.PerDay = "B", 299.6
+	r.Reason = model.GradeReason{Rule: model.ReasonVolume, PerDay: 299.6, VolumeGrade: "B", BandFrom: 50, BandTo: 300}
+	found := false
+	for _, l := range Device(r, Options{Now: printed}).Lines {
+		if strings.HasPrefix(l.Text, "SNOOPING PER DAY") {
+			found = true
+			if !strings.HasSuffix(l.Text, " 299") {
+				t.Errorf("SNOOPING PER DAY line = %q, want 299 beside the B", l.Text)
+			}
+		}
+	}
+	if !found {
+		t.Error("no SNOOPING PER DAY line")
+	}
+}
