@@ -657,7 +657,7 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 		}
 		for _, h := range d.Heartbeats {
 			if h.Category.Snooping() {
-				fmt.Fprintf(w, "     heartbeat: %s every %s (%s)\n", printable(h.Domain), h.Every.Round(time.Second), h.Category.Label())
+				fmt.Fprintf(w, "     heartbeat: %s %s (%s)\n", printable(h.Domain), model.EveryText(h.Every), h.Category.Label())
 			}
 		}
 		for _, b := range d.Bypasses {
