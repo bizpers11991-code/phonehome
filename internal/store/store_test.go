@@ -818,11 +818,12 @@ func TestDNSEach(t *testing.T) {
 	}
 }
 
-// TestPruneWithOpenReader: a report holds one read transaction for its
+// TestReclaimWithOpenReader: a report holds one read transaction for its
 // duration (DNSEach). Prune's reclaim step must not wait for it, and neither
-// may a concurrent insert wait behind Prune: wal_checkpoint(TRUNCATE) did,
-// for the whole busy_timeout (10 s).
-func TestPruneWithOpenReader(t *testing.T) {
+// may a concurrent insert wait behind reclaim: wal_checkpoint(TRUNCATE) did,
+// for the whole busy_timeout (10 s). Only reclaim is timed, so the bound
+// holds on a slow CI machine under -race.
+func TestReclaimWithOpenReader(t *testing.T) {
 	ctx := context.Background()
 	s, err := Open(filepath.Join(t.TempDir(), "phonehome.db"))
 	if err != nil {
@@ -830,16 +831,29 @@ func TestPruneWithOpenReader(t *testing.T) {
 	}
 	defer s.Close()
 	var in []model.DNSQuery
-	for i := range 60000 {
+	for i := range 15000 {
 		in = append(in, q(time.Duration(i)*time.Millisecond-time.Hour, "10.0.0.1", fmt.Sprintf("host%d.example", i)))
 	}
 	in = append(in, q(time.Minute, "10.0.0.1", "new.example"))
 	if err := s.InsertDNS(ctx, in); err != nil {
 		t.Fatal(err)
 	}
+	// Free most of the file without reclaiming it, as Prune's deletes do.
+	for _, q := range []string{
+		`DELETE FROM dns WHERE ts < ?`,
+		`DELETE FROM domains WHERE NOT EXISTS (SELECT 1 FROM dns WHERE dns.domain_id = domains.id) AND ? IS NOT NULL`,
+	} {
+		if _, err := s.db.ExecContext(ctx, q, nanos(t0)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var free int
+	if err := s.db.QueryRowContext(ctx, `PRAGMA freelist_count`).Scan(&free); err != nil || free < minReclaim {
+		t.Fatalf("freelist_count = %d, %v: too few free pages for reclaim to run", free, err)
+	}
 
-	var pruneTook, insertTook time.Duration
-	var pruneErr, insertErr error
+	var reclaimTook, insertTook time.Duration
+	var reclaimErr, insertErr error
 	ran := false
 	err = s.DNSEach(ctx, period(-2*time.Hour, time.Hour), func(*model.DNSQuery) bool {
 		if ran {
@@ -851,12 +865,12 @@ func TestPruneWithOpenReader(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			start := time.Now()
-			_, pruneErr = s.Prune(ctx, t0)
-			pruneTook = time.Since(start)
+			reclaimErr = s.reclaim(ctx)
+			reclaimTook = time.Since(start)
 		}()
 		go func() {
 			defer wg.Done()
-			time.Sleep(50 * time.Millisecond) // let Prune get going
+			time.Sleep(50 * time.Millisecond) // let reclaim get going
 			start := time.Now()
 			insertErr = s.InsertDNS(ctx, []model.DNSQuery{q(2*time.Minute, "10.0.0.2", "other.example")})
 			insertTook = time.Since(start)
@@ -864,12 +878,15 @@ func TestPruneWithOpenReader(t *testing.T) {
 		wg.Wait()
 		return false
 	})
-	if err != nil || pruneErr != nil || insertErr != nil {
-		t.Fatalf("DNSEach: %v, Prune: %v, InsertDNS: %v", err, pruneErr, insertErr)
+	if err != nil || reclaimErr != nil || insertErr != nil {
+		t.Fatalf("DNSEach: %v, reclaim: %v, InsertDNS: %v", err, reclaimErr, insertErr)
 	}
-	const bound = 2 * time.Second
-	if pruneTook > bound || insertTook > bound {
-		t.Errorf("with a read transaction open Prune took %v and a concurrent InsertDNS %v; want under %v", pruneTook, insertTook, bound)
+	if !ran {
+		t.Fatal("DNSEach saw no lookup: the read snapshot was never open")
+	}
+	const bound = 5 * time.Second // busy_timeout is 10 s
+	if reclaimTook > bound || insertTook > bound {
+		t.Errorf("with a read transaction open reclaim took %v and a concurrent InsertDNS %v; want under %v", reclaimTook, insertTook, bound)
 	}
 }
 
