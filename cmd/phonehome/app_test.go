@@ -231,3 +231,72 @@ func TestReportDomainsOnDemand(t *testing.T) {
 		t.Errorf("%d domain reports cached, want at most %d", kept, maxDomainReports)
 	}
 }
+
+// Concurrent requests for one device's full domain list share one analysis,
+// as Report's do, and a list too long to keep in the cache is shared with
+// those waiting but not kept for later.
+func TestReportWithDomainsSharesAnalysis(t *testing.T) {
+	ctx := context.Background()
+	st, err := loadDemo(ctx, 7, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	a := newApp(st, kb.Default(), analyze.DefaultOptions(), true)
+	p := lastDays(3)
+	r, err := a.Report(ctx, p)
+	if err != nil || len(r.Devices) == 0 {
+		t.Fatalf("report: %v", err)
+	}
+	id := r.Devices[0].Device.ID
+	base := a.analyses.Load()
+
+	run := func() []int {
+		var wg sync.WaitGroup
+		counts := make([]int, 8)
+		for i := range counts {
+			wg.Go(func() {
+				r, err := a.ReportWithDomains(ctx, p, id)
+				if err != nil {
+					t.Error(err)
+					return
+				}
+				for _, d := range r.Devices {
+					if d.Device.ID == id {
+						counts[i] = len(d.Domains)
+					}
+				}
+			})
+		}
+		wg.Wait()
+		return counts
+	}
+	counts := run()
+	if n := a.analyses.Load() - base; n != 1 {
+		t.Errorf("8 concurrent ReportWithDomains ran %d analyses, want 1", n)
+	}
+	for _, n := range counts {
+		if n == 0 || n != counts[0] {
+			t.Fatalf("callers got different lists: %v", counts)
+		}
+	}
+	// Short enough: kept for the next caller.
+	if _, err := a.ReportWithDomains(ctx, p, id); err != nil || a.analyses.Load()-base != 1 {
+		t.Errorf("repeat: err %v, %d analyses", err, a.analyses.Load()-base)
+	}
+
+	// Too long to keep: nothing is cached, concurrent callers still share.
+	a.invalidate()
+	a.domainCacheMax = 1
+	base = a.analyses.Load()
+	run()
+	if n := a.analyses.Load() - base; n != 1 {
+		t.Errorf("concurrent calls for an uncacheable list ran %d analyses, want 1", n)
+	}
+	a.mu.Lock()
+	kept, flying := len(a.domains), len(a.domFlights)
+	a.mu.Unlock()
+	if kept != 0 || flying != 0 {
+		t.Errorf("%d lists cached, %d flights left; want none", kept, flying)
+	}
+}

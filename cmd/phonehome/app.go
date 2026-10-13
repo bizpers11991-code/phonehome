@@ -33,6 +33,10 @@ type app struct {
 	flights  map[model.Period]*flight
 	receipts map[receiptKey]cachedReceipt
 	domains  map[domainsKey]cachedDomains
+	// domFlights are the domain-list analyses in progress, like flights.
+	domFlights map[domainsKey]*flight
+	// domainCacheMax is the longest domain list kept in domains.
+	domainCacheMax int
 
 	analysing chan struct{} // a slot per analysis running; see maxAnalyses
 	analyses  atomic.Int64  // analyses run, for tests
@@ -97,11 +101,13 @@ const maxAnalyses = 2
 func newApp(st *store.Store, k *kb.KB, o analyze.Options, demo bool) *app {
 	return &app{
 		store: st, kb: k, opts: o, demo: demo,
-		cache:     map[model.Period]cached{},
-		flights:   map[model.Period]*flight{},
-		receipts:  map[receiptKey]cachedReceipt{},
-		domains:   map[domainsKey]cachedDomains{},
-		analysing: make(chan struct{}, maxAnalyses),
+		cache:          map[model.Period]cached{},
+		flights:        map[model.Period]*flight{},
+		receipts:       map[receiptKey]cachedReceipt{},
+		domains:        map[domainsKey]cachedDomains{},
+		domFlights:     map[domainsKey]*flight{},
+		domainCacheMax: domainListBudget,
+		analysing:      make(chan struct{}, maxAnalyses),
 	}
 }
 
@@ -153,44 +159,89 @@ func (a *app) Report(ctx context.Context, p model.Period) (model.HomeReport, err
 // out once they pass domainListBudget (DomainCount says how long each is),
 // so a month of a household with hundreds of thousands of distinct names
 // stays small in the cache; the details view's full domain table asks for
-// its device's here. The result is cached briefly, for reloads and exports.
+// its device's here.
+//
+// Concurrent callers for the same period and device share one analysis. The
+// result is cached briefly, for reloads and exports, unless the device's
+// list passes domainCacheMax entries: an on-demand list is unbounded (a
+// device can look up millions of names), and keeping one in the cache would
+// undo the budget Report keeps. Such a list is shared with the callers
+// waiting for it and then dropped, so asking again costs another analysis.
 func (a *app) ReportWithDomains(ctx context.Context, p model.Period, deviceID string) (model.HomeReport, error) {
 	p = roundPeriod(p)
 	key := domainsKey{p, deviceID}
-	a.mu.Lock()
-	if c, ok := a.domains[key]; ok && time.Since(c.at) < reportTTL {
-		a.mu.Unlock()
-		return c.report, nil
-	}
-	gen, opts := a.gen, a.opts
-	a.mu.Unlock()
-	opts.DomainsFor = func(id string) bool { return id == deviceID }
-	opts.MaxDomainEntries = 0
-	r, err := a.analyse(ctx, p, opts)
-	if err != nil {
-		return model.HomeReport{}, err
-	}
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if gen == a.gen {
-		for k, v := range a.domains {
-			if time.Since(v.at) >= reportTTL {
-				delete(a.domains, k)
-			}
+	for {
+		a.mu.Lock()
+		if c, ok := a.domains[key]; ok && time.Since(c.at) < reportTTL {
+			a.mu.Unlock()
+			return c.report, nil
 		}
-		for len(a.domains) >= maxDomainReports { // drop the oldest
-			var oldest domainsKey
-			var at time.Time
+		f := a.domFlights[key]
+		if f == nil {
+			// The cache was checked under this same lock hold, so a flight
+			// that just finished (it caches before it leaves) is not rerun.
+			f = &flight{done: make(chan struct{})}
+			a.domFlights[key] = f
+			gen, opts := a.gen, a.opts
+			a.mu.Unlock()
+			opts.DomainsFor = func(id string) bool { return id == deviceID }
+			opts.MaxDomainEntries = 0
+			return a.leadDomains(ctx, key, f, gen, opts)
+		}
+		a.mu.Unlock()
+		select {
+		case <-f.done:
+		case <-ctx.Done():
+			return model.HomeReport{}, ctx.Err()
+		}
+		if ctx.Err() == nil && (errors.Is(f.err, context.Canceled) || errors.Is(f.err, context.DeadlineExceeded)) {
+			continue // the caller running it went away, not this one: try again
+		}
+		return f.report, f.err
+	}
+}
+
+// leadDomains runs the analysis for domain-list flight f, caches a list that
+// is short enough and wakes those waiting.
+func (a *app) leadDomains(ctx context.Context, key domainsKey, f *flight, gen int, opts analyze.Options) (model.HomeReport, error) {
+	f.err = errors.New("analysis failed") // unless it returns
+	defer func() {
+		a.mu.Lock()
+		if a.domFlights[key] == f {
+			delete(a.domFlights, key)
+		}
+		if f.err == nil && gen == a.gen && domainEntries(f.report) <= a.domainCacheMax {
 			for k, v := range a.domains {
-				if at.IsZero() || v.at.Before(at) {
-					oldest, at = k, v.at
+				if time.Since(v.at) >= reportTTL {
+					delete(a.domains, k)
 				}
 			}
-			delete(a.domains, oldest)
+			for len(a.domains) >= maxDomainReports { // drop the oldest
+				var oldest domainsKey
+				var at time.Time
+				for k, v := range a.domains {
+					if at.IsZero() || v.at.Before(at) {
+						oldest, at = k, v.at
+					}
+				}
+				delete(a.domains, oldest)
+			}
+			a.domains[key] = cachedDomains{report: f.report, at: time.Now()}
 		}
-		a.domains[key] = cachedDomains{report: r, at: time.Now()}
+		a.mu.Unlock()
+		close(f.done)
+	}()
+	f.report, f.err = a.analyse(ctx, key.p, opts)
+	return f.report, f.err
+}
+
+// domainEntries is how many domain list entries r holds in all.
+func domainEntries(r model.HomeReport) int {
+	n := 0
+	for _, d := range r.Devices {
+		n += len(d.Domains)
 	}
-	return r, nil
+	return n
 }
 
 // lead runs the analysis for flight f, caches it and wakes those waiting.
@@ -225,6 +276,7 @@ func (a *app) invalidate() {
 	clear(a.flights)
 	clear(a.receipts)
 	clear(a.domains)
+	clear(a.domFlights)
 	a.mu.Unlock()
 }
 

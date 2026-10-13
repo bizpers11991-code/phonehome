@@ -146,9 +146,12 @@ MiB peak, 187 MiB kept):
   each; a household with 20,000 names has them all several times over). Past
   that a device's list is left out of the report (`DomainCount` says how long
   it is) and opening its details runs one analysis for that device's list
-  (`ReportWithDomains`), cached for 30 seconds: about the cost of a report
-  (4 s here for 30 days), once, instead of keeping hundreds of MB for every
-  cached period.
+  (`ReportWithDomains`): about the cost of a report (4 s here for 30 days),
+  once, instead of keeping hundreds of MB for every cached period. Callers
+  asking at the same time share that analysis. The result is cached for 30
+  seconds (two at most) only while the list is under the same 250,000
+  entries; a longer one is handed to those waiting and then dropped, so
+  the cache stays bounded and asking again re-runs the analysis.
 
 `go test -bench Analyze ./internal/analyze` on the laptop, before and after
 (the first two are the machine's usual household; `ManyDomains` is eight
