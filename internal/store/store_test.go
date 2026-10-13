@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -869,5 +870,17 @@ func TestPruneWithOpenReader(t *testing.T) {
 	const bound = 2 * time.Second
 	if pruneTook > bound || insertTook > bound {
 		t.Errorf("with a read transaction open Prune took %v and a concurrent InsertDNS %v; want under %v", pruneTook, insertTook, bound)
+	}
+}
+
+// TestDNSEachErrorText: an error while streaming says which call failed.
+func TestDNSEachErrorText(t *testing.T) {
+	s := openMem(t)
+	if _, err := s.db.Exec(`DROP TABLE sources`); err != nil {
+		t.Fatal(err)
+	}
+	err := s.DNSEach(context.Background(), period(0, time.Hour), func(*model.DNSQuery) bool { return true })
+	if err == nil || !strings.Contains(err.Error(), "store: dns each") || strings.Contains(err.Error(), "dns between") {
+		t.Errorf("DNSEach error = %v, want text naming dns each", err)
 	}
 }
