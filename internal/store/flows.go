@@ -10,7 +10,20 @@ import (
 
 // InsertFlows stores fs in one transaction.
 func (s *Store) InsertFlows(ctx context.Context, fs []model.Flow) error {
+	return s.insertFlows(ctx, fs, nil)
+}
+
+// InsertFlowsWithCursor is InsertFlows that also saves the source's cursor
+// in the same transaction; see InsertDNSWithCursor.
+func (s *Store) InsertFlowsWithCursor(ctx context.Context, fs []model.Flow, source, cursor string) error {
+	return s.insertFlows(ctx, fs, &savedCursor{source, cursor})
+}
+
+func (s *Store) insertFlows(ctx context.Context, fs []model.Flow, cur *savedCursor) error {
 	if len(fs) == 0 {
+		if cur != nil {
+			return s.SetCursor(ctx, cur.source, cur.cursor)
+		}
 		return nil
 	}
 	s.wmu.Lock()
@@ -38,7 +51,7 @@ func (s *Store) InsertFlows(ctx context.Context, fs []model.Flow) error {
 				return err
 			}
 		}
-		return nil
+		return cur.save(ctx, tx)
 	})
 	if err != nil {
 		return fmt.Errorf("store: insert flows: %w", err)

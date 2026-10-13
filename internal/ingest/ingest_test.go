@@ -35,20 +35,30 @@ func newStore() *fakeStore {
 	return &fakeStore{cursors: map[string]string{}, runs: map[string]model.SourceStatus{}}
 }
 
-func (s *fakeStore) InsertDNS(_ context.Context, qs []model.DNSQuery) error {
+// InsertDNSWithCursor stores the lookups and the cursor together or, like
+// the real store's transaction, neither.
+func (s *fakeStore) InsertDNSWithCursor(_ context.Context, qs []model.DNSQuery, src, c string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.failDNS != nil {
 		return s.failDNS
 	}
+	if s.failSetCx != nil {
+		return s.failSetCx
+	}
 	s.dns = append(s.dns, qs...)
+	s.cursors[src] = c
 	return nil
 }
 
-func (s *fakeStore) InsertFlows(_ context.Context, fs []model.Flow) error {
+func (s *fakeStore) InsertFlowsWithCursor(_ context.Context, fs []model.Flow, src, c string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.failSetCx != nil {
+		return s.failSetCx
+	}
 	s.flows = append(s.flows, fs...)
+	s.cursors[src] = c
 	return nil
 }
 
@@ -318,15 +328,25 @@ func TestErrorIsolation(t *testing.T) {
 	}
 }
 
-func TestSetCursorFailureIsReported(t *testing.T) {
+// A batch and its cursor are written together: when the cursor cannot be
+// saved the batch is not stored either, so the next run reads it again
+// without having stored it twice.
+func TestCursorFailureStoresNothing(t *testing.T) {
 	st := newStore()
 	st.failSetCx = errors.New("locked")
 	r := &Runner{Store: st, DNS: []source.DNSSource{&fakeDNS{name: "pihole", total: 3}}, Logger: quiet}
-	if err := r.RunOnce(context.Background()); err == nil || !strings.Contains(err.Error(), "saving cursor") {
+	if err := r.RunOnce(context.Background()); err == nil || !strings.Contains(err.Error(), "locked") {
 		t.Fatalf("err = %v", err)
 	}
-	if st.runs["pihole"].Records != 3 {
-		t.Errorf("inserted records should still be counted: %+v", st.runs["pihole"])
+	if len(st.dns) != 0 || st.cursors["pihole"] != "" {
+		t.Errorf("stored %d lookups, cursor %q after a failed write", len(st.dns), st.cursors["pihole"])
+	}
+	st.failSetCx = nil
+	if err := r.RunOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.dns) != 3 {
+		t.Errorf("%d lookups after the retry, want 3", len(st.dns))
 	}
 }
 

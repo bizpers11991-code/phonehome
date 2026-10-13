@@ -1,9 +1,9 @@
 // Package ingest moves observations from sources into the store.
 //
-// Delivery is at-least-once: a source's cursor is saved only after its batch
-// has been written, so a crash (or a failed SetCursor) between the two makes
-// the next run re-read that batch. The store is expected to tolerate the
-// resulting duplicates.
+// A batch and the cursor that covers it are written in one transaction
+// (InsertDNSWithCursor, InsertFlowsWithCursor), so a crash, a kill -9 or a
+// shutdown in the middle of a run neither loses a batch nor stores it twice
+// on the next start.
 package ingest
 
 import (
@@ -19,8 +19,8 @@ import (
 
 // Store is the subset of the store that ingestion writes to.
 type Store interface {
-	InsertDNS(ctx context.Context, qs []model.DNSQuery) error
-	InsertFlows(ctx context.Context, fs []model.Flow) error
+	InsertDNSWithCursor(ctx context.Context, qs []model.DNSQuery, source, cursor string) error
+	InsertFlowsWithCursor(ctx context.Context, fs []model.Flow, source, cursor string) error
 	UpsertDevices(ctx context.Context, ds []model.Device) error
 	Cursor(ctx context.Context, source string) (string, error)
 	SetCursor(ctx context.Context, source, cursor string) error
@@ -221,12 +221,12 @@ func (r *Runner) tasks() []task {
 	var ts []task
 	for _, s := range r.DNS {
 		ts = append(ts, task{key(s.Name(), "dns"), "dns", func(ctx context.Context, k string) (int64, bool, error) {
-			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchDNS, r.Store.InsertDNS)
+			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchDNS, r.Store.InsertDNSWithCursor)
 		}})
 	}
 	for _, s := range r.Flows {
 		ts = append(ts, task{key(s.Name(), "flow"), "flow", func(ctx context.Context, k string) (int64, bool, error) {
-			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchFlows, r.Store.InsertFlows)
+			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchFlows, r.Store.InsertFlowsWithCursor)
 		}})
 	}
 	for _, s := range r.Devices {
@@ -255,7 +255,7 @@ func (r *Runner) tasks() []task {
 func drain[T any](
 	ctx context.Context, st Store, log *slog.Logger, key string, limit int,
 	fetch func(context.Context, string, int) ([]T, string, error),
-	insert func(context.Context, []T) error,
+	insert func(ctx context.Context, recs []T, key, cursor string) error,
 ) (int64, bool, error) {
 	cur, err := st.Cursor(ctx, key)
 	if err != nil {
@@ -278,17 +278,21 @@ func drain[T any](
 		if err != nil {
 			return total, false, fmt.Errorf("fetching: %w", err)
 		}
+		if next == cur && len(recs) == 0 {
+			return total, false, nil
+		}
+		// The batch and its cursor go in together, so that a crash cannot
+		// leave the batch stored with the old cursor and read again.
 		if len(recs) > 0 {
-			if err := insert(ctx, recs); err != nil {
+			if err := insert(ctx, recs, key, next); err != nil {
 				return total, false, fmt.Errorf("storing: %w", err)
 			}
 			total += int64(len(recs))
+		} else if err := st.SetCursor(ctx, key, next); err != nil {
+			return total, false, fmt.Errorf("saving cursor: %w", err)
 		}
 		if next == cur {
 			return total, false, nil
-		}
-		if err := st.SetCursor(ctx, key, next); err != nil {
-			return total, false, fmt.Errorf("saving cursor: %w", err)
 		}
 		cur = next
 		if len(recs) < limit {
