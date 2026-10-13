@@ -64,8 +64,17 @@ type Options struct {
 	// together; zero means no cap. A device whose list would pass it gets
 	// none (DeviceReport.DomainCount still says how long it is), so a report
 	// stays small however many names a household looks up while ordinary
-	// households keep every list. Devices are taken in the order of devs.
+	// households keep every list. Devices are taken in the order of devs, which
+	// the store returns in device creation order (the order phonehome first
+	// saw them, not alphabetical and not by activity in the period), then
+	// those known only by IP in the order they first appear in the period,
+	// until the cap is spent. Only devices with activity in the period count.
 	MaxDomainEntries int
+	// Aborted, if not nil, is asked by AnalyzeStream once the lookups have
+	// been read. When it says true (the read failed or was cancelled, so
+	// the lookups are incomplete) the report is not built and AnalyzeStream
+	// returns the zero HomeReport, which the caller discards anyway.
+	Aborted func() bool
 }
 
 // DefaultOptions returns the defaults spelled out: quiet hours 01:00–06:00 in
@@ -132,6 +141,9 @@ func analyzeSeq(c Classifier, p model.Period, devs []model.Device, qs iter.Seq[*
 	a := newAnalysis(c, p, devs, o.normalized())
 	for q := range qs {
 		a.addQuery(q)
+	}
+	if o.Aborted != nil && o.Aborted() {
+		return model.HomeReport{}
 	}
 	for i := range fl {
 		a.addFlow(&fl[i])

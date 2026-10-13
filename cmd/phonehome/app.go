@@ -314,6 +314,7 @@ func (a *app) analyse(ctx context.Context, p model.Period, opts analyze.Options)
 	qs := func(yield func(*model.DNSQuery) bool) {
 		scanErr = a.store.DNSEach(ctx, read, yield)
 	}
+	opts.Aborted = func() bool { return scanErr != nil || ctx.Err() != nil }
 	r := analyze.AnalyzeStream(a.kb, p, devs, qs, fl, opts, st.Oldest)
 	if scanErr != nil {
 		return model.HomeReport{}, scanErr

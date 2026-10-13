@@ -176,6 +176,22 @@ func TestAnalyzeStreamMatchesSlice(t *testing.T) {
 	}
 }
 
+// TestAnalyzeStreamAborted: when the read failed, no report is built.
+func TestAnalyzeStreamAborted(t *testing.T) {
+	p := model.Period{From: t0.Add(7 * 24 * time.Hour), To: t0.Add(14 * 24 * time.Hour)}
+	devs, qs := manyDomains(2, 20, 2, 14*24*time.Hour)
+	for name, from := range map[string]time.Time{"compared": t0, "alone": {}} {
+		o := utcOpt
+		if r := AnalyzeStream(newFakeKB(), p, devs, byTime(qs), nil, o, from); len(r.Devices) == 0 {
+			t.Fatalf("%s: no devices without Aborted", name)
+		}
+		o.Aborted = func() bool { return true }
+		if r := AnalyzeStream(newFakeKB(), p, devs, byTime(qs), nil, o, from); !reflect.DeepEqual(r, model.HomeReport{}) {
+			t.Errorf("%s: an aborted analysis built a report with %d devices", name, len(r.Devices))
+		}
+	}
+}
+
 // TestPreviousPeriodHasNoDomainList: the previous period is only compared
 // with, so its devices (HomeComparison.Gone) carry no domain lists.
 func TestPreviousPeriodHasNoDomainList(t *testing.T) {
