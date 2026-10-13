@@ -786,11 +786,13 @@ function exportReport(kind) {
     return;
   }
   const header = ['id', 'name', 'kind', 'vendor', 'grade', 'lookups', 'snooping_lookups', 'snooping_per_day', 'blocked',
-    'quiet_hours_lookups', 'heartbeats', 'bypass_findings', ...CAT_IDS.map((c) => 'lookups_' + c)];
+    'quiet_hours_lookups', 'heartbeats', 'bypass_findings', ...CAT_IDS.map((c) => 'lookups_' + c),
+    'grade_rule', 'grade_provisional', 'classified_percent'];
   const rows = r.devices.map((d) => {
     const byCat = Object.fromEntries(d.categories.map((c) => [c.id, c.count]));
     return [d.id, d.name, d.kind, d.vendor, d.grade, d.total, d.snooping, Math.round(d.perDay * 10) / 10, d.blocked,
-      d.quiet.lookups, d.heartbeats.length, d.bypasses.length, ...CAT_IDS.map((c) => byCat[c] ?? 0)];
+      d.quiet.lookups, d.heartbeats.length, d.bypasses.length, ...CAT_IDS.map((c) => byCat[c] ?? 0),
+      d.reason.rule, d.reason.provisional ? 'true' : 'false', d.coveragePercent];
   });
   download(base + '.csv', 'text/csv', csv(header, rows));
 }
