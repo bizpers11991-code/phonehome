@@ -180,7 +180,8 @@
 
 ### Fixed
 - `phonehome receipt --device` matches a device by ID, name, MAC or any known
-  IP address (case-insensitive), and says so when a name or address fits more
+  IP address (case-insensitive; surrounding spaces, an IPv6 zone and a
+  dashed MAC are fine), and says so when a name or address fits more
   than one device. Before, an IP never matched a device whose ID is a MAC.
 - `GET /api/devices/{id}/domains` returns at most 5000 domains by default
   (`limit` up to 20000, `offset` to page, `total` in the reply); a device with
@@ -189,7 +190,8 @@
 - Retention applies on the first read: records older than `retention_days`
   are skipped before they are stored (Pi-hole database `WHERE timestamp >=`,
   Pi-hole API `from=`, other sources filtered before insert), with cursors
-  moving past them. A 30-day, 3M-row Pi-hole database with `retention_days: 2`
+  moving past them (also when every row is older, so a Pi-hole database that
+  is all older than the retention is not rescanned on every poll). A 30-day, 3M-row Pi-hole database with `retention_days: 2`
   now ingests in 3.7 s into an 18 MB file; before it wrote 3M rows, deleted
   2.8M and kept 125 MB. New databases use incremental auto-vacuum and give
   freed space back after a large prune; existing ones log how to shrink
@@ -197,7 +199,10 @@
 - A dnsmasq query that never got an answer no longer holds back every later
   query until 100 more log lines arrive (hours on a quiet router). It is also
   released, as not blocked, once a later line's own timestamp is 10 seconds
-  newer; the wall clock is never consulted.
+  newer; the wall clock is never consulted, so a quiet router's last query
+  appears when its next log line does. A log clock stepping back (daylight
+  saving, NTP) no longer releases blocked queries as allowed, and a
+  syslog line stamped just after New Year, or Feb 29, gets the right year.
 - **Lookup counts and grades change: a lookup is now counted once, not once
   per query.** A device asking for the same name again within 30 seconds of
   a counted lookup (A, AAAA and HTTPS records together, retries, re-queries of
