@@ -519,7 +519,6 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 	if r.Total > 0 {
 		r.SnoopShare = float64(r.Snooping) / float64(r.Total)
 	}
-	r.PerDay = float64(r.Snooping) / a.covered().Days()
 
 	slices.SortFunc(domains, func(x, y model.DomainStat) int {
 		return cmp.Or(cmp.Compare(y.Count, x.Count), cmp.Compare(x.Domain, y.Domain))
@@ -552,8 +551,12 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 		}
 		r.Fixes = relevantFixes(a.c.FixesFor(r.Device, ids), r)
 	}
+	// Rate per day of this device's own data, not the home's: a device that
+	// joined 48 hours ago in a week-old home is not diluted over the week.
+	data := a.dataFor(r.Device)
+	r.PerDay = float64(r.Snooping) / dayCount(data)
 	r.Grade, r.Reason = GradeWhy(r)
-	r.Reason.Data = a.dataFor(r.Device)
+	r.Reason.Data = data
 	r.Reason.Provisional = r.Reason.Data < provisionalUnder
 	return r
 }
@@ -569,6 +572,9 @@ func (a *analysis) dataFor(dev model.Device) time.Duration {
 	}
 	return max(a.p.To.Sub(from), 0)
 }
+
+// dayCount is d in days with the same floor as model.Period.Days (one hour).
+func dayCount(d time.Duration) float64 { return model.Period{To: time.Time{}.Add(d)}.Days() }
 
 // relevantFixes drops fixes whose When conditions r does not meet (a generic
 // "block content recognition" fix means nothing for a device without ACR) and

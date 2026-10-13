@@ -107,6 +107,10 @@ func compare(hr *model.HomeReport, before model.HomeReport, nowDays, prevDays fl
 	for i := range before.Devices {
 		was[before.Devices[i].Device.ID] = &before.Devices[i]
 	}
+	was0 := make(map[string]*model.DeviceReport, len(before.Devices))
+	for i := range before.Devices {
+		was0[before.Devices[i].Device.ID] = &before.Devices[i]
+	}
 	for i := range hr.Devices {
 		d := &hr.Devices[i]
 		c := base
@@ -122,7 +126,13 @@ func compare(hr *model.HomeReport, before model.HomeReport, nowDays, prevDays fl
 			c.ByCategory = old.ByCategory
 			c.Stopped, c.Started = heartbeatChanges(old.Heartbeats, d.Heartbeats)
 		}
-		c.CategoryDelta = categoryDelta(d.ByCategory, nowDays, c.ByCategory, prevDays)
+		// Per device, by the device's own data window in each period, the same
+		// rule as its PerDay.
+		devNow, devPrev := dayCount(d.Reason.Data), prevDays
+		if old := was0[d.Device.ID]; old != nil {
+			devPrev = dayCount(old.Reason.Data)
+		}
+		c.CategoryDelta = categoryDelta(d.ByCategory, devNow, c.ByCategory, devPrev)
 		d.Previous = &c
 	}
 	for _, d := range before.Devices { // keeps the worst-first order

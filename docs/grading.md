@@ -68,7 +68,8 @@ A rate per day needs enough days behind it. A grade based on **less than 20
 hours of data** for the device is marked **provisional**: "Provisional:
 based on 3 hours of data". The data counted runs from the first lookup in
 the period (or from when the device was first seen, if that is later) to the
-end of the period. That covers a fresh install, and a device that joined an
+end of the period. That is also the window its rate per day is
+divided by. It covers a fresh install, and a device that joined an
 established home an hour ago, whose few lookups would otherwise be spread
 over the whole week and look quieter than they are. The threshold is 20
 hours rather than 24 so that a 24-hour view whose first lookup came a few
@@ -162,8 +163,12 @@ in `internal/analyze/compare.go`.
   Essential traffic (updates, time sync) and the content you asked for
   (streams, apps) never count against a device, and neither do destinations
   the knowledge base does not know yet.
-- **Per day** is snooping lookups divided by the length of the period in days,
-  so a 7-day report and a 1-day report are comparable.
+- **Per day** is snooping lookups divided by the days of data the device has
+  in the period: from the first lookup in the period (or from when the device
+  was first seen, if later) to the period's end, at least one hour. So a
+  7-day report and a 1-day report are comparable, and a device that joined
+  48 hours ago with 1,200 lookups is 600 a day, not 171 spread over the
+  week.
 - **A lookup** is one device asking for one name, counted at most twice a
   minute. DNS logs record *queries*, and one lookup often makes several:
   iPhones, Macs and Chrome ask for the A, AAAA and HTTPS records of a name

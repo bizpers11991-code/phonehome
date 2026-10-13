@@ -414,6 +414,32 @@ func TestPerDayUsesCoveredPeriod(t *testing.T) {
 	}
 }
 
+// A device that joined an established home 48 hours ago is rated on its own
+// 48 hours, not diluted over the home's 7 days: 1,200 lookups is 600 a day (C),
+// not 171 (B), and 48 hours is enough data not to be provisional.
+func TestPerDayUsesDeviceDataWindow(t *testing.T) {
+	end := time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC)
+	old, fresh := netip.MustParseAddr("192.168.1.30"), netip.MustParseAddr("192.168.1.31")
+	p := model.Period{From: end.Add(-7 * 24 * time.Hour), To: end}
+	qs := []model.DNSQuery{{Time: p.From, ClientIP: old, Domain: "time.example"}} // the home's first lookup
+	for i := range 1200 {
+		qs = append(qs, model.DNSQuery{Time: end.Add(-48*time.Hour + time.Duration(i)*144*time.Second), ClientIP: fresh, Domain: "log.google.example"})
+	}
+	devs := []model.Device{
+		{ID: "mac:old", IPs: []netip.Addr{old}, FirstSeen: p.From},
+		{ID: "mac:new", IPs: []netip.Addr{fresh}, FirstSeen: end.Add(-48 * time.Hour)},
+	}
+	r := findDevice(t, Analyze(newFakeKB(), p, devs, qs, nil, utcOpt), "mac:new")
+	if r.PerDay < 599 || r.PerDay > 601 || r.Grade != "C" || r.Reason.Provisional || r.Reason.Data != 48*time.Hour {
+		t.Errorf("PerDay %.1f, grade %s, provisional %v on %v; want ~600, C, false on 48h", r.PerDay, r.Grade, r.Reason.Provisional, r.Reason.Data)
+	}
+	// An hour-old device gets the one-hour floor of Period.Days, not a division by zero.
+	devs[1].FirstSeen = end
+	if r := findDevice(t, Analyze(newFakeKB(), p, devs, qs[:2], nil, utcOpt), "mac:new"); r.Snooping > 0 && r.PerDay > float64(r.Snooping)*24 {
+		t.Errorf("PerDay %.1f beyond the floor for %d lookups", r.PerDay, r.Snooping)
+	}
+}
+
 // A grade on less than a day of data is provisional: a fresh install, or a
 // device that joined an established home an hour ago. The grade itself is
 // still computed the usual way.
@@ -455,8 +481,10 @@ func TestProvisionalGrade(t *testing.T) {
 		if r.Reason.Provisional != tt.provisional || r.Reason.Data != tt.data {
 			t.Errorf("%s: provisional %v on %v of data, want %v on %v", tt.name, r.Reason.Provisional, r.Reason.Data, tt.provisional, tt.data)
 		}
-		if r.Grade != Grade(r) {
-			t.Errorf("%s: grade %s, want %s whether provisional or not", tt.name, r.Grade, Grade(r))
+		// These devices only make volume-rated lookups, so provisional or
+		// not the grade is the one their rate earns.
+		if want, _, _ := volumeGrade(r.PerDay); r.Grade != want || r.Grade != r.Reason.VolumeGrade || r.Reason.Rule != model.ReasonVolume {
+			t.Errorf("%s: grade %s by %q at %.1f/day, want %s by volume", tt.name, r.Grade, r.Reason.Rule, r.PerDay, want)
 		}
 	}
 }
