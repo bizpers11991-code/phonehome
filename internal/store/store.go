@@ -25,7 +25,14 @@ import (
 // processes (e.g. `phonehome ingest --once` next to `phonehome serve`);
 // _txlock=immediate makes write transactions take the write lock up front so
 // they wait on busy_timeout instead of failing on a read→write upgrade.
-const pragmas = "_pragma=busy_timeout(10000)" +
+//
+// auto_vacuum=incremental comes first: it only takes effect on a database
+// that has no tables yet (and before journal_mode writes its header), so it
+// applies to new files only. On an existing file it does nothing: changing
+// the mode takes a full VACUUM, which rewrites the whole file and is never
+// run here.
+const pragmas = "_pragma=auto_vacuum(2)" +
+	"&_pragma=busy_timeout(10000)" +
 	"&_pragma=journal_mode(WAL)" +
 	"&_pragma=synchronous(NORMAL)" +
 	"&_pragma=foreign_keys(1)" +

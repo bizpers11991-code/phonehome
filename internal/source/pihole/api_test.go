@@ -476,3 +476,18 @@ func TestAPISlowServer(t *testing.T) {
 		t.Fatalf("took %v", d)
 	}
 }
+
+// TestAPISince checks that the first read asks FTL only for queries since
+// the retention floor, and later reads still use the cursor's time.
+func TestAPISince(t *testing.T) {
+	const t0 = 1727870000.0
+	_, a := newFakeFTL(t, []apiQuery{
+		q(1, t0, "A", "FORWARDED", "old.example", "192.168.1.20"),
+		q(2, t0+100, "A", "FORWARDED", "new.example", "192.168.1.20"),
+	})
+	ctx := source.WithSince(context.Background(), unixTime(t0+50))
+	got, cur, err := a.FetchDNS(ctx, "", 10)
+	if err != nil || len(got) != 1 || got[0].Domain != "new.example" || cur != "2@1727870100" {
+		t.Fatalf("got %v, %q, %v", got, cur, err)
+	}
+}

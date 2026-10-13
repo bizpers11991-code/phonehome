@@ -109,14 +109,17 @@ func (s *fakeStore) Prune(_ context.Context, before time.Time) (int64, error) {
 type fakeDNS struct {
 	name  string
 	total int
+	at    func(i int) time.Time // record i's time; default i seconds after the epoch
+	since time.Time             // what the last fetch was asked to skip before
 	err   error
 	calls int
 }
 
 func (f *fakeDNS) Name() string { return f.name }
 
-func (f *fakeDNS) FetchDNS(_ context.Context, cursor string, limit int) ([]model.DNSQuery, string, error) {
+func (f *fakeDNS) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DNSQuery, string, error) {
 	f.calls++
+	f.since = source.Since(ctx)
 	if f.err != nil {
 		return nil, cursor, f.err
 	}
@@ -130,8 +133,12 @@ func (f *fakeDNS) FetchDNS(_ context.Context, cursor string, limit int) ([]model
 	end := min(off+limit, f.total)
 	var qs []model.DNSQuery
 	for i := off; i < end; i++ {
+		ts := time.Unix(int64(i), 0)
+		if f.at != nil {
+			ts = f.at(i)
+		}
 		qs = append(qs, model.DNSQuery{
-			Time:     time.Unix(int64(i), 0),
+			Time:     ts,
 			ClientIP: netip.MustParseAddr("192.168.1.2"),
 			Domain:   "example.com",
 			Source:   f.name,
@@ -237,7 +244,8 @@ func TestRunOnceDrainsBacklogInRounds(t *testing.T) {
 // dashboard in seconds, not one capped run per minute.
 func TestRunCatchesUpWithoutWaiting(t *testing.T) {
 	st := newStore()
-	big := &fakeDNS{name: "big", total: 10*maxBatchesPerRun*3 + 5}
+	big := &fakeDNS{name: "big", total: 10*maxBatchesPerRun*3 + 5,
+		at: func(int) time.Time { return time.Now() }}
 	r := &Runner{Store: st, DNS: []source.DNSSource{big}, Batch: 10, Retention: time.Hour, Logger: quiet}
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan struct{})
@@ -438,7 +446,7 @@ func TestRunPrunesAndStops(t *testing.T) {
 	now := time.Date(2026, 1, 10, 12, 0, 0, 0, time.UTC)
 	r := &Runner{
 		Store:     st,
-		DNS:       []source.DNSSource{&fakeDNS{name: "pihole", total: 2}},
+		DNS:       []source.DNSSource{&fakeDNS{name: "pihole", total: 2, at: func(int) time.Time { return now }}},
 		Retention: 48 * time.Hour,
 		Logger:    quiet,
 		Now:       func() time.Time { return now },
@@ -510,4 +518,68 @@ func keys(m map[string]model.SourceStatus) []string {
 		ks = append(ks, k)
 	}
 	return ks
+}
+
+// TestRetentionSkipsOldRecords checks that records older than the retention
+// cutoff are not stored (Prune would delete them at once), that the source
+// is told the cutoff, and that the cursor still moves past skipped batches.
+func TestRetentionSkipsOldRecords(t *testing.T) {
+	now := time.Date(2026, 1, 10, 12, 0, 0, 0, time.UTC)
+	cutoff := now.Add(-48 * time.Hour)
+	st := newStore()
+	// Records 0-24 are old; 25-29 are within retention.
+	src := &fakeDNS{name: "pihole", total: 30, at: func(i int) time.Time {
+		if i < 25 {
+			return cutoff.Add(-time.Hour)
+		}
+		return cutoff.Add(time.Hour)
+	}}
+	r := &Runner{Store: st, DNS: []source.DNSSource{src}, Batch: 10, Retention: 48 * time.Hour,
+		Logger: quiet, Now: func() time.Time { return now }}
+	if err := r.RunOnce(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.dns) != 5 || st.cursors["pihole"] != "30" {
+		t.Fatalf("stored %d records, cursor %q; want 5, 30", len(st.dns), st.cursors["pihole"])
+	}
+	if !src.since.Equal(cutoff) {
+		t.Errorf("source asked to skip before %v, want %v", src.since, cutoff)
+	}
+	if run := st.runs["pihole"]; run.Records != 5 {
+		t.Errorf("status records = %d, want 5", run.Records)
+	}
+
+	// Retention 0 keeps everything and tells the source nothing.
+	st2 := newStore()
+	src2 := &fakeDNS{name: "pihole", total: 12}
+	r2 := &Runner{Store: st2, DNS: []source.DNSSource{src2}, Batch: 10, Logger: quiet, Now: r.Now}
+	if err := r2.RunOnce(context.Background()); err != nil || len(st2.dns) != 12 || !src2.since.IsZero() {
+		t.Fatalf("no retention: %d records, since %v, %v", len(st2.dns), src2.since, err)
+	}
+}
+
+// oldDB is a store whose file cannot shrink after a prune.
+type oldDB struct{ *fakeStore }
+
+func (oldDB) AutoVacuum() bool { return false }
+
+func (s oldDB) Prune(ctx context.Context, before time.Time) (int64, error) {
+	s.fakeStore.Prune(ctx, before)
+	return 10, nil
+}
+
+// TestPruneHintsAboutOldDB checks that a prune on a database that cannot
+// shrink says so once, and how to fix it.
+func TestPruneHintsAboutOldDB(t *testing.T) {
+	var buf strings.Builder
+	log := slog.New(slog.NewTextHandler(&buf, nil))
+	r := &Runner{Store: oldDB{newStore()}, Retention: time.Hour, Logger: log}
+	for range 3 {
+		if err := r.prune(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n := strings.Count(buf.String(), "VACUUM"); n != 1 {
+		t.Errorf("hint logged %d times, want once:\n%s", n, buf.String())
+	}
 }

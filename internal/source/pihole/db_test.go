@@ -346,3 +346,31 @@ func TestDBUpstreamSchemas(t *testing.T) {
 		})
 	}
 }
+
+// TestDBSince checks that a retention floor skips older rows on a first
+// read without losing the cursor of the rows after it.
+func TestDBSince(t *testing.T) {
+	path, w := fixture(t, v5Schema)
+	exec(t, w, `INSERT INTO queries (timestamp, type, status, domain, client) VALUES
+		(1000, 1, 2, 'old1.example', '192.168.1.20'),
+		(1001, 1, 2, 'old2.example', '192.168.1.20'),
+		(2000, 1, 2, 'new1.example', '192.168.1.20'),
+		(2001, 1, 2, 'new2.example', '192.168.1.20')`)
+	d := openDB(t, path)
+	ctx := source.WithSince(context.Background(), time.Unix(1500, 0))
+
+	got, cur, err := d.FetchDNS(ctx, "", 1)
+	if err != nil || len(got) != 1 || got[0].Domain != "new1.example" || cur != "3" {
+		t.Fatalf("first: %v, %q, %v", got, cur, err)
+	}
+	got, cur, err = d.FetchDNS(ctx, cur, 10)
+	if err != nil || len(got) != 1 || got[0].Domain != "new2.example" || cur != "4" {
+		t.Fatalf("second: %v, %q, %v", got, cur, err)
+	}
+
+	// Everything older than the floor: nothing, and no cursor to save.
+	got, cur, err = d.FetchDNS(source.WithSince(context.Background(), time.Unix(5000, 0)), "", 10)
+	if err != nil || got != nil || cur != "" {
+		t.Fatalf("all old: %v, %q, %v", got, cur, err)
+	}
+}

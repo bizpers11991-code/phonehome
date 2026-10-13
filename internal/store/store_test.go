@@ -2,8 +2,10 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/netip"
+	"os"
 	"path/filepath"
 	"reflect"
 	"sync"
@@ -705,5 +707,72 @@ func TestAlertState(t *testing.T) {
 		if got, err := s.AlertState(ctx, "state"); err != nil || got != v {
 			t.Fatalf("got %q, %v; want %q", got, err, v)
 		}
+	}
+}
+
+// TestPruneShrinksNewDB checks that a database created by this build gives
+// the space of a large prune back to the file system, without a VACUUM.
+func TestPruneShrinksNewDB(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "phonehome.db")
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	var mode int
+	if err := s.db.QueryRow(`PRAGMA auto_vacuum`).Scan(&mode); err != nil || mode != 2 {
+		t.Fatalf("auto_vacuum = %d, %v; want 2 (incremental) for a new database", mode, err)
+	}
+	var in []model.DNSQuery
+	for i := range 60000 {
+		in = append(in, q(time.Duration(i)*time.Millisecond-time.Hour, "10.0.0.1", fmt.Sprintf("host%d.example", i)))
+	}
+	in = append(in, q(time.Minute, "10.0.0.1", "new.example"))
+	if err := s.InsertDNS(ctx, in); err != nil {
+		t.Fatal(err)
+	}
+	size := func() int64 {
+		fi, err := os.Stat(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return fi.Size()
+	}
+	before := size()
+	if _, err := s.Prune(ctx, t0); err != nil {
+		t.Fatal(err)
+	}
+	if after := size(); after > before/10 {
+		t.Errorf("file is %d bytes after pruning all but one of 60000 lookups, was %d", after, before)
+	}
+}
+
+// TestPruneKeepsOldDBWorking: a database made before incremental vacuum was
+// set up cannot change mode without a full VACUUM, which Prune never runs.
+func TestPruneOldDB(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "phonehome.db")
+	raw, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := raw.Exec(`PRAGMA auto_vacuum = NONE; CREATE TABLE x (a)`); err != nil {
+		t.Fatal(err)
+	}
+	raw.Close()
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	if s.AutoVacuum() {
+		t.Error("AutoVacuum() = true for a database created without it")
+	}
+	if err := s.InsertDNS(ctx, []model.DNSQuery{q(-time.Hour, "10.0.0.1", "a.example")}); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := s.Prune(ctx, t0); err != nil || n != 1 {
+		t.Fatalf("Prune = %d, %v", n, err)
 	}
 }
