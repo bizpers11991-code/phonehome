@@ -174,8 +174,9 @@
   rules). `myhomescreen.tv` no longer hides the connectivity hosts that a
   blocklist keeps reachable; they are listed as essential. Exact-match
   content rules (apex and `www`) for `alphonso.tv` and 26 ad-tech and
-  analytics vendors' own sites stop a laptop reading their web pages from
-  being flagged. 810 -> 868 rules.
+  analytics vendors' own sites (only `www` for Sentry, whose bare domain
+  also takes legacy crash reports, and for Comscore) stop a laptop reading
+  their web pages from being flagged. 810 -> 866 rules.
 
 ### Fixed
 - **Lookup counts and grades change: a lookup is now counted once, not once
