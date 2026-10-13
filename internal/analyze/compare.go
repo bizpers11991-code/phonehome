@@ -37,7 +37,8 @@ func AnalyzeCompared(c Classifier, p model.Period, devs []model.Device, qs []mod
 // AnalyzeStream is AnalyzeCompared fed from a sequence instead of a slice, so
 // a month of lookups never has to be in memory at once: a store can decode
 // them one at a time (store.DNSEach). qs must yield lookups oldest first and
-// is ranged over once; a yielded *DNSQuery is only read before the next
+// is ranged over once (if its read fails, set Options.Aborted so the report is
+// not built from half of it); a yielded *DNSQuery is only read before the next
 // one, so the producer may reuse it. Domain strings are kept, so they must
 // not be backed by a buffer the producer overwrites.
 func AnalyzeStream(c Classifier, p model.Period, devs []model.Device, qs iter.Seq[*model.DNSQuery], fl []model.Flow, o Options, dataFrom time.Time) model.HomeReport {
@@ -59,6 +60,9 @@ func AnalyzeStream(c Classifier, p model.Period, devs []model.Device, qs iter.Se
 		} else {
 			prev.addQuery(q)
 		}
+	}
+	if o.Aborted != nil && o.Aborted() {
+		return model.HomeReport{}
 	}
 	for i := range fl {
 		if cur.inPeriod(fl[i].Start) {
