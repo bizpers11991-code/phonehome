@@ -816,3 +816,58 @@ func TestDNSEach(t *testing.T) {
 		t.Error("cancelled context: no error")
 	}
 }
+
+// TestPruneWithOpenReader: a report holds one read transaction for its
+// duration (DNSEach). Prune's reclaim step must not wait for it, and neither
+// may a concurrent insert wait behind Prune: wal_checkpoint(TRUNCATE) did,
+// for the whole busy_timeout (10 s).
+func TestPruneWithOpenReader(t *testing.T) {
+	ctx := context.Background()
+	s, err := Open(filepath.Join(t.TempDir(), "phonehome.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	var in []model.DNSQuery
+	for i := range 60000 {
+		in = append(in, q(time.Duration(i)*time.Millisecond-time.Hour, "10.0.0.1", fmt.Sprintf("host%d.example", i)))
+	}
+	in = append(in, q(time.Minute, "10.0.0.1", "new.example"))
+	if err := s.InsertDNS(ctx, in); err != nil {
+		t.Fatal(err)
+	}
+
+	var pruneTook, insertTook time.Duration
+	var pruneErr, insertErr error
+	ran := false
+	err = s.DNSEach(ctx, period(-2*time.Hour, time.Hour), func(*model.DNSQuery) bool {
+		if ran {
+			return false
+		}
+		ran = true // the read snapshot is open from here on
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			start := time.Now()
+			_, pruneErr = s.Prune(ctx, t0)
+			pruneTook = time.Since(start)
+		}()
+		go func() {
+			defer wg.Done()
+			time.Sleep(50 * time.Millisecond) // let Prune get going
+			start := time.Now()
+			insertErr = s.InsertDNS(ctx, []model.DNSQuery{q(2*time.Minute, "10.0.0.2", "other.example")})
+			insertTook = time.Since(start)
+		}()
+		wg.Wait()
+		return false
+	})
+	if err != nil || pruneErr != nil || insertErr != nil {
+		t.Fatalf("DNSEach: %v, Prune: %v, InsertDNS: %v", err, pruneErr, insertErr)
+	}
+	const bound = 2 * time.Second
+	if pruneTook > bound || insertTook > bound {
+		t.Errorf("with a read transaction open Prune took %v and a concurrent InsertDNS %v; want under %v", pruneTook, insertTook, bound)
+	}
+}

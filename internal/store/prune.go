@@ -69,8 +69,8 @@ func (s *Store) AutoVacuum() bool {
 
 // reclaim returns free pages to the file system after a prune freed a large
 // share of the file (at least a quarter and minReclaim pages), in short
-// incremental_vacuum steps, then truncates the WAL so that the file shrinks
-// now rather than at some later checkpoint. It does nothing for a database
+// incremental_vacuum steps, then checkpoints the WAL (without waiting for
+// readers) so that the file shrinks now rather than at some later checkpoint. It does nothing for a database
 // without incremental auto-vacuum.
 func (s *Store) reclaim(ctx context.Context) error {
 	if !s.AutoVacuum() {
@@ -94,9 +94,12 @@ func (s *Store) reclaim(ctx context.Context) error {
 			return err
 		}
 	}
-	// TRUNCATE waits for readers; if one is busy the checkpoint just
-	// happens later, so its failure is not an error.
-	s.db.ExecContext(ctx, `PRAGMA wal_checkpoint(TRUNCATE)`)
+	// PASSIVE copies what it can and never waits: TRUNCATE (and RESTART)
+	// block writers for up to busy_timeout while any reader, such as a
+	// report's long read transaction, is open. What a reader holds back is
+	// checkpointed later by SQLite's own automatic checkpoints, and the
+	// error is not one that matters.
+	s.db.ExecContext(ctx, `PRAGMA wal_checkpoint(PASSIVE)`)
 	return nil
 }
 
