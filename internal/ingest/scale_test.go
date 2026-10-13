@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -324,36 +325,9 @@ func TestScale(t *testing.T) {
 	k := kb.Default()
 	for _, days := range []int{1, 7, 30} {
 		p := model.Period{From: end.Add(-time.Duration(days) * 24 * time.Hour), To: end}
-		runtime.GC()
-		var m0, m1 runtime.MemStats
-		runtime.ReadMemStats(&m0)
-		stop := heapPeak()
-		start := time.Now()
-		ds, err := st.Devices(ctx)
-		if err != nil {
-			t.Fatal(err)
-		}
-		dq, err := st.DNSBetween(ctx, p)
-		if err != nil {
-			t.Fatal(err)
-		}
-		fl, err := st.FlowsBetween(ctx, p)
-		if err != nil {
-			t.Fatal(err)
-		}
-		read := time.Since(start)
-		runtime.ReadMemStats(&m1)
-		readAlloc := m1.TotalAlloc - m0.TotalAlloc
-		runtime.GC()
-		runtime.ReadMemStats(&m1)
-		live := m1.HeapAlloc - m0.HeapAlloc // the lookups just read
-		start = time.Now()
-		rep := analyze.Analyze(k, p, ds, dq, fl, analyze.DefaultOptions())
-		analyzed := time.Since(start)
-		peak := stop()
-		t.Logf("report days=%d: %d lookups, %d devices; read %v (allocates %.0f MiB, keeps %.0f MiB) + analyze %v; heap peak %.0f MiB",
-			days, len(dq), len(rep.Devices), read.Round(time.Millisecond), float64(readAlloc)/mib, float64(live)/mib,
-			analyzed.Round(time.Millisecond), float64(peak)/mib)
+		rep, elapsed, peak, keeps := streamReport(t, st, k, p)
+		t.Logf("report days=%d: %d lookups, %d devices in %v; heap peak %.0f MiB, keeps %.0f MiB",
+			days, rep.Total, len(rep.Devices), elapsed.Round(time.Millisecond), float64(peak)/mib, float64(keeps)/mib)
 	}
 
 	// Retention: drop the oldest week, as a 23-day retention would.
@@ -363,4 +337,109 @@ func TestScale(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("prune: %d lookups older than 23 days in %v", n, time.Since(start).Round(time.Millisecond))
+}
+
+// streamReport builds the report the way phonehome serve does: lookups
+// streamed from the store into the analysis (never held as a slice) and no
+// per-device domain lists. It returns the report, the time taken, the heap
+// peak and what is still live afterwards.
+func streamReport(tb testing.TB, st *store.Store, k *kb.KB, p model.Period) (rep model.HomeReport, elapsed time.Duration, peak, keeps uint64) {
+	tb.Helper()
+	ctx := context.Background()
+	runtime.GC()
+	stop := heapPeak()
+	start := time.Now()
+	ds, err := st.Devices(ctx)
+	if err != nil {
+		tb.Fatal(err)
+	}
+	fl, err := st.FlowsBetween(ctx, p)
+	if err != nil {
+		tb.Fatal(err)
+	}
+	var scanErr error
+	qs := func(yield func(*model.DNSQuery) bool) { scanErr = st.DNSEach(ctx, p, yield) }
+	o := analyze.DefaultOptions()
+	o.DomainsFor = func(string) bool { return false }
+	rep = analyze.AnalyzeStream(k, p, ds, qs, fl, o, time.Time{})
+	if scanErr != nil {
+		tb.Fatal(scanErr)
+	}
+	elapsed = time.Since(start)
+	peak = stop()
+	runtime.GC()
+	var ms runtime.MemStats
+	runtime.ReadMemStats(&ms)
+	keeps = ms.HeapAlloc
+	runtime.KeepAlive(rep)
+	return rep, elapsed, peak, keeps
+}
+
+// TestScaleManyDomains is the report on a household whose devices look up a
+// great many distinct names (CDN hash hosts, generated tracker domains): 14
+// clients, 3M lookups in 30 days of 200k distinct domains by default (about
+// 600k device-domain pairs), stored directly with no source in between. A
+// report's memory grows with the number of such pairs, not lookups; it used
+// to reach 800 MB here and is now checked to stay within 256 MiB of heap. Like TestScale it needs PHONEHOME_SCALE=1
+// (about 30 s); PHONEHOME_SCALE_DOMAINS and PHONEHOME_SCALE_LOOKUPS change
+// the size.
+func TestScaleManyDomains(t *testing.T) {
+	if os.Getenv("PHONEHOME_SCALE") == "" || testing.Short() {
+		t.Skip("set PHONEHOME_SCALE=1 to run the scale test")
+	}
+	envInt := func(name string, def int) int {
+		if v, err := strconv.Atoi(os.Getenv(name)); err == nil && v > 0 {
+			return v
+		}
+		return def
+	}
+	domains, lookups := envInt("PHONEHOME_SCALE_DOMAINS", 200_000), envInt("PHONEHOME_SCALE_LOOKUPS", 3_000_000)
+	const clients = 14
+	ctx := context.Background()
+	end := time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)
+	st, err := store.Open(filepath.Join(t.TempDir(), "phonehome.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+
+	span := 30 * 24 * time.Hour
+	start := time.Now()
+	r := rand.New(rand.NewPCG(5, 6))
+	for done := 0; done < lookups; {
+		n := min(50_000, lookups-done)
+		batch := make([]model.DNSQuery, n)
+		for i := range batch {
+			j := done + i
+			// Each domain is looked up by about three of the clients, so the
+			// household has ~3 (device, domain) pairs per domain.
+			dom := r.IntN(domains)
+			batch[i] = model.DNSQuery{
+				Time:     end.Add(-span + time.Duration(int64(span)/int64(lookups)*int64(j))),
+				ClientIP: netip.AddrFrom4([4]byte{192, 168, 1, byte(20 + (dom+r.IntN(3))%clients)}),
+				Domain:   fmt.Sprintf("h%d.cdn%d.example-hash.net", dom, dom%13),
+				QType:    []string{"A", "AAAA", "HTTPS"}[j%3],
+				Blocked:  j%17 == 0,
+			}
+		}
+		if err := st.InsertDNS(ctx, batch); err != nil {
+			t.Fatal(err)
+		}
+		done += n
+	}
+	t.Logf("stored %d lookups of up to %d domains from %d clients in %v", lookups, domains, clients, time.Since(start).Round(time.Millisecond))
+
+	k := kb.Default()
+	for _, days := range []int{1, 7, 30} {
+		p := model.Period{From: end.Add(-time.Duration(days) * 24 * time.Hour), To: end}
+		rep, elapsed, peak, keeps := streamReport(t, st, k, p)
+		t.Logf("report days=%d: %d lookups, %d devices in %v; heap peak %.0f MiB, keeps %.1f MiB",
+			days, rep.Total, len(rep.Devices), elapsed.Round(time.Millisecond), float64(peak)/mib, float64(keeps)/mib)
+		if len(rep.Devices) != clients || rep.Total == 0 {
+			t.Errorf("days=%d: %d devices, %d lookups", days, len(rep.Devices), rep.Total)
+		}
+		if peak > 256*mib {
+			t.Errorf("days=%d: heap peak %.0f MiB, want under 256", days, float64(peak)/mib)
+		}
+	}
 }

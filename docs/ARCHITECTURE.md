@@ -142,6 +142,8 @@ func (s *Store) UpsertDevices(ctx, []model.Device) error   // merge semantics, s
 func (s *Store) SetLabel(ctx, deviceID, label string) error
 func (s *Store) Devices(ctx) ([]model.Device, error)
 func (s *Store) DNSBetween(ctx, model.Period) ([]model.DNSQuery, error)  // ordered by time
+// DNSEach is DNSBetween one lookup at a time, without the slice: reports use it.
+func (s *Store) DNSEach(ctx, model.Period, fn func(*model.DNSQuery) bool) error
 func (s *Store) FlowsBetween(ctx, model.Period) ([]model.Flow, error)
 func (s *Store) Cursor(ctx, source string) (string, error)
 func (s *Store) SetCursor(ctx, source, cursor string) error
@@ -168,6 +170,12 @@ func Analyze(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQu
 // comparing p with p.Previous(); qs and fl cover both periods (one store
 // read), dataFrom is Status.Oldest. Rules: docs/grading.md.
 func AnalyzeCompared(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQuery, fl []model.Flow, o Options, dataFrom time.Time) model.HomeReport
+// AnalyzeStream is AnalyzeCompared over an iter.Seq of lookups (oldest first,
+// ranged once, the *DNSQuery may be reused): the app feeds it from
+// Store.DNSEach, so a month of lookups is never in memory at once.
+// Options.DomainsFor chooses whose reports list every domain; the cached
+// dashboard report lists none (memory), the domains endpoint asks for one device.
+func AnalyzeStream(c Classifier, p model.Period, devs []model.Device, qs iter.Seq[*model.DNSQuery], fl []model.Flow, o Options, dataFrom time.Time) model.HomeReport
 func InferKind(d model.Device, hints map[model.DeviceKind]int) model.DeviceKind
 func Grade(r model.DeviceReport) string
 // GradeWhy also returns the rule that decided the grade (model.GradeReason);
