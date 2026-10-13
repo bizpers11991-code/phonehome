@@ -604,7 +604,7 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 	if pc := r.Previous; pc != nil {
 		since = previousLabel(pc.Period)
 		fmt.Fprintf(w, "Compared with the %s: %s → %s snooping lookups/day (%s), home grade %s → %s.\n",
-			since, thousands(round(pc.PerDay)), thousands(round(pc.NowPerDay)), changeText(pc.Comparison),
+			since, thousands(model.WholePerDay(pc.PerDay)), thousands(model.WholePerDay(pc.NowPerDay)), changeText(pc.Comparison),
 			gradeOrDash(pc.Grade), gradeOrDash(r.Grade))
 		if pc.Partial {
 			fmt.Fprintf(w, "  Only %.1f of those %.0f days have data; rates are per day of data.\n", pc.Days, pc.Period.Days())
@@ -616,7 +616,7 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 	fmt.Fprintln(w)
 	for _, d := range r.Devices {
 		fmt.Fprintf(w, "%s  %-28s %8s lookups  %7s snooping/day  (%s)\n",
-			gradeOrDash(d.Grade), printable(d.Device.DisplayName()), thousands(d.Total), thousands(round(d.PerDay)), d.Device.Kind)
+			gradeOrDash(d.Grade), printable(d.Device.DisplayName()), thousands(d.Total), thousands(model.WholePerDay(d.PerDay)), d.Device.Kind)
 		if why := d.Reason.Text(); why != "" {
 			fmt.Fprintf(w, "     why: %s\n", printable(why))
 		}
@@ -636,7 +636,7 @@ func printReport(w io.Writer, r model.HomeReport, days int) {
 				fmt.Fprintf(w, "     new: not seen in the %s\n", since)
 			} else {
 				fmt.Fprintf(w, "     vs %s: %s → %s snooping/day (%s), grade %s → %s\n", since,
-					thousands(round(c.PerDay)), thousands(round(c.NowPerDay)), changeText(*c), gradeOrDash(c.Grade), gradeOrDash(d.Grade))
+					thousands(model.WholePerDay(c.PerDay)), thousands(model.WholePerDay(c.NowPerDay)), changeText(*c), gradeOrDash(c.Grade), gradeOrDash(d.Grade))
 			}
 			for _, h := range c.Stopped {
 				fmt.Fprintf(w, "     stopped: %s heartbeat (%s)\n", printable(h.Domain), h.Category.Label())
@@ -712,8 +712,6 @@ func changeText(c model.Comparison) string {
 	}
 	return "no change"
 }
-
-func round(f float64) int { return int(math.Round(f)) }
 
 func gradeOrDash(g string) string {
 	if g == "" {

@@ -381,6 +381,24 @@ func (g GradeReason) TextRate(perDay string) string {
 	return ""
 }
 
+// GradeEdges are the snooping lookups per day at which the volume grade
+// changes (B, C, D and F start here). A rate is never printed as a whole
+// number across one of them; see WholePerDay.
+var GradeEdges = [...]int{50, 300, 1500, 5000}
+
+// WholePerDay is a rate of lookups per day as a whole number for print:
+// rounded, but never up across a grade edge, so 299.6 reads 299, not the 300
+// that would sit next to a B.
+func WholePerDay(perDay float64) int {
+	n := int(math.Round(perDay))
+	for _, e := range GradeEdges {
+		if perDay < float64(e) && n >= e {
+			return e - 1
+		}
+	}
+	return n
+}
+
 // Lookups is PerDay as a whole number for print: rounded, but kept inside
 // VolumeGrade's band so that 49.6 a day reads 49, not the 50 that
 // "A is under 50" rules out.

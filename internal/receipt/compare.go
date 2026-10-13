@@ -61,7 +61,7 @@ func (b *builder) since(c *model.Comparison, gradeKey, now string, stopped []mod
 		b.text("  NOT SEEN IN THE PERIOD BEFORE")
 		return
 	}
-	b.text(leader("SNOOPING PER DAY", rate(c.PerDay)+" → "+rate(c.NowPerDay), Cols))
+	b.text(leader("SNOOPING PER DAY", perDay(c.PerDay)+" → "+perDay(c.NowPerDay), Cols))
 	b.text(leader("  CHANGE", change(*c), Cols))
 	b.bold(leader(gradeKey, gradeOrQ(c.Grade)+" → "+gradeOrQ(now), Cols))
 	if len(stopped) == 0 {

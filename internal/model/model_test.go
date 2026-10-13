@@ -129,3 +129,22 @@ func TestACRUnseen(t *testing.T) {
 		}
 	}
 }
+
+// The headline rate and the reason's number agree and never cross a grade
+// edge: 49.6 a day is a 49 beside an A, 299.6 a 299 beside a B.
+func TestWholePerDay(t *testing.T) {
+	for f, want := range map[float64]int{0: 0, 0.4: 0, 12.4: 12, 49.4: 49, 49.6: 49, 50: 50, 299.6: 299, 300: 300, 1499.6: 1499, 4999.9: 4999, 5000: 5000, 7312.6: 7313} {
+		if got := WholePerDay(f); got != want {
+			t.Errorf("WholePerDay(%v) = %d, want %d", f, got, want)
+		}
+	}
+	for _, c := range []struct {
+		perDay   float64
+		from, to int
+	}{{49.6, 0, 50}, {299.6, 50, 300}, {1499.6, 300, 1500}, {4999.6, 1500, 5000}, {12, 0, 50}} {
+		r := GradeReason{PerDay: c.perDay, BandFrom: c.from, BandTo: c.to}
+		if got := WholePerDay(c.perDay); got != r.Lookups() {
+			t.Errorf("%v a day: WholePerDay %d, reason %d", c.perDay, got, r.Lookups())
+		}
+	}
+}

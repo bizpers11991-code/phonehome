@@ -95,3 +95,25 @@ func TestPrintReportReason(t *testing.T) {
 		t.Errorf("ACR note not on the TV alone:\n%s", out)
 	}
 }
+
+// The report's snooping/day figure is the number its reason prints, kept
+// inside the grade's band: 299.6 reads 299 beside a B, 49.6 reads 49.
+func TestPrintReportRateStaysInBand(t *testing.T) {
+	to := time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)
+	dev := func(name, grade string, perDay float64, from, upTo int) model.DeviceReport {
+		return model.DeviceReport{Device: model.Device{ID: name, Label: name}, PerDay: perDay, Grade: grade,
+			Reason: model.GradeReason{Rule: model.ReasonVolume, PerDay: perDay, VolumeGrade: grade, BandFrom: from, BandTo: upTo}}
+	}
+	r := model.HomeReport{Period: model.Period{From: to.Add(-7 * 24 * time.Hour), To: to}, Grade: "B",
+		Devices: []model.DeviceReport{dev("Busy", "B", 299.6, 50, 300), dev("Quiet", "A", 49.6, 0, 50)}}
+	var b strings.Builder
+	printReport(&b, r, 7)
+	for _, want := range []string{"299 snooping/day", "49 snooping/day", "why: 299 snooping lookups a day (B is 50–299)"} {
+		if !strings.Contains(b.String(), want) {
+			t.Errorf("report lacks %q\n%s", want, b.String())
+		}
+	}
+	if strings.Contains(b.String(), " 300 ") || strings.Contains(b.String(), " 50 snooping") {
+		t.Errorf("a rate crosses its band edge:\n%s", b.String())
+	}
+}

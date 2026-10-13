@@ -175,11 +175,11 @@ func needsCountry(name, cc string) bool {
 	return cc != "" && !strings.Contains(strings.ToUpper(name), "("+strings.ToUpper(cc)+")") && !strings.HasSuffix(name, ")")
 }
 
-func (b *builder) totals(total int, share, perDay float64) {
+func (b *builder) totals(total int, share, rate float64) {
 	b.kind(DoubleRule)
 	b.bold(leader("TOTAL CALLS HOME", thousands(total), Cols))
 	b.bold(leader("ABOUT YOU (SNOOPING)", percent(share), Cols))
-	b.bold(leader("SNOOPING PER DAY", rate(perDay), Cols))
+	b.bold(leader("SNOOPING PER DAY", perDay(rate), Cols))
 }
 
 func (b *builder) stamp(grade string, aside []string) {

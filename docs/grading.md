@@ -37,8 +37,10 @@ rules, matching the table above:
 
 "At least D" is literal: a device with an ACR lookup or a bypass that also
 makes 5,000+ snooping lookups a day is an F, and its reason is then the
-volume. The rate in a reason is rounded but never across a band's edge, so
-49.6 a day reads "49 (A is under 50)", not 50.
+volume. The rate is rounded but never across a band's edge, so
+49.6 a day reads "49 (A is under 50)", not 50. The big per-day figure on a
+card, the report's snooping/day and the receipt's SNOOPING PER DAY follow the
+same rule, so the number beside a grade always sits inside that grade's band.
 
 ### Which devices the ACR rules apply to
 

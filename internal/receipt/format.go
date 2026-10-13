@@ -8,6 +8,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/bizpers11991-code/phonehome/internal/model"
 )
 
 // clean makes s printable on the grid: control characters become spaces,
@@ -117,6 +119,15 @@ func rate(f float64) string {
 		return strconv.FormatFloat(f, 'f', 1, 64)
 	}
 	return thousands(int(math.Round(f)))
+}
+
+// perDay formats snooping lookups per day next to a grade: like rate, but a
+// whole number never crosses a grade edge, so 299.6 reads 299 beside a B.
+func perDay(f float64) string {
+	if f < 10 && math.Round(f) != f {
+		return rate(f)
+	}
+	return thousands(model.WholePerDay(f))
 }
 
 func percent(f float64) string {
