@@ -56,6 +56,16 @@ What counts as **blocked**, per source:
   blocklists generate). In Pi-hole's `pihole.log`, every verdict Pi-hole
   logs as blocked, including whole CNAME chains.
 
+**When a `dnsmasq-log` lookup appears.** A query is stored once dnsmasq has
+logged how it was answered. One that is never answered is released, as not
+blocked, after 100 more log lines or once a later line is 10 seconds newer.
+That 10 seconds is measured on the log's own timestamps, never the clock on
+the machine running phonehome, so on a quiet router the last query waits
+for the next line dnsmasq writes (any line, from any client) before it
+shows up. A log clock that steps back by more than 10 seconds (daylight
+saving ending in classic syslog format, an NTP correction) restarts that
+reckoning from the new time.
+
 **Rate limiting.** When Pi-hole rate-limits a client, FTL refuses the
 query without recording it, so it is missing from the database and the
 API. `pihole.log` does log it, and the `dnsmasq-log` reader counts it as a

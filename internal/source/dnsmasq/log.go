@@ -26,7 +26,9 @@ const lookahead = 100
 // answer, so a quiet router does not hold its last query back for hours.
 // dnsmasq answers from config at once and upstream replies take well under
 // a second, or a few seconds when it retries; 10 s is past that, and far
-// below the hours a quiet log can go without 100 more lines.
+// below the hours a quiet log can go without 100 more lines. Because the
+// rule runs on log time, a quiet router's last query is held back until the
+// next line of any kind arrives, however long that takes (docs/setup).
 const quietAfter = 10 * time.Second
 
 // cnameHold is how many lines a query answered with a CNAME is held back,
