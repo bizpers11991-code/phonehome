@@ -66,7 +66,9 @@
 - **Provisional grades.** A grade based on less than 20 hours of data for
   the device (a fresh install, or a device that joined an hour ago) is marked
   "Provisional: based on 3 hours of data". Alerts and the MQTT grade sensor
-  ignore provisional grades; `/metrics` has
+  ignore provisional grades. Rates per day are per day of the device's own
+  data, so a device that joined 48 hours ago with 1,200 lookups is 600 a day
+  (C), not 171 spread over the home's week; `/metrics` has
   `phonehome_device_grade_provisional`.
 - **Coverage.** Each device shows the share of its lookups the knowledge base
   recognised, and a grade resting on less than half of them says so
