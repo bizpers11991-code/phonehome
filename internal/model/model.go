@@ -368,7 +368,7 @@ func (g GradeReason) TextRate(perDay string) string {
 	}
 	switch g.Rule {
 	case ReasonACRHeartbeat:
-		return "Content recognition (ACR) on a clock, " + everyText(g.Every) + ": always F"
+		return "Content recognition (ACR) on a clock, " + EveryText(g.Every) + ": always F"
 	case ReasonACR:
 		return fmt.Sprintf("Contacts content-recognition (ACR) servers (%s %s): at least D",
 			thousands(g.Count), plural(g.Count, "lookup", "lookups"))
@@ -451,10 +451,10 @@ func (h HomeReport) ProvisionalText() string {
 	return GradeReason{Provisional: true, Data: most}.ProvisionalText()
 }
 
-// everyText words a heartbeat's interval as the Privacy Receipt's heartbeat
+// EveryText words a heartbeat's interval as the Privacy Receipt's heartbeat
 // lines do ("every 15s", "every 5 min"), so the reason printed under them
 // matches.
-func everyText(d time.Duration) string {
+func EveryText(d time.Duration) string {
 	switch s := d.Seconds(); {
 	case d <= 0:
 		return "regularly"

@@ -152,7 +152,7 @@ func TestWholePerDay(t *testing.T) {
 	}
 }
 
-// everyText's cut-offs are mirrored by every() in the dashboard's app.js
+// EveryText's cut-offs are mirrored by every() in the dashboard's app.js
 // (checked there by hand with these same values), so change both together.
 func TestEveryTextCutoffs(t *testing.T) {
 	for d, want := range map[time.Duration]string{
@@ -167,8 +167,8 @@ func TestEveryTextCutoffs(t *testing.T) {
 		129600 * time.Second:     "every 2 days",
 		400000 * time.Second:     "every 5 days",
 	} {
-		if got := everyText(d); got != want {
-			t.Errorf("everyText(%v) = %q, want %q", d, got, want)
+		if got := EveryText(d); got != want {
+			t.Errorf("EveryText(%v) = %q, want %q", d, got, want)
 		}
 	}
 }
