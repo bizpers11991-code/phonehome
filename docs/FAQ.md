@@ -111,6 +111,15 @@ or your DHCP server, so they may include a person's name ("Anna's iPad");
 rename devices with `labels:` first if that matters. Counts and timing also
 hint at a household's routine.
 
+### Does it read rotated, compressed (`.gz`) logs?
+
+No. It follows a rotation to `<log>.1` as plain text, then continues in the
+new file, but never opens `.gz` files. If logrotate compresses the log at
+rotation, the lines written between phonehome's last read and the rotation
+are lost. For dnsmasq and AdGuard Home logs, set `delaycompress` in the
+logrotate stanza (or `copytruncate` without immediate `compress`). Pi-hole
+sources read its database or API and are not affected.
+
 ### Does it need root, or change anything on my network?
 
 No and no. It reads files and, optionally, the Pi-hole API. It never writes
