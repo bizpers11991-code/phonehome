@@ -744,3 +744,60 @@ func TestDomainsEndpoint(t *testing.T) {
 		t.Errorf("days=3: status %d", w.Code)
 	}
 }
+
+// manyDomainsBackend reports one device that looked up n domains.
+type manyDomainsBackend struct {
+	fake
+	n int
+}
+
+func (b *manyDomainsBackend) Report(_ context.Context, p model.Period) (model.HomeReport, error) {
+	var ds []model.DomainStat
+	for i := range b.n { // descending by count, as the report has them
+		ds = append(ds, model.DomainStat{Domain: fmt.Sprintf("d%06d.example", i), Count: b.n - i})
+	}
+	return model.HomeReport{Period: p, Devices: []model.DeviceReport{{
+		Device: model.Device{ID: "mac:aa:bb:cc:00:11:22", Label: "Busy"}, Domains: ds,
+	}}}, nil
+}
+
+// TestDomainsEndpointIsCapped checks that a device with a huge number of
+// domains does not produce a huge response: a default cap, paging with
+// limit and offset, and the total so the caller knows there is more.
+func TestDomainsEndpointIsCapped(t *testing.T) {
+	h := newServer(&manyDomainsBackend{n: 5100}, web.Options{})
+	type page struct {
+		Total, Offset, Limit int
+		Domains              []struct{ Domain string }
+	}
+	fetch := func(query string) (page, int) {
+		w := get(t, h, "/api/devices/"+url.PathEscape("mac:aa:bb:cc:00:11:22")+"/domains"+query)
+		var p page
+		if w.Code == http.StatusOK {
+			if err := json.Unmarshal(w.Body.Bytes(), &p); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return p, w.Code
+	}
+
+	p, code := fetch("")
+	if code != 200 || len(p.Domains) != 5000 || p.Total != 5100 || p.Limit != 5000 || p.Domains[0].Domain != "d000000.example" {
+		t.Errorf("default: status %d, %d domains, total %d, limit %d", code, len(p.Domains), p.Total, p.Limit)
+	}
+	p, _ = fetch("?limit=50&offset=5090")
+	if len(p.Domains) != 10 || p.Total != 5100 || p.Offset != 5090 || p.Domains[0].Domain != "d005090.example" {
+		t.Errorf("last page: %d domains, total %d, offset %d", len(p.Domains), p.Total, p.Offset)
+	}
+	if p, _ = fetch("?offset=9000"); len(p.Domains) != 0 || p.Total != 5100 {
+		t.Errorf("past the end: %d domains, total %d", len(p.Domains), p.Total)
+	}
+	if p, _ = fetch("?limit=20000"); len(p.Domains) != 5100 {
+		t.Errorf("limit=20000: %d domains", len(p.Domains))
+	}
+	for _, bad := range []string{"?limit=0", "?limit=-1", "?limit=x", "?limit=20001", "?offset=-1", "?offset=x"} {
+		if _, code := fetch(bad); code != http.StatusBadRequest {
+			t.Errorf("%s: status %d, want 400", bad, code)
+		}
+	}
+}

@@ -735,7 +735,7 @@ func cmdReceipt(ctx context.Context, args []string) error {
 	fl := newFlags("receipt", "[--config FILE | --demo] [--days N] [--device ID] [-o FILE]", "Write a Privacy Receipt image for the home or one device.")
 	cfgPath := fl.String("config", "", configHelp)
 	days := fl.Int("days", 7, "how many days back to cover, ending now")
-	device := fl.String("device", "", `device ID (e.g. "mac:aa:bb:cc:dd:ee:ff") or name; empty = whole home`)
+	device := fl.String("device", "", `device ID (e.g. "mac:aa:bb:cc:dd:ee:ff"), name, MAC or IP address; empty = whole home`)
 	out := fl.String("o", "receipt.png", "output file (.png or .svg)")
 	useDemo := fl.Bool("demo", false, "use the synthetic demo household")
 	if err := parseFlags(fl, args); err != nil {
@@ -796,16 +796,34 @@ func hasLookups(r model.HomeReport, id string, days int) error {
 	return fmt.Errorf("no lookups%s in the last %d days; check your sources with `phonehome report`", who, days)
 }
 
-// resolveDevice accepts a device ID or a case-insensitive display name.
+// resolveDevice accepts a device ID, or, case-insensitively, its display
+// name, MAC address or any IP address it is known by. An exact ID wins; a
+// name or address that fits several devices is an error listing them.
 func resolveDevice(r model.HomeReport, q string) (string, error) {
-	var names []string
+	addr, addrErr := netip.ParseAddr(q)
+	var ids, hits, all []string
 	for _, d := range r.Devices {
-		if d.Device.ID == q || strings.EqualFold(d.Device.DisplayName(), q) {
-			return d.Device.ID, nil
+		line := fmt.Sprintf("  %s  (%s)", d.Device.ID, printable(d.Device.DisplayName()))
+		if d.Device.ID == q {
+			return q, nil
 		}
-		names = append(names, fmt.Sprintf("  %s  (%s)", d.Device.ID, printable(d.Device.DisplayName())))
+		all = append(all, line)
+		match := strings.EqualFold(d.Device.ID, q) || strings.EqualFold(d.Device.DisplayName(), q) ||
+			d.Device.MAC != "" && strings.EqualFold(d.Device.MAC, q)
+		for _, ip := range d.Device.IPs {
+			match = match || addrErr == nil && ip == addr.Unmap()
+		}
+		if match {
+			ids, hits = append(ids, d.Device.ID), append(hits, line)
+		}
 	}
-	return "", fmt.Errorf("no device %q in this period; devices:\n%s", q, strings.Join(names, "\n"))
+	switch len(hits) {
+	case 0:
+		return "", fmt.Errorf("no device %q in this period; devices:\n%s", q, strings.Join(all, "\n"))
+	case 1:
+		return ids[0], nil
+	}
+	return "", fmt.Errorf("%q matches more than one device; use the ID:\n%s", q, strings.Join(hits, "\n"))
 }
 
 func cmdKB(args []string) error {

@@ -730,6 +730,7 @@ function domainTable(d, res) {
   return h('div', {},
     h('div', { class: 'table-tools' },
       h('label', { for: 'domain-filter', class: 'visually-hidden', text: t('domains.filter') }), filter, count),
+    res.total > all.length ? h('p', { class: 'empty-note', text: t('domains.capped', { n: fmt(all.length), total: fmt(res.total) }) }) : null,
     h('div', { class: 'table-wrap' }, h('table', { class: 'domain-table' }, h('thead', {}, h('tr', {}, heads)), tbody)),
     h('p', { class: 'table-more' }, more),
     h('p', { class: 'table-export' }, t('domains.export'), ' ',

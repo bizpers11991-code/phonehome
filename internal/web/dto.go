@@ -190,9 +190,13 @@ func newDomain(s model.DomainStat) domainDTO {
 	}
 }
 
-// domainsDTO is GET /api/devices/{id}/domains: every domain a device looked
-// up in the period, with the rule that classified it.
+// domainsDTO is GET /api/devices/{id}/domains: the domains a device looked
+// up in the period, most looked-up first, with the rule that classified
+// each. Domains is the page of Limit starting at Offset; Total counts all.
 type domainsDTO struct {
+	Total   int             `json:"total"`
+	Offset  int             `json:"offset"`
+	Limit   int             `json:"limit"`
 	ID      string          `json:"id"`
 	Name    string          `json:"name"`
 	From    string          `json:"from"`
@@ -210,10 +214,11 @@ type fullDomainDTO struct {
 	Evidence   []string `json:"evidence"`
 }
 
-func newDomainsDTO(r model.HomeReport, d model.DeviceReport) domainsDTO {
-	out := domainsDTO{ID: d.Device.ID, Name: d.Device.DisplayName(), From: stamp(r.Period.From), To: stamp(r.Period.To),
+func newDomainsDTO(r model.HomeReport, d model.DeviceReport, limit, offset int) domainsDTO {
+	out := domainsDTO{Total: len(d.Domains), Offset: offset, Limit: limit, ID: d.Device.ID, Name: d.Device.DisplayName(), From: stamp(r.Period.From), To: stamp(r.Period.To),
 		Demo: r.Demo, Domains: []fullDomainDTO{}}
-	for _, s := range d.Domains {
+	page := d.Domains[min(offset, len(d.Domains)):]
+	for _, s := range page[:min(limit, len(page))] {
 		ev := s.Evidence
 		if ev == nil {
 			ev = []string{}

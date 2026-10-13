@@ -179,6 +179,13 @@
   their web pages from being flagged. 810 -> 866 rules.
 
 ### Fixed
+- `phonehome receipt --device` matches a device by ID, name, MAC or any known
+  IP address (case-insensitive), and says so when a name or address fits more
+  than one device. Before, an IP never matched a device whose ID is a MAC.
+- `GET /api/devices/{id}/domains` returns at most 5000 domains by default
+  (`limit` up to 20000, `offset` to page, `total` in the reply); a device with
+  200,000 unique domains answered with 13 MB. The dashboard's details view
+  shows the first page and says when the list is cut.
 - Retention applies on the first read: records older than `retention_days`
   are skipped before they are stored (Pi-hole database `WHERE timestamp >=`,
   Pi-hole API `from=`, other sources filtered before insert), with cursors
