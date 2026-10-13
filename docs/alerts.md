@@ -47,11 +47,22 @@ DHCP may have handed that address to another device).
 notification. At most `max_per_hour` notifications (default 6) are sent per
 hour; events held back by the limit are sent once the hour allows.
 
-**Delivery** is at most once. If a target is down, that notification is
-logged as failed and not retried, so a broken target cannot flood you
-later. What phonehome remembers between checks lives in its own database,
+**Delivery** is at most once, with no retry and no queue. Each check makes
+one attempt per target (HTTP targets time out after 15 seconds, MQTT after
+15 seconds in total). If a target is down or refuses the request, that
+batch is logged as `alert delivery failed` and is lost for that target; the
+events in it are already recorded as sent, so they are not offered again
+when the target comes back, and nothing is kept to send later. Targets are
+independent: one being down does not stop the others from receiving the
+batch. What phonehome remembers between checks lives in its own database,
 and is saved before a notification goes out, so a restart neither repeats
 nor loses alerts (and if the database cannot be written, nothing is sent).
+The one thing that is sent later is an event held back by `max_per_hour`,
+because it was never sent.
+
+The MQTT target's per-device grade sensors are different: they are not
+alerts. If a publish fails, nothing is remembered and the next check sends
+them again.
 
 ## Configuration
 
