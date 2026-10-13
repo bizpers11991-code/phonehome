@@ -123,7 +123,9 @@
   domain it looked up, with company, category, lookups, blocks, first and
   last seen, and the rule's confidence and evidence links.
 - **Export.** The report (CSV, one row per device, or JSON) and a device's
-  domain table, generated in the browser.
+  domain table, generated in the browser. The CSV ends with `grade_rule`,
+  `grade_provisional` and `classified_percent`, so a grade's reason travels
+  with it.
 - **Accessibility.** Arrow keys move between device cards; dialogs keep focus
   inside and return it on close; light-mode colours now meet WCAG AA
   contrast, checked by a test for light and dark.
