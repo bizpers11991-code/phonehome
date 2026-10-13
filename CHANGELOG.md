@@ -175,7 +175,9 @@
   an ACR heartbeat, at least D for any ACR lookup) now apply only to TVs,
   streaming players and devices of unknown kind. A laptop or phone opening an
   ACR company's site was graded D; its ACR lookups now count as snooping
-  like any other. [Why](docs/grading.md#which-devices-the-acr-rules-apply-to)
+  like any other. Content-recognition hosts no longer count when phonehome
+  infers a device's kind, so a laptop is not re-inferred as a TV for looking
+  one up. [Why](docs/grading.md#which-devices-the-acr-rules-apply-to)
 - **Readers checked against upstream source.** Each reader was compared
   with the code of the software it reads, and the fixtures now come from
   that code. Supported versions are listed in

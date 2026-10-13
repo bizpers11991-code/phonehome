@@ -71,7 +71,9 @@ func matchKind(rules []kindRule, s string) model.DeviceKind {
 // What a device does is better evidence than what it is called, so the
 // sources are consulted in this order and the first that answers wins:
 //
-//  1. strong domain evidence: one hinted kind has ≥ 5 lookups and ≥ 50% of
+//  1. strong domain evidence (hosts of content-recognition rules never
+//     count: Analyze leaves them out, since the ACR grading rules apply by
+//     kind and the kind must not follow from them): one hinted kind has ≥ 5 lookups and ≥ 50% of
 //     all hinted lookups (a box that talks to Samsung's ACR servers all day
 //     is a TV, whatever DHCP calls it);
 //  2. d.Kind, when a source or the user already set one other than unknown;
