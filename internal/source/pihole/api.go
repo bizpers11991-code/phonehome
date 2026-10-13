@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"cmp"
 	"context"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -299,12 +300,26 @@ func (a *API) send(ctx context.Context, method, path string, body any, sid strin
 		// thing three times; name the Pi-hole and what to check once.
 		var ue *url.Error
 		if ctx.Err() == nil && errors.As(err, &ue) {
-			return nil, fmt.Errorf("pihole: cannot reach %s: %w; check the url of this pihole-api source and that Pi-hole's web server is running",
-				a.base, ue.Err)
+			hint := "check the url of this pihole-api source and that Pi-hole's web server is running"
+			if isCertError(err) {
+				// Pi-hole v6 serves HTTPS with a self-signed certificate.
+				hint = "Pi-hole's own certificate is self-signed: point url at its plain http:// address, usually port 80"
+			}
+			return nil, fmt.Errorf("pihole: cannot reach %s: %w; %s", a.base, ue.Err, hint)
 		}
 		return nil, fmt.Errorf("pihole: %s %s: %w", method, req.URL.Path, err)
 	}
 	return resp, nil
+}
+
+// isCertError reports whether err is a TLS certificate verification failure.
+func isCertError(err error) bool {
+	var (
+		unknown  x509.UnknownAuthorityError
+		invalid  x509.CertificateInvalidError
+		hostname x509.HostnameError
+	)
+	return errors.As(err, &unknown) || errors.As(err, &invalid) || errors.As(err, &hostname)
 }
 
 // decode reads a JSON reply, turning FTL's error objects into Go errors.

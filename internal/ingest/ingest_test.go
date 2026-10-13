@@ -358,7 +358,7 @@ func TestCycleSkipsFailingSource(t *testing.T) {
 	r := &Runner{Store: st, DNS: []source.DNSSource{bad, good}, Logger: quiet}
 	backoffs := map[string]*backoff{}
 	for range 10 {
-		r.cycle(context.Background(), time.Minute, backoffs)
+		r.cycle(context.Background(), time.Minute, backoffs, true)
 	}
 	if good.calls != 10 {
 		t.Errorf("healthy source called %d times, want 10", good.calls)
@@ -370,10 +370,30 @@ func TestCycleSkipsFailingSource(t *testing.T) {
 
 	bad.err = nil
 	for range 8 {
-		r.cycle(context.Background(), time.Minute, backoffs)
+		r.cycle(context.Background(), time.Minute, backoffs, true)
 	}
 	if backoffs["bad"].fails != 0 {
 		t.Errorf("backoff not reset after recovery: %+v", backoffs["bad"])
+	}
+}
+
+// While one source is catching up, extra rounds run back to back; they are
+// not ticks, so a failing source must not use them up as backoff and get
+// hammered (and logged) hundreds of times a second.
+func TestCatchUpRoundsDoNotRetryFailingSource(t *testing.T) {
+	st := newStore()
+	bad := &fakeDNS{name: "bad", err: errors.New("down")}
+	big := &fakeDNS{name: "big", total: 10*maxBatchesPerRun*5 + 5}
+	r := &Runner{Store: st, DNS: []source.DNSSource{bad, big}, Batch: 10, Logger: quiet}
+	backoffs := map[string]*backoff{}
+	r.cycle(context.Background(), time.Minute, backoffs, true)
+	for r.cycle(context.Background(), time.Minute, backoffs, false) {
+	}
+	if bad.calls != 1 {
+		t.Errorf("failing source tried %d times during one tick's catch-up, want 1", bad.calls)
+	}
+	if st.runs["big"].Records != int64(big.total) {
+		t.Errorf("big: %+v", st.runs["big"])
 	}
 }
 

@@ -412,3 +412,67 @@ func TestAPIPaginationMovingTime(t *testing.T) {
 		t.Fatalf("got %d queries, cursor %q", len(got), cur)
 	}
 }
+
+// A Pi-hole v6 serves HTTPS with a self-signed certificate by default. The
+// error must say what to do, not just "x509: certificate signed by unknown
+// authority".
+func TestAPISelfSignedTLS(t *testing.T) {
+	srv := httptest.NewTLSServer(http.NotFoundHandler())
+	defer srv.Close()
+	a, err := NewAPI(srv.URL, "pw", &http.Client{Timeout: 5 * time.Second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = a.FetchDNS(context.Background(), "", 10)
+	if err == nil || !strings.Contains(err.Error(), "certificate") || !strings.Contains(err.Error(), "http://") {
+		t.Fatalf("err = %v, want a certificate error that suggests http://", err)
+	}
+	// With the server's certificate trusted, the same URL works.
+	f := &fakeFTL{t: t, password: "pw", sids: map[string]bool{}}
+	tls := httptest.NewTLSServer(f)
+	defer tls.Close()
+	a, err = NewAPI(tls.URL, "pw", tls.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := a.FetchDNS(context.Background(), "", 10); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// A server that accepts the connection and never answers must not hang a
+// fetch past the client timeout or its context.
+func TestAPISlowServer(t *testing.T) {
+	release := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	}))
+	defer srv.Close()
+	defer close(release)
+
+	a, err := NewAPI(srv.URL, "pw", &http.Client{Timeout: 100 * time.Millisecond})
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	if _, _, err := a.FetchDNS(context.Background(), "", 10); err == nil {
+		t.Fatal("expected a timeout")
+	}
+	if d := time.Since(start); d > 3*time.Second {
+		t.Fatalf("took %v", d)
+	}
+
+	a, _ = NewAPI(srv.URL, "pw", &http.Client{})
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	start = time.Now()
+	if _, _, err := a.FetchDNS(ctx, "", 10); err == nil {
+		t.Fatal("expected the context to end the fetch")
+	}
+	if d := time.Since(start); d > 3*time.Second {
+		t.Fatalf("took %v", d)
+	}
+}
