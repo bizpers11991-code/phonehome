@@ -185,12 +185,75 @@ func TestEngineProvisional(t *testing.T) {
 	}
 
 	// Once the grade is no longer provisional, it is compared with B, the
-	// grade known before; the phone's first real grade is learnt quietly.
+	// grade known before. The phone appeared after the baseline, so its
+	// first real grade, an F, is alerted, with no previous grade.
 	h.now = h.now.Add(5 * time.Minute)
 	h.devs = []model.DeviceReport{dev("mac:1", "TV", "D"), dev("mac:2", "Phone", "F")}
 	check(t, e)
-	if len(rec.batches) != 2 || kinds(rec.batches[1]) != "grade_worse:TV" || rec.batches[1].Events[0].Before != "B" {
+	if len(rec.batches) != 2 || kinds(rec.batches[1]) != "grade_worse:TV grade_worse:Phone" || rec.batches[1].Events[0].Before != "B" {
 		t.Fatalf("after the provisional period: %d batches, last %v", len(rec.batches), rec.batches[len(rec.batches)-1])
+	}
+	if ev := rec.batches[1].Events[1]; ev.Before != "" || ev.Grade != "F" {
+		t.Errorf("phone's first grade event %+v, want F with no previous grade", ev)
+	}
+	if _, text := Text(rec.batches[1]); !strings.Contains(text, "Phone is now graded F (its grade was provisional).") {
+		t.Errorf("text %q", text)
+	}
+	if strings.Contains(string(JSON(rec.batches[1])), `"previousGrade":""`) {
+		t.Errorf("JSON carries an empty previousGrade: %s", JSON(rec.batches[1]))
+	}
+}
+
+// A device that was provisional when alerts were turned on learns its first
+// real grade silently, however bad: it is on the dashboard, and an alert
+// storm hours after install helps no one. A device first seen after the
+// baseline is told about only if that first real grade is a D or F.
+func TestEngineFirstRealGrade(t *testing.T) {
+	h := &home{now: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)}
+	provisional := func(r model.DeviceReport) model.DeviceReport {
+		r.Reason.Provisional, r.Reason.Data = true, time.Hour
+		return r
+	}
+	h.devs = []model.DeviceReport{provisional(dev("mac:1", "TV", "D")), provisional(dev("mac:2", "Phone", "B"))}
+	e, rec, _ := newEngine(h)
+	e.Devices = func(context.Context) ([]model.Device, error) {
+		return []model.Device{{ID: "mac:1"}, {ID: "mac:2"}, {ID: "mac:3"}}, nil
+	}
+	check(t, e) // baseline: the TV and phone are provisional, mac:3 is quiet this week
+	if len(rec.batches) != 0 {
+		t.Fatalf("baseline sent %v", rec.batches)
+	}
+
+	// Still provisional a while later, then a real F: all quiet, even for
+	// mac:3, which only now has traffic.
+	h.now = h.now.Add(time.Hour)
+	h.devs = []model.DeviceReport{provisional(dev("mac:1", "TV", "D")), provisional(dev("mac:2", "Phone", "B")), provisional(dev("mac:3", "Lamp", "F"))}
+	check(t, e)
+	h.now = h.now.Add(time.Hour)
+	h.devs = []model.DeviceReport{dev("mac:1", "TV", "F"), dev("mac:2", "Phone", "D"), dev("mac:3", "Lamp", "F")}
+	check(t, e)
+	if len(rec.batches) != 0 {
+		t.Fatalf("a baseline device's first real grade was alerted: %v", kinds(rec.batches[0]))
+	}
+	// After that it is an ordinary device: getting worse is alerted.
+	h.now = h.now.Add(time.Hour)
+	h.devs[1] = dev("mac:2", "Phone", "F")
+	check(t, e)
+	if len(rec.batches) != 1 || kinds(rec.batches[0]) != "grade_worse:Phone" || rec.batches[0].Events[0].Before != "D" {
+		t.Fatalf("batches %v", rec.batches)
+	}
+
+	// A device first seen after the baseline: its first real B is quiet, but
+	// a first real D is alerted.
+	h.now = h.now.Add(time.Hour)
+	h.devs = append(h.devs, provisional(dev("mac:4", "Cam", "A")), provisional(dev("mac:5", "Bulb", "C")))
+	check(t, e) // announced as new, without a grade
+	h.now = h.now.Add(time.Hour)
+	h.devs[len(h.devs)-2], h.devs[len(h.devs)-1] = dev("mac:4", "Cam", "B"), dev("mac:5", "Bulb", "D")
+	check(t, e)
+	last := rec.batches[len(rec.batches)-1]
+	if kinds(last) != "grade_worse:Bulb" || last.Events[0].Before != "" || last.Events[0].Grade != "D" {
+		t.Fatalf("last batch %v, want only the bulb's first real grade", kinds(last))
 	}
 }
 

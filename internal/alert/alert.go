@@ -54,7 +54,7 @@ type Event struct {
 	Kind   string
 	Device Device
 	Grade  string // new_device, grade_worse: the grade now
-	Before string // grade_worse: the grade before
+	Before string // grade_worse: the grade before; "" when it was provisional
 
 	// heartbeat
 	Domain   string
@@ -127,11 +127,15 @@ type state struct {
 type deviceState struct {
 	// Pending marks a device known when the baseline was taken but quiet
 	// that week: its state is learnt, silently, when it is next active.
-	Pending    bool      `json:"pending,omitempty"`
-	Seen       time.Time `json:"seen"` // last check it was in the report
-	Grade      string    `json:"grade"`
-	Heartbeats []string  `json:"heartbeats"` // snooping heartbeat domains
-	Bypasses   []string  `json:"bypasses"`   // kind|evidence
+	Pending bool      `json:"pending,omitempty"`
+	Seen    time.Time `json:"seen"` // last check it was in the report
+	Grade   string    `json:"grade"`
+	// Baseline marks a device that was already known when the baseline was
+	// taken and has had no real (non-provisional) grade since: its first
+	// real grade is learnt silently, however bad. Cleared once it has one.
+	Baseline   bool     `json:"baseline,omitempty"`
+	Heartbeats []string `json:"heartbeats"` // snooping heartbeat domains
+	Bypasses   []string `json:"bypasses"`   // kind|evidence
 }
 
 // Run checks every interval until ctx is cancelled. The first check waits
@@ -227,6 +231,11 @@ func (e *Engine) Check(ctx context.Context) error {
 				cur.Grade = prev.Grade
 			}
 		}
+		// A device present at the baseline stays quiet about its first real
+		// grade (the user sees it on the dashboard; an alert storm hours
+		// after install helps no one). Others, first seen later, are alerted
+		// about a first real D or F.
+		cur.Baseline = cur.Grade == "" && (baseline || (prev != nil && (prev.Baseline || prev.Pending)))
 		next[d.Device.ID] = cur
 		if baseline {
 			continue
@@ -239,7 +248,7 @@ func (e *Engine) Check(ctx context.Context) error {
 		if prev.Pending {
 			continue // known from the baseline, first seen active now: learn it
 		}
-		if worse(cur.Grade, prev.Grade) {
+		if worse(cur.Grade, prev.Grade) || (prev.Grade == "" && !prev.Baseline && (cur.Grade == "D" || cur.Grade == "F")) {
 			add(GradeWorse+":"+dev.ID+":"+cur.Grade, Event{Kind: GradeWorse, Device: dev, Grade: cur.Grade, Before: prev.Grade})
 		}
 		for _, h := range d.Heartbeats {
