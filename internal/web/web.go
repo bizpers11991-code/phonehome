@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"mime"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -96,7 +97,11 @@ func New(b Backend, o Options) http.Handler {
 // period parses ?days=1|7|30 (default 7) into [now−days, now).
 func (s *server) period(r *http.Request) (model.Period, bool) {
 	days := 7
-	if v := r.URL.Query().Get("days"); v != "" {
+	q, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return model.Period{}, false
+	}
+	if v := q.Get("days"); v != "" {
 		n, err := strconv.Atoi(v)
 		if err != nil || (n != 1 && n != 7 && n != 30) {
 			return model.Period{}, false

@@ -159,6 +159,8 @@ func TestReportPeriod(t *testing.T) {
 		{"?days=2", 400, 0},
 		{"?days=-7", 400, 0},
 		{"?days=week", 400, 0},
+		{"?days=%ZZ", 400, 0},
+		{"?days=7;x=1", 400, 0},
 	} {
 		f := &fake{}
 		w := get(t, newServer(f, web.Options{}), "/api/report"+tc.query)

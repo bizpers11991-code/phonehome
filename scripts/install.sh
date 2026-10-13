@@ -14,11 +14,25 @@ BINDIR="${BINDIR:-/usr/local/bin}"
 VERSION="${PHONEHOME_VERSION:-}"
 WITH_SYSTEMD=0
 
+# Not "sed ... $0": when piped into sh ($0 is "sh") there is no file to read.
+usage() {
+	cat <<'EOF'
+Install the latest phonehome release.
+
+  sh install.sh                 # install binary to /usr/local/bin
+  sh install.sh --systemd       # also install and enable the systemd unit
+  PHONEHOME_VERSION=v0.1.0 sh install.sh
+
+Downloads from GitHub Releases and refuses to install anything whose
+SHA-256 does not match the release's SHA256SUMS. Read it before running it.
+EOF
+}
+
 for arg in "$@"; do
 	case "$arg" in
 	--systemd) WITH_SYSTEMD=1 ;;
 	-h | --help)
-		sed -n '2,9p' "$0"
+		usage
 		exit 0
 		;;
 	*)
