@@ -28,6 +28,11 @@ func TestResolveDevice(t *testing.T) {
 		"192.168.1.20":          "mac:aa:bb:cc:00:11:22", // IP of a MAC-keyed device
 		"FD00:0:0:0:0:0:0:20":   "mac:aa:bb:cc:00:11:22", // same address, spelled differently
 		"AA:BB:CC:00:11:22":     "mac:aa:bb:cc:00:11:22", // bare MAC, any case
+		"aa-bb-cc-00-11-22":     "mac:aa:bb:cc:00:11:22", // MAC with dashes
+		"AA-BB-CC-00-11-22":     "mac:aa:bb:cc:00:11:22",
+		"  192.168.1.20\n":      "mac:aa:bb:cc:00:11:22", // surrounding whitespace
+		" living-tv ":           "mac:aa:bb:cc:00:11:22",
+		"fd00::20%eth0":         "mac:aa:bb:cc:00:11:22", // IPv6 zone
 		"192.168.1.30":          "ip:192.168.1.30",
 		"192.168.1.42":          "mac:aa:bb:cc:00:11:44",
 	} {

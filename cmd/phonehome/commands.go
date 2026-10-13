@@ -799,8 +799,16 @@ func hasLookups(r model.HomeReport, id string, days int) error {
 // resolveDevice accepts a device ID, or, case-insensitively, its display
 // name, MAC address or any IP address it is known by. An exact ID wins; a
 // name or address that fits several devices is an error listing them.
+// Surrounding whitespace, an IPv6 zone (fe80::1%eth0) and dashes in a MAC
+// (aa-bb-cc-dd-ee-ff, as Windows writes them) are ignored.
 func resolveDevice(r model.HomeReport, q string) (string, error) {
+	q = strings.TrimSpace(q)
 	addr, addrErr := netip.ParseAddr(q)
+	addr = addr.WithZone("")
+	mac := q
+	if hw, err := net.ParseMAC(strings.TrimPrefix(strings.ToLower(q), "mac:")); err == nil && len(hw) == 6 {
+		mac = hw.String() // colons, lower case
+	}
 	var ids, hits, all []string
 	for _, d := range r.Devices {
 		line := fmt.Sprintf("  %s  (%s)", d.Device.ID, printable(d.Device.DisplayName()))
@@ -809,7 +817,8 @@ func resolveDevice(r model.HomeReport, q string) (string, error) {
 		}
 		all = append(all, line)
 		match := strings.EqualFold(d.Device.ID, q) || strings.EqualFold(d.Device.DisplayName(), q) ||
-			d.Device.MAC != "" && strings.EqualFold(d.Device.MAC, q)
+			strings.EqualFold(d.Device.ID, "mac:"+mac) ||
+			d.Device.MAC != "" && strings.EqualFold(d.Device.MAC, mac)
 		for _, ip := range d.Device.IPs {
 			match = match || addrErr == nil && ip == addr.Unmap()
 		}
