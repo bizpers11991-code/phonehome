@@ -270,6 +270,13 @@ func TestParseTimeYear(t *testing.T) {
 		{"Jan  1 00:10:00", newYear, time.Date(2026, 1, 1, 0, 10, 0, 0, time.UTC)},
 		{"Oct  3 10:00:00", testNow, time.Date(2026, 10, 3, 10, 0, 0, 0, time.UTC)},
 		{"Oct  4 10:00:00", testNow, time.Date(2025, 10, 4, 10, 0, 0, 0, time.UTC)},
+		// Read just before New Year, a line stamped just after it is next year's.
+		{"Jan  1 00:00:05 host", time.Date(2026, 12, 31, 23, 59, 59, 0, time.UTC), time.Date(2027, 1, 1, 0, 0, 5, 0, time.UTC)},
+		{"Dec 31 23:59:59 host", time.Date(2026, 12, 31, 23, 59, 59, 0, time.UTC), time.Date(2026, 12, 31, 23, 59, 59, 0, time.UTC)},
+		// Feb 29 needs a leap year: the nearest one, never Mar 1.
+		{"Feb 29 12:00:00", time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC), time.Date(2024, 2, 29, 12, 0, 0, 0, time.UTC)},
+		{"Feb 29 12:00:00", time.Date(2027, 2, 27, 0, 0, 0, 0, time.UTC), time.Date(2028, 2, 29, 12, 0, 0, 0, time.UTC)},
+		{"Feb 29 12:00:00", time.Date(2028, 3, 1, 0, 0, 0, 0, time.UTC), time.Date(2028, 2, 29, 12, 0, 0, 0, time.UTC)},
 		{"Thu Jan  1 00:10:00 2026 daemon.info", newYear, time.Date(2026, 1, 1, 0, 10, 0, 0, time.UTC)},
 		{"2026-01-01T01:10:00+01:00 host", newYear, time.Date(2026, 1, 1, 0, 10, 0, 0, time.UTC)},
 	} {

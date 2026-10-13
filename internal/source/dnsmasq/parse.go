@@ -37,8 +37,7 @@ type event struct {
 var programs = []string{" dnsmasq[", " dnsmasq:", " pihole-FTL[", " pihole-FTL:"}
 
 // parseLine parses one log line. Timestamps without a year are placed in
-// now's year, or the year before if that would put them over a day in the
-// future (a log read just after New Year).
+// the year nearest to now (see inferYear).
 func parseLine(line string, loc *time.Location, now time.Time) (event, bool) {
 	at := -1
 	for _, p := range programs {
@@ -81,14 +80,49 @@ func parseTime(header string, loc *time.Location, now time.Time) (time.Time, boo
 		if err != nil {
 			return time.Time{}, false
 		}
-		n := now.In(loc)
-		t = t.AddDate(n.Year(), 0, 0)
-		if t.After(n.Add(24 * time.Hour)) {
-			t = t.AddDate(-1, 0, 0)
-		}
-		return t, true
+		return inferYear(t, loc, now)
 	}
 	return time.Time{}, false
+}
+
+// inferYear places a month-day-time that carries no year (t's year is
+// ignored) near now: among the years before, of and after now's, the one
+// that puts it closest to now, preferring a time at most a day ahead (the
+// clock of the log may run a little fast) over one further in the future.
+// Feb 29 only exists in leap years, so the nearest leap year is used, going
+// further out when none of those three is one; it is never turned into
+// Mar 1.
+func inferYear(t time.Time, loc *time.Location, now time.Time) (time.Time, bool) {
+	n := now.In(loc)
+	var best time.Time
+	for r := 1; r <= 8 && best.IsZero(); r++ {
+		for y := n.Year() - r; y <= n.Year()+r; y++ {
+			if y != n.Year()-r && y != n.Year()+r && r > 1 {
+				continue // inner years were tried in an earlier round
+			}
+			c := time.Date(y, t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), 0, loc)
+			if c.Month() != t.Month() { // Feb 29 in a common year
+				continue
+			}
+			if best.IsZero() || better(c, best, n) {
+				best = c
+			}
+		}
+	}
+	return best, !best.IsZero()
+}
+
+// better reports whether a is a better guess than b for a line read at n.
+func better(a, b, n time.Time) bool {
+	limit := n.Add(24 * time.Hour)
+	if aok, bok := !a.After(limit), !b.After(limit); aok != bok {
+		return aok
+	}
+	da, db := a.Sub(n).Abs(), b.Sub(n).Abs()
+	if da != db {
+		return da < db
+	}
+	return a.Before(b) // a tie goes to the past
 }
 
 // parseMessage parses what dnsmasq's log_query() writes:
