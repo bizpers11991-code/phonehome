@@ -101,7 +101,9 @@ rounded down, so 49.6% reads 49%.
 When fewer than half of a device's lookups are recognised, the grade says
 so: "Graded on the 40% of lookups phonehome recognises". Such a grade errs
 on the kind side: a rule for one of its unknown domains can only add
-snooping, never take it away. The device's details list those unknown
+snooping, never take it away. An A on such a device says little, so its
+receipt does not claim it "minds its own business": the stamp reads "TOO
+LITTLE RECOGNISED TO SAY MUCH". The device's details list those unknown
 domains, with a button to suggest rules for them.
 
 ## The home grade

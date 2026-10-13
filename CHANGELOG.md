@@ -79,7 +79,9 @@
   `phonehome_device_grade_provisional`.
 - **Coverage.** Each device shows the share of its lookups the knowledge base
   recognised, and a grade resting on less than half of them says so
-  ("Graded on the 40% of lookups phonehome recognises"). TVs and streaming
+  ("Graded on the 40% of lookups phonehome recognises"; an A there gets the
+  receipt headline "TOO LITTLE RECOGNISED TO SAY MUCH" instead of "MINDS ITS
+  OWN BUSINESS"). TVs and streaming
   players with no known content-recognition server seen get a note that not
   every brand's servers are known. `/metrics` has
   `phonehome_device_classified_ratio`.

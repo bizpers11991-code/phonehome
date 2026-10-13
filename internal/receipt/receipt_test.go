@@ -302,7 +302,8 @@ func TestGradeExplained(t *testing.T) {
 			[]string{"MINDS ITS OWN", "WHY: 3.6 snooping lookups a day (A is", "SNOOPING PER DAY ....................  3.6"},
 			[]string{"Graded on", "Provisional", "content-recognition"}},
 		{"low coverage", lowCoverage,
-			[]string{"Graded on the 40% of lookups phonehome", "recognises."}, nil},
+			[]string{"Graded on the 40% of lookups phonehome", "recognises.", "TOO LITTLE RECOGNISED", "TO SAY MUCH."},
+			[]string{"MINDS ITS OWN"}},
 		{"provisional", provisional,
 			[]string{"Provisional: based on 3 hours of data."}, nil},
 	}
@@ -324,8 +325,16 @@ func TestGradeExplained(t *testing.T) {
 			t.Errorf("%s: reason not under the stamp\n%s", tt.name, s)
 		}
 	}
+	for _, l := range headline("A", model.GradeReason{Rule: model.ReasonVolume}, true) {
+		if width(l) > stampAside {
+			t.Errorf("low-coverage headline %q is wider than %d", l, stampAside)
+		}
+	}
+	if got := headline("D", model.GradeReason{Rule: model.ReasonVolume}, true); got[0] != "TALKS ABOUT YOU" {
+		t.Errorf("a D on low coverage reads %q: only an A is hedged", got)
+	}
 	for _, rule := range []string{model.ReasonACRHeartbeat, model.ReasonACR, model.ReasonBypass} {
-		for _, l := range headline("D", model.GradeReason{Rule: rule}) {
+		for _, l := range headline("D", model.GradeReason{Rule: rule}, false) {
 			if width(l) > stampAside {
 				t.Errorf("%s headline %q is wider than %d", rule, l, stampAside)
 			}
