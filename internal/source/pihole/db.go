@@ -103,10 +103,19 @@ func (d *DB) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DN
 
 // fetch reads up to limit rows with ids above last and returns the
 // lookups among them and the id of the last row read (last if none).
+//
+// On a first read (last is 0) rows older than source.Since(ctx) are not read
+// at all: ids grow with time, so the cursor after the first batch is already
+// past them. Later reads need no time filter, which could make SQLite scan
+// by timestamp instead of id.
 func (d *DB) fetch(ctx context.Context, last int64, limit int) ([]model.DNSQuery, int64, error) {
+	var floor int64
+	if last == 0 {
+		floor = max(source.Since(ctx).Unix(), 0)
+	}
 	rows, err := d.db.QueryContext(ctx,
 		`SELECT id, timestamp, type, status, domain, client
-		   FROM queries WHERE id > ? ORDER BY id LIMIT ?`, last, limit)
+		   FROM queries WHERE id > ? AND timestamp >= ? ORDER BY id LIMIT ?`, last, floor, limit)
 	if err != nil {
 		return nil, last, fmt.Errorf("pihole: read queries: %w", err)
 	}

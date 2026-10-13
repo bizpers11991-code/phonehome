@@ -179,6 +179,14 @@
   their web pages from being flagged. 810 -> 866 rules.
 
 ### Fixed
+- Retention applies on the first read: records older than `retention_days`
+  are skipped before they are stored (Pi-hole database `WHERE timestamp >=`,
+  Pi-hole API `from=`, other sources filtered before insert), with cursors
+  moving past them. A 30-day, 3M-row Pi-hole database with `retention_days: 2`
+  now ingests in 3.7 s into an 18 MB file; before it wrote 3M rows, deleted
+  2.8M and kept 125 MB. New databases use incremental auto-vacuum and give
+  freed space back after a large prune; existing ones log how to shrink
+  once (phonehome never runs a full `VACUUM`).
 - A dnsmasq query that never got an answer no longer holds back every later
   query until 100 more log lines arrive (hours on a quiet router). It is also
   released, as not blocked, once a later line's own timestamp is 10 seconds

@@ -125,6 +125,9 @@ func (a *API) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.D
 		}
 		if cursor != "" {
 			q.Set("from", from)
+		} else if since := source.Since(ctx); !since.IsZero() {
+			// First read: nothing older than the retention floor.
+			q.Set("from", strconv.FormatFloat(float64(since.UnixMicro())/1e6, 'f', -1, 64))
 		}
 		var resp struct {
 			Queries []apiQuery `json:"queries"`

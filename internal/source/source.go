@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
@@ -33,6 +34,24 @@ func Domain(name string) string {
 		}
 	}
 	return strings.ToLower(name)
+}
+
+type sinceKey struct{}
+
+// WithSince returns a context asking sources to skip lookups older than t:
+// the retention cutoff, since Prune would delete them straight away. It is
+// a hint; the caller still drops what a source returns anyway. A source
+// that can filter cheaply (an indexed query, an API parameter) should do so
+// on a first read, when its cursor is empty, and must keep its cursor
+// pointing past the last record it read, skipped or not.
+func WithSince(ctx context.Context, t time.Time) context.Context {
+	return context.WithValue(ctx, sinceKey{}, t)
+}
+
+// Since returns the time set by WithSince, or the zero time.
+func Since(ctx context.Context) time.Time {
+	t, _ := ctx.Value(sinceKey{}).(time.Time)
+	return t
 }
 
 // DNSSource yields DNS lookups incrementally.

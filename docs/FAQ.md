@@ -98,7 +98,13 @@ with the environment variable. Numbers from real Zeros are very welcome.
 It copies lookups into its own SQLite database (by default
 `/var/lib/phonehome/phonehome.db`, `/data` in Docker) and deletes anything
 older than `retention_days` (default 90; `0` keeps everything). Nothing is
-stored anywhere else. Uninstalling and deleting that file removes it all.
+stored anywhere else. On the first read, history older than `retention_days`
+is skipped rather than stored and deleted again, so a 2-day retention over a
+30-day Pi-hole database stays small. A database created by this version
+returns the space of a large prune to the disk by itself; one created by an
+earlier version only reuses it. To shrink such a file once, stop phonehome
+and run `sqlite3 phonehome.db 'PRAGMA auto_vacuum=INCREMENTAL; VACUUM;'`
+(phonehome never runs a full `VACUUM` itself). Uninstalling and deleting that file removes it all.
 It never modifies your Pi-hole or AdGuard data.
 
 ### Is the receipt safe to share?

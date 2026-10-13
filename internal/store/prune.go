@@ -44,7 +44,60 @@ func (s *Store) Prune(ctx context.Context, before time.Time) (int64, error) {
 	if err != nil {
 		return total, fmt.Errorf("store: prune domains: %w", err)
 	}
+	if err := s.reclaim(ctx); err != nil {
+		return total, fmt.Errorf("store: reclaim space: %w", err)
+	}
 	return total, nil
+}
+
+// vacuumStep is how many free pages one incremental_vacuum transaction
+// releases, so that ingestion waits only briefly for the write lock.
+const vacuumStep = 2000
+
+// minReclaim is the number of free pages below which the file is left as it
+// is: they will be reused by the next inserts.
+const minReclaim = 256
+
+// AutoVacuum reports whether the database was created with incremental
+// auto-vacuum, so that pruning can shrink the file. Databases made by
+// earlier versions were not, and only a full VACUUM (with phonehome
+// stopped) can change that.
+func (s *Store) AutoVacuum() bool {
+	var mode int
+	return s.db.QueryRow(`PRAGMA auto_vacuum`).Scan(&mode) == nil && mode == 2
+}
+
+// reclaim returns free pages to the file system after a prune freed a large
+// share of the file (at least a quarter and minReclaim pages), in short
+// incremental_vacuum steps, then truncates the WAL so that the file shrinks
+// now rather than at some later checkpoint. It does nothing for a database
+// without incremental auto-vacuum.
+func (s *Store) reclaim(ctx context.Context) error {
+	if !s.AutoVacuum() {
+		return nil
+	}
+	var free, pages int64
+	if err := s.db.QueryRowContext(ctx, `PRAGMA freelist_count`).Scan(&free); err != nil {
+		return err
+	}
+	if err := s.db.QueryRowContext(ctx, `PRAGMA page_count`).Scan(&pages); err != nil {
+		return err
+	}
+	if free < minReclaim || free*4 < pages {
+		return nil
+	}
+	for ; free > 0; free -= vacuumStep {
+		if err := s.write(ctx, func(tx *sql.Tx) error {
+			_, err := tx.ExecContext(ctx, fmt.Sprintf(`PRAGMA incremental_vacuum(%d)`, vacuumStep))
+			return err
+		}); err != nil {
+			return err
+		}
+	}
+	// TRUNCATE waits for readers; if one is busy the checkpoint just
+	// happens later, so its failure is not an error.
+	s.db.ExecContext(ctx, `PRAGMA wal_checkpoint(TRUNCATE)`)
+	return nil
 }
 
 // deleteChunks runs the chunked DELETE q (parameters ?1 = cut, ?2 = chunk

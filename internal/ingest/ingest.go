@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/bizpers11991-code/phonehome/internal/model"
@@ -49,6 +50,8 @@ type Runner struct {
 	Retention time.Duration // Run prunes older data daily; 0 = keep forever
 	Logger    *slog.Logger  // nil = slog.Default()
 	Now       func() time.Time
+
+	hinted bool // the "file will not shrink" hint has been logged
 }
 
 // task is one source's unit of work in a run. run reports whether the
@@ -174,6 +177,12 @@ func (r *Runner) prune(ctx context.Context) error {
 	}
 	if n > 0 {
 		r.log().Info("pruned old records", "records", n, "retention", r.Retention)
+		if av, ok := r.Store.(interface{ AutoVacuum() bool }); ok && !av.AutoVacuum() && !r.hinted {
+			r.hinted = true
+			r.log().Info("the database file will not shrink: it was created before incremental vacuum was set up, " +
+				"so freed space is only reused. To shrink it once, stop phonehome and run: " +
+				"sqlite3 <database> 'PRAGMA auto_vacuum=INCREMENTAL; VACUUM;'")
+		}
 	}
 	return nil
 }
@@ -221,12 +230,14 @@ func (r *Runner) tasks() []task {
 	var ts []task
 	for _, s := range r.DNS {
 		ts = append(ts, task{key(s.Name(), "dns"), "dns", func(ctx context.Context, k string) (int64, bool, error) {
-			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchDNS, r.Store.InsertDNSWithCursor)
+			return drain(ctx, r.Store, r.log(), k, r.batch(), r.cutoff(), func(q model.DNSQuery) time.Time { return q.Time },
+				s.FetchDNS, r.Store.InsertDNSWithCursor)
 		}})
 	}
 	for _, s := range r.Flows {
 		ts = append(ts, task{key(s.Name(), "flow"), "flow", func(ctx context.Context, k string) (int64, bool, error) {
-			return drain(ctx, r.Store, r.log(), k, r.batch(), s.FetchFlows, r.Store.InsertFlowsWithCursor)
+			return drain(ctx, r.Store, r.log(), k, r.batch(), r.cutoff(), func(f model.Flow) time.Time { return f.Start },
+				s.FetchFlows, r.Store.InsertFlowsWithCursor)
 		}})
 	}
 	for _, s := range r.Devices {
@@ -247,19 +258,37 @@ func (r *Runner) tasks() []task {
 	return ts
 }
 
+// cutoff is the oldest time worth storing: what Prune would keep. The zero
+// time (no retention) keeps everything.
+func (r *Runner) cutoff() time.Time {
+	if r.Retention <= 0 {
+		return time.Time{}
+	}
+	return r.now().Add(-r.Retention)
+}
+
 // drain fetches and inserts batches until the source has nothing new, the
-// per-round cap is reached (more is then true), or something fails. The cursor is advanced only
+// per-round cap is reached (more is then true), or something fails. Records
+// older than since (when set) are dropped before they are stored: Prune
+// would delete them at once, and a first read of a long history would
+// otherwise write millions of rows only to delete them. Sources told the
+// cutoff (source.WithSince) may skip them earlier. A batch that is dropped
+// entirely still advances the cursor. The cursor is advanced only
 // after the batch it covers has been inserted. A saved cursor the source
 // cannot read (source.ErrBadCursor) is dropped and reading starts over,
 // rather than failing on every run until someone edits the database.
 func drain[T any](
 	ctx context.Context, st Store, log *slog.Logger, key string, limit int,
+	since time.Time, at func(T) time.Time,
 	fetch func(context.Context, string, int) ([]T, string, error),
 	insert func(ctx context.Context, recs []T, key, cursor string) error,
 ) (int64, bool, error) {
 	cur, err := st.Cursor(ctx, key)
 	if err != nil {
 		return 0, false, fmt.Errorf("reading cursor: %w", err)
+	}
+	if !since.IsZero() {
+		ctx = source.WithSince(ctx, since)
 	}
 	var total int64
 	for range maxBatchesPerRun {
@@ -281,6 +310,10 @@ func drain[T any](
 		if next == cur && len(recs) == 0 {
 			return total, false, nil
 		}
+		fetched := len(recs)
+		if !since.IsZero() {
+			recs = slices.DeleteFunc(recs, func(rec T) bool { return at(rec).Before(since) })
+		}
 		// The batch and its cursor go in together, so that a crash cannot
 		// leave the batch stored with the old cursor and read again.
 		if len(recs) > 0 {
@@ -295,7 +328,7 @@ func drain[T any](
 			return total, false, nil
 		}
 		cur = next
-		if len(recs) < limit {
+		if fetched < limit {
 			return total, false, nil
 		}
 	}
