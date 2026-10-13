@@ -6,6 +6,7 @@ unless asked for:
 ```sh
 PHONEHOME_SCALE=1 go test -run TestScale -v -timeout 30m ./internal/ingest
 GOARCH=386 PHONEHOME_SCALE=1 go test -run TestScale -v ./internal/ingest   # 32-bit
+PHONEHOME_SCALE=1 go test -run TestScaleManyDomains -v ./internal/ingest   # 200k distinct domains
 ```
 
 ## The workload
@@ -37,28 +38,132 @@ and 7) builds were only compiled and vetted.
 
 "Heap peak" is the highest `HeapAlloc` sampled every 5 ms. It includes
 garbage the collector has not reclaimed yet, so it moves with `GOGC` and
-`GOMEMLIMIT`; "keeps" is what is still live after a GC, i.e. the lookups the
-report holds.
+`GOMEMLIMIT`; "keeps" is what is still live after a GC, i.e. the finished
+report. "Max RSS" is what the OS saw for the whole `phonehome report` process.
 
 ## Results
 
-Measured on main for v0.3.0, with the 30-second lookup counting.
+Measured on main for v0.3.0, with the 30-second lookup counting and the
+report-memory changes described [below](#reports-with-many-distinct-domains).
 
 | | amd64 | 386 (32-bit) |
 |---|---|---|
-| First ingest, 1.46M lookups | 4.6 s (313k lookups/s), heap peak 8 MiB | 6.2 s (235k/s), heap peak 6 MiB |
-| Incremental ingest, one hour (1,227 lookups) | 8 ms | 9 ms |
-| Store on disk (after checkpoint) | 48.8 MiB, 35 B/lookup | same file |
-| Report, 1 day (42.7k lookups) | 39 ms read + 22 ms analyze; peak 14 MiB | 62 + 33 ms; peak 11 MiB |
-| Report, 7 days (310k lookups) | 277 + 150 ms; peak 67 MiB | 361 + 206 ms; peak 45 MiB |
-| Report, 30 days (1.46M lookups) | 1.10 s + 0.70 s; keeps 145 MiB, peak 292 MiB | 1.74 s + 0.84 s; keeps 95 MiB, peak 188 MiB |
-| Prune 1 week (353k lookups) | 1.13 s | 0.76 s |
+| First ingest, 1.46M lookups | 4.9 s (297k lookups/s), heap peak 8 MiB | 6.5 s (222k/s), heap peak 6 MiB |
+| Incremental ingest, one hour (1,227 lookups) | 10 ms | 14 ms |
+| Store on disk (after checkpoint) | 48.7 MiB, 35 B/lookup | same file |
+| Report, 1 day (38k lookups) | 52 ms; peak 9 MiB | 86 ms; peak 7 MiB |
+| Report, 7 days (276k lookups) | 379 ms; peak 26 MiB | 543 ms; peak 20 MiB |
+| Report, 30 days (1.31M lookups) | 1.51 s; peak 72 MiB | 2.38 s; peak 60 MiB |
+| Prune 1 week (353k lookups) | 0.70 s | 0.79 s |
 
-With `GOMEMLIMIT=128MiB` the 32-bit 30-day report peaks at 135 MiB (analysis
-takes 1.2 s instead of 0.8 s, as the GC works harder).
+The report rows are the whole report (read and analysis in one pass, since
+lookups are streamed from the store into the analysis) with the lists a
+dashboard does not show left out. They used to be 1.10 s + 0.70 s with a
+292 MiB peak (amd64) and 1.74 s + 0.84 s with 188 MiB (386) for 30 days, as
+the report held every lookup of the period in memory.
 
 Ingest memory stays flat however large the backlog: sources are read in
 batches of 5,000 and a run stops after 20 batches.
+
+## Reports with many distinct domains
+
+The household above has 20,000 distinct names it does not know. Launch QA
+tried a harder one, a Pi-hole v5 database of **3,000,000 lookups over 30
+days from 14 clients to about 208,000 distinct domains** (CDN hash hosts,
+generated tracker names), where a device looks up tens of thousands of names
+of its own. A report's memory does not grow with lookups so much as with
+**(device, domain) pairs**: each needs a counter, its burst times for the
+heartbeat test, a row in the device's domain list and its classification.
+That fixture has 624,000 pairs in 30 days.
+
+`phonehome report --days N` on the same Ryzen laptop (`tm.py`: wall time
+and max RSS of the whole process; heap peak sampled inside the process):
+
+| | before | after |
+|---|---|---|
+| 1 day (98k lookups) | 0.55 s, RSS 153 MiB, heap peak 124 MiB | 0.46 s, RSS 79 MiB, heap peak 56 MiB |
+| 7 days (698k) | 3.3 s, RSS 708 MiB, heap peak 638 MiB | 2.3 s, RSS 225 MiB, heap peak 173 MiB |
+| 30 days (3.0M) | 4.3 s, RSS 803 MiB, heap peak 747 MiB | 3.8 s, RSS 234 MiB, heap peak 189 MiB |
+| 1 day, `GOMEMLIMIT=128MiB` | 0.56 s, RSS 138 MiB, heap peak 107 MiB | 0.45 s, RSS 82 MiB, heap peak 53 MiB |
+| 7 days, `GOMEMLIMIT=128MiB` | 10.7 s (115 s of CPU), RSS 552 MiB, heap peak 517 MiB | 3.3 s (15 s of CPU), RSS 174 MiB, heap peak 137 MiB |
+| 30 days, `GOMEMLIMIT=128MiB` | 13.7 s (153 s of CPU), RSS 477 MiB, heap peak 440 MiB | 4.7 s (16 s of CPU), RSS 162 MiB, heap peak 115 MiB |
+
+(The 7-day report reads 14 days, to compare with the week before.) Before,
+the live data alone was above the 128 MiB limit, so the collector ran
+continuously: 10–15 s of wall time and a minute-plus of CPU on a 16-thread
+machine, which on a 4-core Pi is the wall time. After, the live data is
+about 100 MiB at its largest (just before the report is built), so the limit
+holds with a collector that is busy but not thrashing, and RSS stays near
+160 MiB: Go's heap limit is soft and does not count SQLite's own memory.
+Nothing about the output changed: the dashboard's API answers for 1, 7 and
+30 days and every device's domain list were compared byte for byte, before
+and after, on this fixture and on the demo household.
+
+`TestScaleManyDomains` makes a smaller version of this without a Pi-hole
+database (3M lookups, 14 clients, 200k domains, about 600k pairs, stored
+directly) and fails if the 30-day heap peak passes 256 MiB:
+
+| | time | heap peak |
+|---|---|---|
+| 1 day | 0.26 s | 35 MiB |
+| 7 days | 1.4 s | 108 MiB |
+| 30 days | 4.6 s | 187 MiB |
+
+What changed, from the profile of the 30-day report (1.37 GB allocated, 673
+MiB peak, 187 MiB kept):
+
+- **Lookups are streamed.** `Store.DNSEach` decodes one row at a time into
+  the analysis (`analyze.AnalyzeStream`) instead of building a 3M-element
+  `[]model.DNSQuery` (104 bytes each, 310 MiB). Its scan variables are also
+  declared once; per row they were three heap allocations, a fifth of the
+  garbage.
+- **A pair costs 64 bytes of counters, not 80 plus a slice.** The accumulator
+  no longer points at its domain (the map key does), keeps a name's first
+  burst time in a field and later ones in a slice only if there are any, and
+  is allocated in chunks per device, so a device's are garbage as soon as its
+  report is built.
+- **Classifications are shared.** All the unknown domains, or all those under
+  one rule, point at one `model.DomainMatch` instead of each carrying a
+  152-byte copy of the rule's text, company and evidence; a `DomainStat` is
+  now a name, two counts, two times and that pointer.
+- **Only the top is kept.** `Unknown` (top 50) and `TopDomains` (top 25) were
+  built from a full sort of every domain, and the 50 kept pinned the backing
+  array of all of them (52 MiB in the 7-day report); they now trim as they go, and
+  a name's registrable-domain grouping is worked out only for the survivors.
+- **The previous period keeps no domain lists.** The comparison period is only
+  compared with; its devices (`Gone`) used to carry full lists nobody shows.
+- **The full domain lists are capped.** `DeviceReport.Domains` is every
+  domain a device looked up, shown in the details view's table. A cached
+  report keeps these lists for up to 250,000 entries in all (about 90 bytes
+  each; a household with 20,000 names has them all several times over). Past
+  that a device's list is left out of the report (`DomainCount` says how long
+  it is) and opening its details runs one analysis for that device's list
+  (`ReportWithDomains`), cached for 30 seconds: about the cost of a report
+  (4 s here for 30 days), once, instead of keeping hundreds of MB for every
+  cached period.
+
+`go test -bench Analyze ./internal/analyze` on the laptop, before and after
+(the first two are the machine's usual household; `ManyDomains` is eight
+devices that each look up 20,000 names, 480k lookups in a week):
+
+| | before | after |
+|---|---|---|
+| `BenchmarkAnalyze` (1M lookups, one week) | 221 ms, 74 MB, 487k allocs | 188 ms, 62 MB, 328k allocs |
+| `BenchmarkAnalyzeCompared` (2M, two weeks) | 439 ms, 146 MB, 949k allocs | 364 ms, 113 MB, 631k allocs |
+| `BenchmarkAnalyzeManyDomains` (160k pairs) | 223 ms, 70 MB, 761k allocs | 158 ms, 30 MB, 442k allocs |
+
+`TestManyDomainsMemory` (in `go test`, about half a second, skipped with
+`-short`) guards the shape: 120,000 pairs must peak under 450 bytes of heap
+each; it was 737 before and is about 215 now.
+
+**What is left.** Memory still grows linearly with pairs, at roughly 160
+bytes live (300 with the collector's headroom) per pair in the busiest
+period: the counter, its map slot and burst times, the domain's cached
+classification, and the name. A household where every device looks up
+millions of distinct names would still need hundreds of MB for a 30-day
+report, in proportion; there is no cap that would not change what a report
+says, so there is none. The details view's table of a device with hundreds
+of thousands of domains is a large response (about 10 MB for 52,000 here).
 
 ## Before and after the v0.2 store changes
 
@@ -101,19 +206,17 @@ not extra work per lookup.
   a month of history the first time takes minutes, not hours.
 - The store needs about 35 bytes per lookup: ~50 MB a month for this
   household, ~150 MB at the default 90-day retention.
-- The 30-day report is the memory peak. It holds every lookup of the period
-  in memory (~95 MiB live on 32-bit for 1.46M lookups) and peaks near 190 MiB
-  with default GC settings. That fits in 512 MB next to Pi-hole, but not with
-  much to spare, so the systemd unit and the Docker image set
-  `GOMEMLIMIT=128MiB`, which keeps the peak near that limit at the cost of
-  slower reports. The 1- and 7-day reports stay under 50 MiB.
+- The 30-day report is the memory peak, and it is proportional to the
+  distinct (device, domain) pairs, not the lookups, since lookups are
+  streamed: 60 MiB on 32-bit for the 1.46M-lookup household above, and 189 MiB
+  (115 MiB with the limit) for the 208,000-domain case. That fits in 512 MB
+  next to Pi-hole with room to spare. The systemd unit and the Docker image
+  set `GOMEMLIMIT=128MiB`, which holds the peak near that limit at the cost of
+  slower reports only when a report is that large. The 1- and 7-day reports
+  stay under 50 MiB in the household above.
 - `GOMEMLIMIT` is a soft limit and only an environment variable, so it is
   easy to change: `systemctl edit phonehome` → `Environment=GOMEMLIMIT=512MiB`,
   or `-e GOMEMLIMIT=512MiB` / `environment:` in Docker; `off` removes it. On a
-  64-bit machine a household this busy keeps ~145 MiB live during a 30-day
-  report, above the limit, so the collector runs more often (Go caps it at
-  about half the CPU); raise the limit there if reports feel slow.
-- Most of the remaining report memory is the `[]model.DNSQuery` itself
-  (~68 bytes per lookup on 32-bit, ~104 on 64-bit). Shrinking it further
-  would mean streaming lookups into `analyze` instead of materialising them,
-  which is a change to the `analyze` / `model` contract and was left out.
+  64-bit machine the 208,000-domain case keeps ~100 MiB live while a 30-day
+  report is built, close to the limit, so the collector runs often (Go caps
+  it at about half the CPU); raise the limit there if reports feel slow.

@@ -288,6 +288,19 @@
     commented-out GID that was wrong for most hosts.
     `packaging/compose/adguard.yml` notes it needs Docker Compose v2.23.1+.
 
+### Reliability and speed
+- **A report's memory no longer grows with the number of distinct domains.**
+  Launch QA's fixture (3M lookups, 14 clients, 208,000 domains) took 3.5 s
+  and 718 MiB for a 7-day report and 4.3 s and 799 MiB for 30 days, and
+  thrashed for 14 s under `GOMEMLIMIT=128MiB`; it now takes 2.3 s and 225 MiB,
+  3.8 s and 234 MiB, and 4.7 s and 162 MiB under the limit. Lookups are
+  streamed from the store into the analysis instead of being held as a
+  slice, per-domain counters and classifications are packed and shared, the
+  unknown and top-domain lists keep only their top as they go, and the
+  full domain lists are kept up to a budget (past it, a device's table is
+  listed when its details open). Reports are byte-for-byte unchanged. See
+  [docs/performance.md](docs/performance.md).
+
 ### Docs and tests
 - docs/alerts.md states exactly how delivery fails: one attempt per target per batch, no retry or queue, a missed batch is not resent.
 - Rotated `.gz` logs: the dnsmasq, OpenWrt, AdGuard Home and FAQ pages say logrotate needs `delaycompress` (phonehome does not read `.gz`).
