@@ -485,6 +485,9 @@ func Home(r model.HomeReport, o Options) Doc {
 	// The home grade is computed by analyze (HomeReport.Grade); the receipt
 	// only prints it.
 	b.stamp(r.Grade, []string{"HOME GRADE", "A QUIET ... F LOUD", "", "AS GOOD AS ITS", "WORST DEVICE."})
+	if s := r.ProvisionalText(); s != "" {
+		b.note("", s+".")
+	}
 	if worst != nil {
 		b.fix(worst.Fixes)
 	}

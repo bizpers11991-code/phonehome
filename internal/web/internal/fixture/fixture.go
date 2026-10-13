@@ -284,6 +284,7 @@ func (b *Backend) Report(_ context.Context, p model.Period) (model.HomeReport, e
 	}
 	slices.SortStableFunc(rep.Devices, func(a, b model.DeviceReport) int { return cmp.Compare(b.Snooping, a.Snooping) })
 	rep.Grade = analyze.HomeGrade(rep.Devices)
+	rep.Provisional = analyze.HomeProvisional(rep.Devices)
 	return rep, nil
 }
 

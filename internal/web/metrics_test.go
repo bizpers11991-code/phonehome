@@ -60,6 +60,7 @@ func TestWriteMetrics(t *testing.T) {
 		Period:      model.Period{From: at.AddDate(0, 0, -7), To: at},
 		GeneratedAt: at,
 		Grade:       "D",
+		Provisional: true,
 		Snooping:    700,
 		ByCategory:  map[model.Category]int{model.CatACR: 300, model.CatContent: 50},
 		Devices: []model.DeviceReport{
@@ -91,6 +92,7 @@ func TestWriteMetrics(t *testing.T) {
 		`phonehome_window_days`:                        "7",
 		`phonehome_report_generated_timestamp_seconds`: "1.7909424e+09",
 		`phonehome_home_grade`:                         "1",
+		`phonehome_home_grade_provisional`:             "1",
 		`phonehome_home_devices`:                       "2",
 		`phonehome_home_lookups{category="acr"}`:       "300",
 		`phonehome_home_lookups{category="unknown"}`:   "0",
@@ -119,10 +121,10 @@ func TestWriteMetrics(t *testing.T) {
 	if _, ok := got[`phonehome_source_last_success_timestamp_seconds{source="leases",kind="devices"}`]; ok {
 		t.Error("a source that never succeeded has a last-success time")
 	}
-	// 7 home categories, per device 1 grade + 1 provisional + 1 classified
+	// A provisional home grade, 7 home categories, per device 1 grade + 1 provisional + 1 classified
 	// + 1 rate + 7 categories + 3 counts + 3 confidences, 2 sources × 4 (one
 	// without a success time).
-	if want := 4 + 1 + 1 + 7 + 1 + 2*(1+1+1+1+7+3+3) + 2*4 - 1; len(got) != want {
+	if want := 4 + 1 + 1 + 1 + 7 + 1 + 2*(1+1+1+1+7+3+3) + 2*4 - 1; len(got) != want {
 		t.Errorf("%d series, want %d", len(got), want)
 	}
 }

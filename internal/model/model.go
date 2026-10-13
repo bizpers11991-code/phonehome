@@ -417,6 +417,22 @@ func (g GradeReason) ProvisionalText() string {
 	return "Provisional: based on less than an hour of data"
 }
 
+// ProvisionalText is "Provisional: based on 3 hours of data" for a
+// provisional home grade, using the most data any device at that grade has,
+// or "" when the home grade is not provisional.
+func (h HomeReport) ProvisionalText() string {
+	if !h.Provisional {
+		return ""
+	}
+	var most time.Duration
+	for _, d := range h.Devices {
+		if d.Grade == h.Grade {
+			most = max(most, d.Reason.Data)
+		}
+	}
+	return GradeReason{Provisional: true, Data: most}.ProvisionalText()
+}
+
 // everyText words a heartbeat's interval as the Privacy Receipt's heartbeat
 // lines do ("every 15s", "every 5 min"), so the reason printed under them
 // matches.
@@ -514,7 +530,11 @@ type HomeReport struct {
 	Snooping    int
 	ByCategory  map[Category]int
 	Grade       string // "A".."F", the worst device grade; "" with no devices. See docs/grading.md
-	Demo        bool   // true when built from synthetic demo data
+	// Provisional is true when every device at the home's grade has a
+	// provisional grade (see GradeReason.Provisional), so the home grade
+	// itself rests on too little data. See HomeProvisional in analyze.
+	Provisional bool
+	Demo        bool // true when built from synthetic demo data
 	// Previous compares the home with the period of equal length just
 	// before Period. nil when there is nothing honest to compare with: no
 	// stored data then, too little of it, or no lookups at all. See

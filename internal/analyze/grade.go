@@ -97,6 +97,23 @@ func mayRunACR(k model.DeviceKind) bool {
 	return false
 }
 
+// HomeProvisional reports whether the home grade (HomeGrade of devs) is
+// provisional: every device at that grade has a provisional grade. A home
+// whose worst device has a real grade is not provisional, however new its
+// other devices are, since they could only lower it by being worse.
+func HomeProvisional(devs []model.DeviceReport) bool {
+	worst := HomeGrade(devs)
+	if worst == "" {
+		return false
+	}
+	for _, d := range devs {
+		if d.Grade == worst && !d.Reason.Provisional {
+			return false
+		}
+	}
+	return true
+}
+
 // HomeGrade grades the whole home: it is as good as its worst device, so the
 // result is the worst grade among devs, or "" when there are no devices to
 // grade. Grades outside A–F (such as "") are ignored. See docs/grading.md.

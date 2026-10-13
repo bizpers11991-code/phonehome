@@ -97,3 +97,19 @@ func TestCompareDTO(t *testing.T) {
 		t.Errorf("report without a comparison has previous: %s", b)
 	}
 }
+
+// /api/report says when the home grade is provisional.
+func TestReportDTOProvisional(t *testing.T) {
+	for _, prov := range []bool{false, true} {
+		b, err := json.Marshal(newReportDTO(model.HomeReport{Grade: "D", Provisional: prov}))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got struct {
+			Provisional *bool `json:"provisional"`
+		}
+		if err := json.Unmarshal(b, &got); err != nil || got.Provisional == nil || *got.Provisional != prov {
+			t.Errorf("provisional = %v (%v), want %v, present", got.Provisional, err, prov)
+		}
+	}
+}

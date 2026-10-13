@@ -153,3 +153,27 @@ func TestHomeGrade(t *testing.T) {
 		}
 	}
 }
+
+// The home grade is provisional only when every device at that grade is: a
+// real D is not made provisional by a brand-new C.
+func TestHomeProvisional(t *testing.T) {
+	dev := func(grade string, prov bool) model.DeviceReport {
+		return model.DeviceReport{Grade: grade, Reason: model.GradeReason{Provisional: prov}}
+	}
+	tests := []struct {
+		name string
+		devs []model.DeviceReport
+		want bool
+	}{
+		{"no devices", nil, false},
+		{"worst is provisional", []model.DeviceReport{dev("D", true), dev("A", false)}, true},
+		{"worst is real, a better one is provisional", []model.DeviceReport{dev("D", false), dev("C", true)}, false},
+		{"two at the worst grade, one real", []model.DeviceReport{dev("D", true), dev("D", false)}, false},
+		{"two at the worst grade, both provisional", []model.DeviceReport{dev("D", true), dev("D", true), dev("A", false)}, true},
+	}
+	for _, tt := range tests {
+		if got := HomeProvisional(tt.devs); got != tt.want {
+			t.Errorf("%s: HomeProvisional = %v, want %v", tt.name, got, tt.want)
+		}
+	}
+}

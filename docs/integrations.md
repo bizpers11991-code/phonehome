@@ -65,6 +65,7 @@ For the whole home:
 | Metric | Meaning |
 |---|---|
 | `phonehome_home_grade` | The home's grade in grade points (the worst device's). Absent when no device was seen. |
+| `phonehome_home_grade_provisional` | 1 when every device at the home's grade has a [provisional](grading.md#provisional-grades) grade, else 0. Absent when no device was seen. |
 | `phonehome_home_devices` | Devices seen in the period. |
 | `phonehome_home_lookups{category=…}` | Lookups in the period, per category. |
 | `phonehome_home_snooping_lookups_per_day` | Snooping lookups per day. |

@@ -13,15 +13,17 @@ import (
 // and times are RFC 3339 (omitted when unknown).
 
 type reportDTO struct {
-	From        string        `json:"from"`
-	To          string        `json:"to"`
-	Days        float64       `json:"days"`
-	GeneratedAt string        `json:"generatedAt,omitempty"`
-	Demo        bool          `json:"demo"`
-	Total       int           `json:"total"`
-	Snooping    int           `json:"snooping"`
-	SnoopShare  float64       `json:"snoopShare"`
-	Grade       string        `json:"grade"` // home grade: the worst device's; "" with no devices
+	From        string  `json:"from"`
+	To          string  `json:"to"`
+	Days        float64 `json:"days"`
+	GeneratedAt string  `json:"generatedAt,omitempty"`
+	Demo        bool    `json:"demo"`
+	Total       int     `json:"total"`
+	Snooping    int     `json:"snooping"`
+	SnoopShare  float64 `json:"snoopShare"`
+	Grade       string  `json:"grade"` // home grade: the worst device's; "" with no devices
+	// Provisional: every device at the home grade has a provisional grade.
+	Provisional bool          `json:"provisional"`
 	Categories  []categoryDTO `json:"categories"`
 	Devices     []deviceDTO   `json:"devices"`
 	// Previous compares the home with the period of equal length before
@@ -339,6 +341,7 @@ func newReportDTO(r model.HomeReport) reportDTO {
 		Snooping:    r.Snooping,
 		SnoopShare:  share(r.Snooping, r.Total),
 		Grade:       r.Grade,
+		Provisional: r.Provisional,
 		Devices:     make([]deviceDTO, 0, len(r.Devices)),
 	}
 	for _, c := range model.Categories() {
