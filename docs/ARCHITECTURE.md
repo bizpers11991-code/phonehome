@@ -222,8 +222,11 @@ it; the person clicks it, and the UI says GitHub will see the names. Demo
 reports get no link.
 
 Routes: `GET /` (embedded SPA), `GET /api/report?days=7`, `GET /api/status`,
-`POST /api/devices/{id}/label`, `GET /api/devices/{id}/domains?days=7` (every domain
-a device looked up, with first/last seen and the classifying rule), `GET /receipt/home.svg|png?days=7`,
+`POST /api/devices/{id}/label`, `GET /api/devices/{id}/domains?days=7&limit=5000&offset=0` (the domains
+a device looked up, most looked-up first, with first/last seen and the classifying rule;
+a page of at most `limit` of them, default 5000, maximum 20000, and `total` says how many
+there are, so a device with 200,000 domains does not answer with 13 MB; the dashboard
+shows the first page and says when the list is cut), `GET /receipt/home.svg|png?days=7`,
 `GET /receipt/{deviceID}.svg|png?days=7`, `GET /healthz`, and with `metrics: true`
 `GET /metrics?days=7` (Prometheus text format, written by hand in
 `internal/web/metrics.go`; series listed in docs/integrations.md). Assets embedded with

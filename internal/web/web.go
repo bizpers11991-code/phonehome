@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"mime"
 	"net/http"
@@ -126,12 +127,47 @@ func (s *server) report(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, newReportDTO(rep))
 }
 
-// domains lists every domain one device looked up in the period, for the
-// details view's full table and its exports.
+// Paging of GET /api/devices/{id}/domains: a device can look up hundreds of
+// thousands of names a month (13 MB of JSON at 200,000), so a response holds
+// at most defaultDomains of them unless asked for more, and never more than
+// maxDomains.
+const (
+	defaultDomains = 5000
+	maxDomains     = 20000
+)
+
+// pageParams reads limit and offset from the query string.
+func pageParams(r *http.Request) (limit, offset int, ok bool) {
+	q, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return 0, 0, false
+	}
+	limit = defaultDomains
+	if v := q.Get("limit"); v != "" {
+		if limit, err = strconv.Atoi(v); err != nil || limit < 1 || limit > maxDomains {
+			return 0, 0, false
+		}
+	}
+	if v := q.Get("offset"); v != "" {
+		if offset, err = strconv.Atoi(v); err != nil || offset < 0 {
+			return 0, 0, false
+		}
+	}
+	return limit, offset, true
+}
+
+// domains lists the domains one device looked up in the period, most
+// looked-up first, for the details view's table and its exports: one page
+// (see defaultDomains), with the total so the caller knows if there is more.
 func (s *server) domains(w http.ResponseWriter, r *http.Request) {
 	p, ok := s.period(r)
 	if !ok {
 		writeError(w, http.StatusBadRequest, "days must be 1, 7 or 30")
+		return
+	}
+	limit, offset, ok := pageParams(r)
+	if !ok {
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("limit must be 1 to %d and offset 0 or more", maxDomains))
 		return
 	}
 	rep, err := s.b.Report(r.Context(), p)
@@ -142,7 +178,7 @@ func (s *server) domains(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	for _, d := range rep.Devices {
 		if d.Device.ID == id {
-			writeJSON(w, http.StatusOK, newDomainsDTO(rep, d))
+			writeJSON(w, http.StatusOK, newDomainsDTO(rep, d, limit, offset))
 			return
 		}
 	}
