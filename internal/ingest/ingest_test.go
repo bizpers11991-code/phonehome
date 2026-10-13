@@ -417,6 +417,22 @@ func TestCatchUpRoundsDoNotRetryFailingSource(t *testing.T) {
 	}
 }
 
+// A device source re-reports the same devices every interval; that is not
+// news worth an INFO line a minute in the journal.
+func TestDeviceRefreshIsNotLoggedAsIngest(t *testing.T) {
+	var buf strings.Builder
+	log := slog.New(slog.NewTextHandler(&buf, nil))
+	r := &Runner{Store: newStore(), DNS: []source.DNSSource{&fakeDNS{name: "pihole", total: 3}},
+		Devices: []source.DeviceSource{fakeDevices{name: "pihole"}}, Logger: log}
+	r.cycle(context.Background(), time.Minute, map[string]*backoff{}, true)
+	if !strings.Contains(buf.String(), "source=pihole/dns") {
+		t.Errorf("new lookups not logged: %q", buf.String())
+	}
+	if strings.Contains(buf.String(), "pihole/devices") {
+		t.Errorf("device refresh logged: %q", buf.String())
+	}
+}
+
 func TestRunPrunesAndStops(t *testing.T) {
 	st := newStore()
 	now := time.Date(2026, 1, 10, 12, 0, 0, 0, time.UTC)

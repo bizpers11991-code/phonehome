@@ -256,6 +256,22 @@
 
 ### Docs and tests
 - Every claim in the README, FAQ, setup guides and docs checked against the code: privacy wording names alert targets, the Pi-hole API source's device names, current demo and benchmark figures, and the `allowed_hosts` names (including `pi.hole`).
+- **Launch QA fixes.**
+  - A `kill -9`, power cut or shutdown during ingestion no longer stores a
+    batch twice. The batch and its cursor are written in one transaction;
+    before, up to 5,000 lookups per source were duplicated on restart.
+  - A first start on a large history (a Pi-hole database with millions of
+    rows) catches up in seconds, not one 100,000-lookup round per minute, and
+    `ingest --once` reads everything instead of the oldest 100,000. A failing
+    source is still retried on its backoff, not on every catch-up round.
+  - A dnsmasq log that was emptied and grew past the old offset while
+    phonehome was stopped is read from the top, not from the middle of a line.
+  - A Pi-hole v6 `https://` address with its self-signed certificate says to
+    use the plain `http://` address.
+  - `?days=` with a malformed query string is a 400, not the 7-day default.
+  - `install.sh --help` also works when the script is piped into `sh`.
+  - `serve` no longer logs "ingested" for the unchanged device list every
+    interval.
 
 ## v0.2.0
 

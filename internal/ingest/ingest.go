@@ -158,7 +158,7 @@ func (r *Runner) cycle(ctx context.Context, interval time.Duration, backoffs map
 		case b.fails > 0:
 			r.log().Info("ingest recovered", "source", t.key, "records", n)
 			b.reset()
-		case n > 0:
+		case n > 0 && t.kind != "devices": // those are re-read every time
 			r.log().Info("ingested", "source", t.key, "records", n)
 		}
 		more = more || err == nil && again
