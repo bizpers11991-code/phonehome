@@ -183,10 +183,11 @@ type domainDTO struct {
 }
 
 func newDomain(s model.DomainStat) domainDTO {
+	m := s.Match() // never nil, unlike s.DomainMatch
 	return domainDTO{
 		Domain: s.Domain, Count: s.Count, Blocked: s.Blocked,
-		Category: s.Category, CategoryLabel: s.Category.Label(), Snooping: s.Category.Snooping(),
-		CompanyID: s.CompanyID, CompanyName: s.CompanyName, Purpose: s.Purpose,
+		Category: m.Category, CategoryLabel: m.Category.Label(), Snooping: m.Category.Snooping(),
+		CompanyID: m.CompanyID, CompanyName: m.CompanyName, Purpose: m.Purpose,
 	}
 }
 
@@ -219,12 +220,13 @@ func newDomainsDTO(r model.HomeReport, d model.DeviceReport, limit, offset int) 
 		Demo: r.Demo, Domains: []fullDomainDTO{}}
 	page := d.Domains[min(offset, len(d.Domains)):]
 	for _, s := range page[:min(limit, len(page))] {
-		ev := s.Evidence
+		m := s.Match()
+		ev := m.Evidence
 		if ev == nil {
 			ev = []string{}
 		}
 		out.Domains = append(out.Domains, fullDomainDTO{domainDTO: newDomain(s), FirstSeen: stamp(s.First), LastSeen: stamp(s.Last),
-			Rule: s.Rule, Confidence: s.Confidence, Evidence: ev})
+			Rule: m.Rule, Confidence: m.Confidence, Evidence: ev})
 	}
 	return out
 }

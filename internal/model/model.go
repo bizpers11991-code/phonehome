@@ -206,14 +206,29 @@ type DomainMatch struct {
 	Evidence    []string // the rule's evidence URLs
 }
 
-// DomainStat is how often a device looked up one domain. The embedded
-// *DomainMatch must not be nil.
+// DomainStat is how often a device looked up one domain. The analysis always
+// sets the embedded *DomainMatch, but a DomainStat built any other way (a
+// zero value, a test fixture) may leave it nil, and then the promoted fields
+// (s.Category, s.Rule) panic. Code that reads a DomainStat it did not make
+// should go through Match, which never returns nil.
 type DomainStat struct {
 	Domain string
 	*DomainMatch
 	Count       int
 	Blocked     int
 	First, Last time.Time
+}
+
+// unmatched is what Match returns for a DomainStat with no classification.
+var unmatched = &DomainMatch{}
+
+// Match returns the classification of s, or an empty one (read-only, as any
+// DomainMatch) when s has none. It never returns nil.
+func (s DomainStat) Match() *DomainMatch {
+	if s.DomainMatch == nil {
+		return unmatched
+	}
+	return s.DomainMatch
 }
 
 // UnknownDomain is a domain a device looked up that the knowledge base does

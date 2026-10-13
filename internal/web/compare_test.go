@@ -113,3 +113,21 @@ func TestReportDTOProvisional(t *testing.T) {
 		}
 	}
 }
+
+// A DomainStat with no classification (a zero value, hand-built data) must
+// not panic the DTOs through its nil embedded *DomainMatch.
+func TestDomainStatWithoutMatch(t *testing.T) {
+	s := model.DomainStat{Domain: "x.example", Count: 3}
+	if m := s.Match(); m == nil || m.Rule != "" {
+		t.Fatalf("Match() = %v", m)
+	}
+	if d := newDomain(s); d.Domain != "x.example" || d.Count != 3 || d.CompanyID != "" {
+		t.Errorf("newDomain = %+v", d)
+	}
+	r := model.HomeReport{}
+	d := model.DeviceReport{Domains: []model.DomainStat{s}}
+	out := newDomainsDTO(r, d, 10, 0)
+	if len(out.Domains) != 1 || out.Domains[0].Evidence == nil || out.Domains[0].Rule != "" {
+		t.Errorf("newDomainsDTO = %+v", out.Domains)
+	}
+}
