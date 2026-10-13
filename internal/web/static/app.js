@@ -158,10 +158,16 @@ function flag(cc) {
   return String.fromCodePoint(...[...cc.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)));
 }
 
+// every words an interval with the same cut-offs as Go's everyText (and so
+// the report and receipts): no interval is "regularly"; under 59.5 s it is
+// seconds; under 90 minutes, minutes (75 s is "every 1 min"); under 36 hours,
+// hours; beyond that, days.
 function every(sec) {
-  if (sec < 90) return t('every.s', { n: Math.round(sec) });
-  if (sec < 5400) return t('every.min', { n: Math.round(sec / 60) });
-  return t('every.h', { n: Math.round(sec / 3600) });
+  if (!(sec > 0)) return t('every.regular');
+  if (sec < 59.5) return t('every.s', { n: Math.max(1, Math.round(sec)) });
+  if (sec < 90 * 60) return t('every.min', { n: Math.round(sec / 60) });
+  if (sec < 36 * 3600) return t('every.h', { n: Math.round(sec / 3600) });
+  return t('every.d', { n: Math.round(sec / 86400) });
 }
 
 // ---------- Compared with the previous period ----------

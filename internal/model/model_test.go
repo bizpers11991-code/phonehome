@@ -89,6 +89,9 @@ func TestGradeReasonText(t *testing.T) {
 
 	// The receipt prints small rates to a decimal place.
 	g := GradeReason{Rule: ReasonVolume, PerDay: 1.4, VolumeGrade: "A", BandTo: 50}
+	if got, want := g.TextRate("0.6"), "0.6 snooping lookups a day (A is under 50)"; got != want {
+		t.Errorf("TextRate = %q, want %q: singular only for exactly 1", got, want)
+	}
 	if got, want := g.TextRate("1.4"), "1.4 snooping lookups a day (A is under 50)"; got != want {
 		t.Errorf("TextRate = %q, want %q", got, want)
 	}
@@ -145,6 +148,27 @@ func TestWholePerDay(t *testing.T) {
 		r := GradeReason{PerDay: c.perDay, BandFrom: c.from, BandTo: c.to}
 		if got := WholePerDay(c.perDay); got != r.Lookups() {
 			t.Errorf("%v a day: WholePerDay %d, reason %d", c.perDay, got, r.Lookups())
+		}
+	}
+}
+
+// everyText's cut-offs are mirrored by every() in the dashboard's app.js
+// (checked there by hand with these same values), so change both together.
+func TestEveryTextCutoffs(t *testing.T) {
+	for d, want := range map[time.Duration]string{
+		0:                        "regularly",
+		14600 * time.Millisecond: "every 15s",
+		59400 * time.Millisecond: "every 59s",
+		59500 * time.Millisecond: "every 1 min",
+		75 * time.Second:         "every 1 min",
+		5399 * time.Second:       "every 90 min",
+		5400 * time.Second:       "every 2 h",
+		129599 * time.Second:     "every 36 h",
+		129600 * time.Second:     "every 2 days",
+		400000 * time.Second:     "every 5 days",
+	} {
+		if got := everyText(d); got != want {
+			t.Errorf("everyText(%v) = %q, want %q", d, got, want)
 		}
 	}
 }
