@@ -516,3 +516,32 @@ func TestOverlongLine(t *testing.T) {
 	got, _ = drain(t, l, cur, 100)
 	equal(t, got, []string{"13:58:04 three.example A 192.168.1.5 false"})
 }
+
+// TestQuietRouterRelease checks that a query nobody answered is released
+// once a later line's own timestamp is quietAfter newer, not only after
+// lookahead more lines, and that it is recorded as not blocked.
+func TestQuietRouterRelease(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dnsmasq.log")
+	l := newTestLog(path)
+	appendFile(t, path, "Oct  2 14:10:00 dnsmasq[9]: query[A] lost.example.com from 192.168.1.20\n")
+	got, cur := drain(t, l, "", 10)
+	equal(t, got, nil)
+
+	// A line a few seconds later (even one that is no query or answer)
+	// is not enough.
+	appendFile(t, path, "Oct  2 14:10:05 dnsmasq[9]: forwarded lost.example.com to 9.9.9.9\n")
+	got, cur = drain(t, l, cur, 10)
+	equal(t, got, nil)
+
+	// 30 s later one unrelated line arrives; the query is let go.
+	appendFile(t, path, "Oct  2 14:10:30 dnsmasq[9]: cached other.example.com is <CNAME>\n")
+	got, cur = drain(t, l, cur, 10)
+	equal(t, got, []string{"14:10:00 lost.example.com A 192.168.1.20 false"})
+
+	// Lines from other programs carry no weight, and an older timestamp
+	// than the query's (clock step back) releases nothing.
+	appendFile(t, path, "Oct  2 14:11:00 dnsmasq[9]: query[A] b.example.com from 192.168.1.20\n"+
+		"Oct  2 14:50:00 cron[1]: job\nOct  2 13:00:00 dnsmasq[9]: forwarded b.example.com to 9.9.9.9\n")
+	got, _ = drain(t, l, cur, 10)
+	equal(t, got, nil)
+}
