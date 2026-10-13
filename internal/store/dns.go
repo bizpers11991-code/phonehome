@@ -283,7 +283,7 @@ func (s *Store) DNSBetween(ctx context.Context, p model.Period) ([]model.DNSQuer
 		return nil, nil
 	}
 	out := make([]model.DNSQuery, 0, n)
-	err = dnsEach(ctx, tx, p, func(q *model.DNSQuery) bool {
+	err = dnsEach(ctx, tx, "dns between", p, func(q *model.DNSQuery) bool {
 		out = append(out, *q)
 		return true
 	})
@@ -309,20 +309,22 @@ func (s *Store) DNSEach(ctx context.Context, p model.Period, fn func(*model.DNSQ
 		return fmt.Errorf("store: dns each: %w", err)
 	}
 	defer tx.Rollback()
-	return dnsEach(ctx, tx, p, fn)
+	return dnsEach(ctx, tx, "dns each", p, fn)
 }
 
-func dnsEach(ctx context.Context, tx *sql.Tx, p model.Period, fn func(*model.DNSQuery) bool) error {
+// dnsEach is the read behind DNSBetween and DNSEach; op names the caller in
+// errors.
+func dnsEach(ctx context.Context, tx *sql.Tx, op string, p model.Period, fn func(*model.DNSQuery) bool) error {
 	from, to := nanos(p.From), nanos(p.To)
 	srcNames, err := names(ctx, tx, `SELECT id, name FROM sources`)
 	if err != nil {
-		return fmt.Errorf("store: dns between: %w", err)
+		return fmt.Errorf("store: %s: %w", op, err)
 	}
 	// domains.last_ts is at or after every lookup of the domain, so only
 	// domains with last_ts in or after p can be referred to.
 	domNames, err := names(ctx, tx, `SELECT id, name FROM domains WHERE last_ts >= ?`, from)
 	if err != nil {
-		return fmt.Errorf("store: dns between: %w", err)
+		return fmt.Errorf("store: %s: %w", op, err)
 	}
 
 	rows, err := tx.QueryContext(ctx, `
@@ -331,7 +333,7 @@ func dnsEach(ctx context.Context, tx *sql.Tx, p model.Period, fn func(*model.DNS
 		WHERE ts >= ? AND ts < ?
 		ORDER BY ts, seq`, from, to)
 	if err != nil {
-		return fmt.Errorf("store: dns between: %w", err)
+		return fmt.Errorf("store: %s: %w", op, err)
 	}
 	defer rows.Close()
 
@@ -348,7 +350,7 @@ func dnsEach(ctx context.Context, tx *sql.Tx, p model.Period, fn func(*model.DNS
 	)
 	for rows.Next() {
 		if err := rows.Scan(&ts, &client, &dom, &qt, &blocked, &src); err != nil {
-			return fmt.Errorf("store: dns between: %w", err)
+			return fmt.Errorf("store: %s: %w", op, err)
 		}
 		qtype, ok := qtypes[string(qt)]
 		if !ok {
@@ -359,7 +361,7 @@ func dnsEach(ctx context.Context, tx *sql.Tx, p model.Period, fn func(*model.DNS
 		if !ok {
 			// Not expected (InsertDNS keeps last_ts current), but never
 			// return a lookup without its domain.
-			if domain, err = domainName(ctx, tx, dom); err != nil {
+			if domain, err = domainName(ctx, tx, op, dom); err != nil {
 				return err
 			}
 			domNames[dom] = domain
@@ -377,17 +379,17 @@ func dnsEach(ctx context.Context, tx *sql.Tx, p model.Period, fn func(*model.DNS
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("store: dns between: %w", err)
+		return fmt.Errorf("store: %s: %w", op, err)
 	}
 	return nil
 }
 
 // domainName reads one domain's name, for a lookup whose domain the bulk read
 // in dnsEach did not return.
-func domainName(ctx context.Context, tx *sql.Tx, id int64) (string, error) {
+func domainName(ctx context.Context, tx *sql.Tx, op string, id int64) (string, error) {
 	var name string
 	if err := tx.QueryRowContext(ctx, `SELECT name FROM domains WHERE id = ?`, id).Scan(&name); err != nil {
-		return "", fmt.Errorf("store: dns between: domain %d: %w", id, err)
+		return "", fmt.Errorf("store: %s: domain %d: %w", op, id, err)
 	}
 	return name, nil
 }
