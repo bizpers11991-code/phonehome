@@ -26,9 +26,10 @@ Features › Nesting* (or `pct set <ctid> --features nesting=1`), then restart
 the container. Recent Proxmox versions tick it by default when you create an
 unprivileged container in the web UI.
 
-Memory: phonehome holds the lookups for the period you view in RAM while it
-builds a report, so a busy network needs more. We have not measured it on
-small containers yet; if yours is tight, watch `systemctl status phonehome`.
+Memory: a report's memory follows the number of distinct (device, domain)
+pairs in the period you view, so a busy network needs more ([measured
+figures](../performance.md)). We have not measured it on small containers
+yet; if yours is tight, watch `systemctl status phonehome`.
 
 ## Separate container, reading Pi-hole over its API
 

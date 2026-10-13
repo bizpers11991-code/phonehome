@@ -113,8 +113,8 @@ container runs as UID 65532, so give the file to that user:
   self-signed default certificate will be rejected.
 - phonehome logs in, keeps the session while it runs, and logs out when it
   stops. It only reads; it never changes Pi-hole's settings.
-- If Pi-hole refuses the login, phonehome's status says
-  `login refused: check the app password`.
+- If Pi-hole refuses the password, phonehome's status says
+  `pihole: <url> refused the password; check password_file (or password) …`.
 
 ## Without the web interface
 

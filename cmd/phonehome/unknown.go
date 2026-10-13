@@ -19,7 +19,7 @@ func cmdUnknown(ctx context.Context, args []string) error {
 	fl := newFlags("unknown", "[--config FILE | --demo] [--days N] [--device ID] [--limit N]", "List looked-up domains the knowledge base cannot explain yet, to suggest as rules.")
 	cfgPath := fl.String("config", "", configHelp)
 	days := fl.Int("days", 7, "how many days back to cover, ending now")
-	device := fl.String("device", "", "only this device (ID or name)")
+	device := fl.String("device", "", "only this device (ID, name, MAC or IP address)")
 	useDemo := fl.Bool("demo", false, "use the synthetic demo household")
 	limit := fl.Int("limit", 10, "domain groups to show per device (0 = all)")
 	if err := parseFlags(fl, args); err != nil {

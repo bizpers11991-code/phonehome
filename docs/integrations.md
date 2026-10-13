@@ -84,8 +84,8 @@ household), `phonehome_window_days` and
 `phonehome_report_generated_timestamp_seconds`.
 
 **Cardinality.** Labels never contain domains, addresses or anything
-unbounded. Each device adds 15 series, each source 4, and the rest add 14:
-a home with 30 devices and 3 sources has 14 + 30 × 15 + 3 × 4 = 476
+unbounded. Each device adds 17 series, each source 4, and the rest add 15:
+a home with 30 devices and 3 sources has 15 + 30 × 17 + 3 × 4 = 537
 series. `name` is the device's display name, so renaming a device in the
 dashboard starts new series for it; `device` (the MAC- or IP-based id)
 stays the same, so join on that.

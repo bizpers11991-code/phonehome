@@ -95,8 +95,10 @@ Because phonehome runs on the resolver itself, the router's own upstream DNS
 traffic is not reported as a bypass. For byte counts on connections, enable
 conntrack accounting: `sysctl -w net.netfilter.nf_conntrack_acct=1`.
 
-Mind the router's RAM: phonehome loads the lookups for the period you are
-viewing into memory, so a 7-day view on a busy network may need tens of MB.
+Mind the router's RAM: a report streams the lookups rather than holding them,
+so its memory follows the number of distinct (device, domain) pairs, not the
+log's size, but a 7-day view on a busy network can still need tens of MB
+([measurements](../performance.md)).
 
 ## B. phonehome on another machine (remote syslog)
 

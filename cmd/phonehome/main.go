@@ -49,7 +49,7 @@ Flags:
   --demo         use the synthetic demo household instead of your data
   --days N       how many days back to cover, ending now (report, receipt,
                  unknown: 7; demo: days of synthetic history, 30)
-  --device ID    one device, by ID (mac:aa:bb:cc:dd:ee:ff) or name
+  --device ID    one device, by ID (mac:aa:bb:cc:dd:ee:ff), name, MAC or IP
   -o FILE        receipt file to write, .png or .svg (default receipt.png)
   --limit N      domain groups to show per device, 0 for all (default 10)
   --once         read what is available now and exit, instead of polling
