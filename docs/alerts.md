@@ -27,6 +27,16 @@ grade known before stays the one later grades are compared with, so a fresh
 install or a device that joined an hour ago does not page anyone. Heartbeat
 and bypass alerts are findings, not rates, and are sent as usual.
 
+**A device's first real grade.** When a provisional grade becomes a real
+one, there is no earlier grade to compare with. A device that was already
+known when alerts were turned on (the baseline) learns that first grade
+silently, however bad: you can see it on the dashboard, and a burst of alerts
+a day after install helps no one. A device first seen *after* the baseline
+whose first real grade is a **D or F** sends `grade_worse` with no
+`previousGrade` ("Living room TV is now graded F (its grade was
+provisional)."). Its first real A, B or C is learnt silently, and every grade
+after the first is compared as usual.
+
 **No repeats.** The same alert (same device and the same grade, domain or
 finding) is not sent again within 24 hours, however often it flaps. A
 device that drops out of the week and comes back is not "new" (one known

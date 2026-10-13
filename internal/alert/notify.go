@@ -67,6 +67,9 @@ func sentence(e Event) string {
 		}
 		return s + "."
 	case GradeWorse:
+		if e.Before == "" { // its first real grade, after a provisional one
+			return fmt.Sprintf("%s is now graded %s (its grade was provisional).", n, e.Grade)
+		}
 		return fmt.Sprintf("%s got worse: grade %s → %s.", n, e.Before, e.Grade)
 	case Heartbeat:
 		return fmt.Sprintf("%s started contacting %s every %s (%s).", n, e.Domain, every(e.Every), e.Category.Label())

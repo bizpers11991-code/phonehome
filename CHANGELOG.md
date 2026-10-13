@@ -68,7 +68,9 @@
 - **Provisional grades.** A grade based on less than 20 hours of data for
   the device (a fresh install, or a device that joined an hour ago) is marked
   "Provisional: based on 3 hours of data". Alerts and the MQTT grade sensor
-  ignore provisional grades. Rates per day are per day of the device's own
+  ignore provisional grades (a device that appears after alerts were turned on
+  and then earns its first real D or F is alerted, with no previous grade; one
+  known at install learns it silently). Rates per day are per day of the device's own
   data, so a device that joined 48 hours ago with 1,200 lookups is 600 a day
   (C), not 171 spread over the home's week. The home grade is marked
   provisional too when every device at that grade is (report header, home
