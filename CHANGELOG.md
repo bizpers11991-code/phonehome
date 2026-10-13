@@ -179,6 +179,10 @@
   their web pages from being flagged. 810 -> 866 rules.
 
 ### Fixed
+- A dnsmasq query that never got an answer no longer holds back every later
+  query until 100 more log lines arrive (hours on a quiet router). It is also
+  released, as not blocked, once a later line's own timestamp is 10 seconds
+  newer; the wall clock is never consulted.
 - **Lookup counts and grades change: a lookup is now counted once, not once
   per query.** A device asking for the same name again within 30 seconds of
   a counted lookup (A, AAAA and HTTPS records together, retries, re-queries of

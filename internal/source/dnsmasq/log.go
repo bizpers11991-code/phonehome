@@ -21,6 +21,14 @@ import (
 // from config immediately, so a late answer came from upstream.
 const lookahead = 100
 
+// quietAfter is how much newer (by the log's own timestamps, never the
+// wall clock) a later line must be for a query to be released without an
+// answer, so a quiet router does not hold its last query back for hours.
+// dnsmasq answers from config at once and upstream replies take well under
+// a second, or a few seconds when it retries; 10 s is past that, and far
+// below the hours a quiet log can go without 100 more lines.
+const quietAfter = 10 * time.Second
+
 // cnameHold is how many lines a query answered with a CNAME is held back,
 // at most. Pi-hole decides whether to block a CNAME chain only after
 // logging it ("reply a.example is <CNAME>", then the chain, then "gravity
@@ -221,13 +229,15 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 		done    = s.start
 		queue   []pending
 		lineNum int
+		latest  time.Time // newest timestamp on any dnsmasq line so far
 	)
+	stale := func(p pending) bool { return latest.Sub(p.e.time) >= quietAfter }
 	// emit hands over queries from the head of the queue that are settled
 	// (or all of them, at the end of a complete file).
 	emit := func(all bool) {
 		for len(queue) > 0 && !r.full() {
 			p := queue[0]
-			if !all && (!p.answered && lineNum-p.line < lookahead || p.answered && lineNum < p.hold) {
+			if !all && (!p.answered && lineNum-p.line < lookahead || p.answered && lineNum < p.hold) && !stale(p) {
 				return
 			}
 			r.out = append(r.out, model.DNSQuery{
@@ -260,7 +270,11 @@ func (r *reader) read(ctx context.Context, s segment) (position, error) {
 		offset += int64(n)
 		lineNum++
 		// A nil line was longer than any real one, and is skipped.
-		if e, ok := parseLine(string(line), r.loc, r.now); line != nil && ok {
+		e, ok := parseLine(string(line), r.loc, r.now)
+		if line != nil && e.time.After(latest) {
+			latest = e.time // set even for lines that are no query or answer
+		}
+		if line != nil && ok {
 			if e.query {
 				for i := range queue {
 					queue[i].hold = 0
