@@ -30,6 +30,7 @@ const MESSAGES = {
     'conf.high': 'high', 'conf.medium': 'medium', 'conf.low': 'low',
 
     'every.s': 'every {n} s', 'every.min': 'every {n} min', 'every.h': 'every {n} h',
+    'every.d': 'every {n} days', 'every.regular': 'regularly',
     'prev.day': 'the previous 24 hours', 'prev.days': 'the previous {n} days',
     'trend.new': 'New', 'trend.upFromNone': 'up from none', 'trend.same': 'No change',
     'trend.less': ' less snooping', 'trend.more': ' more snooping',
@@ -181,6 +182,7 @@ const MESSAGES = {
     'conf.high': 'hohe', 'conf.medium': 'mittlere', 'conf.low': 'geringe',
 
     'every.s': 'alle {n} s', 'every.min': 'alle {n} min', 'every.h': 'alle {n} Std.',
+    'every.d': 'alle {n} Tage', 'every.regular': 'regelmäßig',
     'prev.day': 'den vorherigen 24 Stunden', 'prev.days': 'den vorherigen {n} Tagen',
     'trend.new': 'Neu', 'trend.upFromNone': 'vorher keine', 'trend.same': 'Keine Änderung',
     'trend.less': ' weniger Schnüffelei', 'trend.more': ' mehr Schnüffelei',
@@ -332,6 +334,7 @@ const MESSAGES = {
     'conf.high': 'élevée', 'conf.medium': 'moyenne', 'conf.low': 'faible',
 
     'every.s': 'toutes les {n} s', 'every.min': 'toutes les {n} min', 'every.h': 'toutes les {n} h',
+    'every.d': 'tous les {n} jours', 'every.regular': 'régulièrement',
     'prev.day': 'les 24 heures précédentes', 'prev.days': 'les {n} jours précédents',
     'trend.new': 'Nouveau', 'trend.upFromNone': 'aucun auparavant', 'trend.same': 'Aucun changement',
     'trend.less': ' d’espionnage en moins', 'trend.more': ' d’espionnage en plus',
@@ -483,6 +486,7 @@ const MESSAGES = {
     'conf.high': 'alta', 'conf.medium': 'media', 'conf.low': 'baja',
 
     'every.s': 'cada {n} s', 'every.min': 'cada {n} min', 'every.h': 'cada {n} h',
+    'every.d': 'cada {n} días', 'every.regular': 'con regularidad',
     'prev.day': 'las 24 horas anteriores', 'prev.days': 'los {n} días anteriores',
     'trend.new': 'Nuevo', 'trend.upFromNone': 'antes ninguno', 'trend.same': 'Sin cambios',
     'trend.less': ' menos espionaje', 'trend.more': ' más espionaje',
@@ -634,6 +638,7 @@ const MESSAGES = {
     'conf.high': 'hoge', 'conf.medium': 'gemiddelde', 'conf.low': 'lage',
 
     'every.s': 'elke {n} s', 'every.min': 'elke {n} min', 'every.h': 'elke {n} u',
+    'every.d': 'elke {n} dagen', 'every.regular': 'regelmatig',
     'prev.day': 'de vorige 24 uur', 'prev.days': 'de vorige {n} dagen',
     'trend.new': 'Nieuw', 'trend.upFromNone': 'eerst geen', 'trend.same': 'Geen verandering',
     'trend.less': ' minder meekijken', 'trend.more': ' meer meekijken',
