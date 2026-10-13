@@ -53,6 +53,19 @@ type Options struct {
 	// findings, since forwarding lookups upstream is their job; they are
 	// otherwise analysed like any device.
 	Resolvers []netip.Addr
+	// DomainsFor chooses the devices whose reports list every domain they
+	// looked up (DeviceReport.Domains), by device ID. nil means every device.
+	// The list is the bulk of a report's memory (one entry per distinct domain
+	// per device, hundreds of thousands in a household with generated
+	// names), so callers that only need the dashboard's figures pass a
+	// function that says no. TopDomains is filled either way.
+	DomainsFor func(deviceID string) bool
+	// MaxDomainEntries caps the entries of all devices' Domains lists
+	// together; zero means no cap. A device whose list would pass it gets
+	// none (DeviceReport.DomainCount still says how long it is), so a report
+	// stays small however many names a household looks up while ordinary
+	// households keep every list. Devices are taken in the order of devs.
+	MaxDomainEntries int
 }
 
 // DefaultOptions returns the defaults spelled out: quiet hours 01:00–06:00 in
@@ -112,8 +125,12 @@ type Classifier interface {
 //
 // c must not be nil. Each distinct domain is classified once.
 func Analyze(c Classifier, p model.Period, devs []model.Device, qs []model.DNSQuery, fl []model.Flow, o Options) model.HomeReport {
+	return analyzeSeq(c, p, devs, byTime(qs), fl, o)
+}
+
+func analyzeSeq(c Classifier, p model.Period, devs []model.Device, qs iter.Seq[*model.DNSQuery], fl []model.Flow, o Options) model.HomeReport {
 	a := newAnalysis(c, p, devs, o.normalized())
-	for q := range byTime(qs) {
+	for q := range qs {
 		a.addQuery(q)
 	}
 	for i := range fl {
@@ -157,25 +174,100 @@ func byTime(qs []model.DNSQuery) iter.Seq[*model.DNSQuery] {
 // domainInfo is the per-run cache entry for one distinct domain.
 type domainInfo struct {
 	name     string
-	cls      model.Classification
+	m        *matchInfo
 	resolver bool // a known encrypted-DNS resolver hostname
 }
 
-// domainAcc accumulates one device's lookups of one domain.
+// matchInfo is what the analysis keeps of a classification. Domains that
+// classify alike (all the unknown ones, or those under one rule) share one,
+// which is most of what keeps a long tail of distinct names cheap.
+type matchInfo struct {
+	model.DomainMatch
+	company  *model.Company
+	kindHint model.DeviceKind
+}
+
+// matchKey identifies a classification by everything that is kept of it. The
+// evidence is compared by identity: the knowledge base hands out one slice
+// per rule.
+type matchKey struct {
+	rule, purpose, confidence string
+	category                  model.Category
+	company                   *model.Company
+	evidence                  *string
+	nEvidence                 int
+	kindHint                  model.DeviceKind
+}
+
+// match returns the shared matchInfo for cls.
+func (a *analysis) match(cls model.Classification) *matchInfo {
+	k := matchKey{
+		rule: cls.Rule, purpose: cls.Purpose, confidence: cls.Confidence,
+		category: cls.Category, company: cls.Company, nEvidence: len(cls.Evidence), kindHint: cls.KindHint,
+	}
+	if len(cls.Evidence) > 0 {
+		k.evidence = &cls.Evidence[0]
+	}
+	if m, ok := a.matches[k]; ok {
+		return m
+	}
+	m := &matchInfo{
+		DomainMatch: model.DomainMatch{
+			Category: cls.Category, Purpose: cls.Purpose,
+			Rule: cls.Rule, Confidence: cls.Confidence, Evidence: cls.Evidence,
+		},
+		company:  cls.Company,
+		kindHint: cls.KindHint,
+	}
+	if co := cls.Company; co != nil && co.ID != "" {
+		m.CompanyID, m.CompanyName = co.ID, co.Name
+	}
+	a.matches[k] = m
+	return m
+}
+
+// domainAcc accumulates one device's lookups of one domain. There is one per
+// (device, domain) pair, hundreds of thousands in a household with many
+// distinct names, so it is packed: 64 bytes, with no pointer to its domain
+// (the map key is that) and the burst times held as the first (first) plus
+// the rest (more), so a name looked up in one burst needs no slice.
 type domainAcc struct {
-	info    *domainInfo
-	count   int // lookups, each standing for its queries within countWindow
-	blocked int // lookups with at least one blocked query
-	// times are the starts of query bursts (burstWindow), oldest first: the
-	// moments detectHeartbeat would merge them into anyway.
-	times []int64 // unix nanoseconds
-	first int64   // first and last query
-	last  int64
+	// first and last query, unix nanoseconds. first is also the start of the
+	// first burst.
+	first, last int64
 	// counted is when the latest lookup began; countedBlocked whether any of
 	// its queries so far was blocked.
-	counted        int64
+	counted int64
+	// more are the starts of the later query bursts (burstWindow), oldest
+	// first: with first, the moments detectHeartbeat would merge them into
+	// anyway.
+	more    []int64
+	count   int32 // lookups, each standing for its queries within countWindow
+	blocked int32 // lookups with at least one blocked query
+
 	countedBlocked bool
 }
+
+// lastBurst is the start of the latest burst of queries.
+func (da *domainAcc) lastBurst() int64 {
+	if n := len(da.more); n > 0 {
+		return da.more[n-1]
+	}
+	return da.first
+}
+
+// bursts is the number of query bursts.
+func (da *domainAcc) bursts() int { return 1 + len(da.more) }
+
+// times lists the starts of all the bursts, oldest first.
+func (da *domainAcc) times() []int64 {
+	return append(append(make([]int64, 0, da.bursts()), da.first), da.more...)
+}
+
+// accChunk is how many domainAccs a device allocates at a time: one
+// allocation per chunk, not per accumulator, and a device's chunks are
+// garbage as soon as its report is built.
+const accChunk = 256
 
 type deviceAcc struct {
 	dev     model.Device
@@ -185,10 +277,21 @@ type deviceAcc struct {
 	flows   int
 	hourly  [24]int
 	domains map[*domainInfo]*domainAcc
+	chunk   []domainAcc // unused part of the current chunk
 	// bypass counts evidence per bypass kind: kind → evidence → occurrences.
 	bypass map[string]map[string]int
 	// first and last are the observed extremes, used for synthetic devices.
 	first, last time.Time
+}
+
+// newAcc returns a zeroed accumulator from the device's chunk.
+func (d *deviceAcc) newAcc() *domainAcc {
+	if len(d.chunk) == 0 {
+		d.chunk = make([]domainAcc, accChunk)
+	}
+	da := &d.chunk[0]
+	d.chunk = d.chunk[1:]
+	return da
 }
 
 func (d *deviceAcc) active() bool { return d.total > 0 || d.flows > 0 }
@@ -221,6 +324,8 @@ type analysis struct {
 	byIP    map[netip.Addr]*deviceAcc
 	devices []*deviceAcc
 	cache   map[string]*domainInfo
+	// matches are the distinct classifications seen, shared by their domains.
+	matches map[matchKey]*matchInfo
 	// resolvers is Options.Resolvers as a set of normalized addresses.
 	resolvers map[netip.Addr]bool
 	// first is the earliest lookup in the period: rates are per day of data,
@@ -229,6 +334,12 @@ type analysis struct {
 	// noFixes skips looking up fixes: the previous period of a comparison
 	// only needs its figures and grades.
 	noFixes bool
+	// domainEntries is how many Domains entries the devices reported so far hold.
+	domainEntries int
+	// noDomains skips the per-domain list (DeviceReport.Domains and
+	// TopDomains), the bulk of a report's memory: nothing shows the previous
+	// period's domains.
+	noDomains bool
 }
 
 // normAddr strips IPv6 zones and IPv4-in-IPv6 mapping so the same host always
@@ -242,6 +353,7 @@ func newAnalysis(c Classifier, p model.Period, devs []model.Device, o Options) *
 		o:         o,
 		byIP:      make(map[netip.Addr]*deviceAcc),
 		cache:     make(map[string]*domainInfo),
+		matches:   make(map[matchKey]*matchInfo),
 		resolvers: make(map[netip.Addr]bool, len(o.Resolvers)),
 	}
 	for _, r := range o.Resolvers {
@@ -313,7 +425,7 @@ func (a *analysis) domain(name string) *domainInfo {
 	if !cls.Category.Valid() {
 		cls.Category = model.CatUnknown
 	}
-	info := &domainInfo{name: name, cls: cls, resolver: isResolverHost(name)}
+	info := &domainInfo{name: name, m: a.match(cls), resolver: isResolverHost(name)}
 	a.cache[name] = info
 	return info
 }
@@ -356,13 +468,13 @@ func (a *analysis) addQuery(q *model.DNSQuery) {
 	ns := q.Time.UnixNano()
 	da := d.domains[info]
 	if da == nil {
-		da = &domainAcc{info: info, first: ns}
+		da = d.newAcc()
+		da.first = ns
 		d.domains[info] = da
+	} else if time.Duration(ns-da.lastBurst()) > burstWindow {
+		da.more = append(da.more, ns)
 	}
 	da.last = ns
-	if n := len(da.times); n == 0 || time.Duration(ns-da.times[n-1]) > burstWindow {
-		da.times = append(da.times, ns)
-	}
 	if da.count > 0 && time.Duration(ns-da.counted) < countWindow {
 		if q.Blocked && !da.countedBlocked {
 			da.countedBlocked = true
@@ -442,15 +554,16 @@ func zeroCategories() map[model.Category]int {
 
 func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 	r := model.DeviceReport{
-		Device:     d.dev,
-		Period:     a.p,
-		Total:      d.total,
-		Blocked:    d.blocked,
-		ByCategory: zeroCategories(),
-		Hourly:     d.hourly,
-		QuietHours: d.quiet,
-		QuietLabel: a.o.quietLabel(),
-		Flows:      d.flows,
+		Device:      d.dev,
+		Period:      a.p,
+		Total:       d.total,
+		Blocked:     d.blocked,
+		ByCategory:  zeroCategories(),
+		Hourly:      d.hourly,
+		QuietHours:  d.quiet,
+		QuietLabel:  a.o.quietLabel(),
+		Flows:       d.flows,
+		DomainCount: len(d.domains),
 	}
 	if r.Device.FirstSeen.IsZero() {
 		r.Device.FirstSeen = d.first
@@ -462,60 +575,77 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 	hints := make(map[model.DeviceKind]int)
 	companies := make(map[string]*model.CompanyStat)
 	countries := make(map[string]int)
-	domains := make([]model.DomainStat, 0, len(d.domains))
+	var unknown unknownTop
+	full := a.o.DomainsFor == nil || a.o.DomainsFor(d.dev.ID)
+	if full && a.o.MaxDomainEntries > 0 && a.domainEntries+len(d.domains) > a.o.MaxDomainEntries {
+		full = false
+	}
+	if full && !a.noDomains {
+		a.domainEntries += len(d.domains)
+	}
+	var domains []model.DomainStat // every domain, if full
+	var top topDomains             // else just the most looked up
+	if !a.noDomains && full {
+		domains = make([]model.DomainStat, 0, len(d.domains))
+	}
 	for info, da := range d.domains {
-		cls := &info.cls
-		r.ByCategory[cls.Category] += da.count
-		if cls.Category.Snooping() {
-			r.Snooping += da.count
+		count, blocked := int(da.count), int(da.blocked)
+		m := info.m
+		cat := m.Category
+		r.ByCategory[cat] += count
+		if cat.Snooping() {
+			r.Snooping += count
 		}
 		// ACR hosts hint "TV" but grading treats a TV as the thing that runs
 		// ACR: letting them decide the kind would be circular, and a laptop
 		// that opens an ACR company's site would be re-inferred as a TV and
 		// penalised. Only other hosts (a TV's app and update servers) count.
-		if cls.KindHint != "" && cls.KindHint != model.KindUnknown && cls.Category != model.CatACR {
-			hints[cls.KindHint] += da.count
+		if h := m.kindHint; h != "" && h != model.KindUnknown && cat != model.CatACR {
+			hints[h] += count
 		}
-		ds := model.DomainStat{
-			Domain:     info.name,
-			Count:      da.count,
-			Blocked:    da.blocked,
-			Category:   cls.Category,
-			Purpose:    cls.Purpose,
-			Rule:       cls.Rule,
-			Confidence: cls.Confidence,
-			Evidence:   cls.Evidence,
+		var ds model.DomainStat
+		if !a.noDomains {
+			ds = model.DomainStat{Domain: info.name, DomainMatch: &m.DomainMatch, Count: count, Blocked: blocked}
+			if count > 0 {
+				ds.First, ds.Last = time.Unix(0, da.first), time.Unix(0, da.last)
+			}
 		}
-		if da.count > 0 {
-			ds.First, ds.Last = time.Unix(0, da.first), time.Unix(0, da.last)
-		}
-		if co := cls.Company; co != nil && co.ID != "" {
-			ds.CompanyID, ds.CompanyName = co.ID, co.Name
+		if co := m.company; co != nil && co.ID != "" {
 			cs := companies[co.ID]
 			if cs == nil {
 				cs = &model.CompanyStat{ID: co.ID, Name: co.Name, Country: co.Country}
 				companies[co.ID] = cs
 			}
-			cs.Count += da.count
+			cs.Count += count
 			if co.Country != "" {
-				countries[co.Country] += da.count
+				countries[co.Country] += count
 			}
 		}
-		domains = append(domains, ds)
-		if cls.Category == model.CatUnknown && reportable(info.name) {
-			r.Unknown = append(r.Unknown, unknownDomain(info.name, da))
+		switch {
+		case a.noDomains:
+		case full:
+			domains = append(domains, ds)
+		default:
+			top.add(ds)
+		}
+		if cat == model.CatUnknown && reportable(info.name) {
+			unknown.add(info.name, da)
 		}
 		if info.resolver {
-			d.addBypass(BypassDoHLookup, info.name, da.count)
+			d.addBypass(BypassDoHLookup, info.name, count)
 		}
 		// Local names and reverse lookups are left out, as in Unknown: a clock
 		// on the home network is no privacy finding, and receipts print
 		// heartbeat names.
-		if every, jitter, ok := detectHeartbeat(da.times, a.o.MinHeartbeat); ok && reportable(info.name) {
+		// Only a name with enough bursts to qualify has its times gathered.
+		if da.bursts() < max(a.o.MinHeartbeat, 3) {
+			continue
+		}
+		if every, jitter, ok := detectHeartbeat(da.times(), a.o.MinHeartbeat); ok && reportable(info.name) {
 			r.Heartbeats = append(r.Heartbeats, model.Heartbeat{
 				Domain:   info.name,
-				Category: cls.Category,
-				Count:    da.count,
+				Category: cat,
+				Count:    count,
 				Every:    every,
 				Jitter:   jitter,
 			})
@@ -525,13 +655,17 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 		r.SnoopShare = float64(r.Snooping) / float64(r.Total)
 	}
 
-	slices.SortFunc(domains, func(x, y model.DomainStat) int {
-		return cmp.Or(cmp.Compare(y.Count, x.Count), cmp.Compare(x.Domain, y.Domain))
-	})
-	r.Domains = domains
-	r.TopDomains = domains[:min(len(domains), maxTopDomains):min(len(domains), maxTopDomains)]
+	switch {
+	case a.noDomains:
+	case full:
+		slices.SortFunc(domains, compareDomainStats)
+		r.Domains = domains
+		r.TopDomains = domains[:min(len(domains), maxTopDomains):min(len(domains), maxTopDomains)]
+	default:
+		r.TopDomains = top.result()
+	}
 	sortHeartbeats(r.Heartbeats)
-	r.Unknown = topUnknown(r.Unknown)
+	r.Unknown = unknown.result()
 
 	for _, cs := range companies {
 		r.Companies = append(r.Companies, *cs)
@@ -563,6 +697,10 @@ func (a *analysis) deviceReport(d *deviceAcc) model.DeviceReport {
 	r.Grade, r.Reason = GradeWhy(r)
 	r.Reason.Data = data
 	r.Reason.Provisional = r.Reason.Data < provisionalUnder
+	// Done with this device's per-domain accumulators: let the collector
+	// have them before the next device's report is built, instead of
+	// holding every device's at once.
+	d.domains = nil
 	return r
 }
 

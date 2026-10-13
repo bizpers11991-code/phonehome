@@ -29,6 +29,15 @@ type Backend interface {
 	Receipt(ctx context.Context, p model.Period, deviceID, format string) ([]byte, error)
 }
 
+// DomainsReporter is implemented by a Backend whose Report may leave out a
+// device's full domain list (DeviceReport.Domains is empty while DomainCount
+// is not), because it would be too large to keep: the domains endpoint then
+// asks for it with ReportWithDomains, which fills it in for deviceID. A
+// Backend without it is expected to fill Domains in Report.
+type DomainsReporter interface {
+	ReportWithDomains(ctx context.Context, p model.Period, deviceID string) (model.HomeReport, error)
+}
+
 // ErrNotFound may be returned (or wrapped) by a Backend when a device does
 // not exist; the API then answers 404 instead of 500.
 var ErrNotFound = errors.New("not found")
@@ -177,12 +186,31 @@ func (s *server) domains(w http.ResponseWriter, r *http.Request) {
 	}
 	id := r.PathValue("id")
 	for _, d := range rep.Devices {
-		if d.Device.ID == id {
-			writeJSON(w, http.StatusOK, newDomainsDTO(rep, d, limit, offset))
-			return
+		if d.Device.ID != id {
+			continue
 		}
+		if dr, ok := s.b.(DomainsReporter); ok && len(d.Domains) == 0 && d.DomainCount > 0 {
+			if rep, err = dr.ReportWithDomains(r.Context(), p, id); err != nil {
+				s.fail(w, r, err)
+				return
+			}
+			if d = findDevice(rep, id); d.Device.ID == "" {
+				break
+			}
+		}
+		writeJSON(w, http.StatusOK, newDomainsDTO(rep, d, limit, offset))
+		return
 	}
 	s.fail(w, r, ErrNotFound)
+}
+
+func findDevice(r model.HomeReport, id string) model.DeviceReport {
+	for _, d := range r.Devices {
+		if d.Device.ID == id {
+			return d
+		}
+	}
+	return model.DeviceReport{}
 }
 
 func (s *server) status(w http.ResponseWriter, r *http.Request) {

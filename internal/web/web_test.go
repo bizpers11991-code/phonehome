@@ -705,9 +705,9 @@ func (b *domainsBackend) Report(_ context.Context, p model.Period) (model.HomeRe
 	return model.HomeReport{Period: p, Devices: []model.DeviceReport{{
 		Device: model.Device{ID: "mac:aa:bb:cc:00:11:22", Label: "TV"},
 		Domains: []model.DomainStat{
-			{Domain: "acr.example", Count: 40, Category: model.CatACR, CompanyName: "Example TV", Purpose: "Content recognition.",
-				Rule: "acr.example", Confidence: "high", Evidence: []string{"https://example.org/paper"}, First: first, Last: first.Add(time.Hour)},
-			{Domain: "mystery.example", Count: 3, Category: model.CatUnknown, First: first, Last: first},
+			{Domain: "acr.example", DomainMatch: &model.DomainMatch{Category: model.CatACR, CompanyName: "Example TV", Purpose: "Content recognition.",
+				Rule: "acr.example", Confidence: "high", Evidence: []string{"https://example.org/paper"}}, Count: 40, First: first, Last: first.Add(time.Hour)},
+			{Domain: "mystery.example", DomainMatch: &model.DomainMatch{Category: model.CatUnknown}, Count: 3, First: first, Last: first},
 		},
 	}}}, nil
 }
@@ -754,7 +754,7 @@ type manyDomainsBackend struct {
 func (b *manyDomainsBackend) Report(_ context.Context, p model.Period) (model.HomeReport, error) {
 	var ds []model.DomainStat
 	for i := range b.n { // descending by count, as the report has them
-		ds = append(ds, model.DomainStat{Domain: fmt.Sprintf("d%06d.example", i), Count: b.n - i})
+		ds = append(ds, model.DomainStat{Domain: fmt.Sprintf("d%06d.example", i), DomainMatch: &model.DomainMatch{Category: model.CatUnknown}, Count: b.n - i})
 	}
 	return model.HomeReport{Period: p, Devices: []model.DeviceReport{{
 		Device: model.Device{ID: "mac:aa:bb:cc:00:11:22", Label: "Busy"}, Domains: ds,
@@ -799,5 +799,54 @@ func TestDomainsEndpointIsCapped(t *testing.T) {
 		if _, code := fetch(bad); code != http.StatusBadRequest {
 			t.Errorf("%s: status %d, want 400", bad, code)
 		}
+	}
+}
+
+// leanBackend is a Backend whose Report leaves out the domain lists (as
+// phonehome serve does for a household with very many) and which fills them
+// in on request. With keep set it leaves them in, and must not be asked.
+type leanBackend struct {
+	domainsBackend
+	keep  bool
+	asked []string
+}
+
+func (b *leanBackend) Report(ctx context.Context, p model.Period) (model.HomeReport, error) {
+	r, err := b.domainsBackend.Report(ctx, p)
+	for i := range r.Devices {
+		if b.keep {
+			r.Devices[i].DomainCount = len(r.Devices[i].Domains)
+			continue
+		}
+		r.Devices[i].DomainCount = len(r.Devices[i].Domains)
+		r.Devices[i].Domains = nil
+	}
+	return r, err
+}
+
+func (b *leanBackend) ReportWithDomains(ctx context.Context, p model.Period, id string) (model.HomeReport, error) {
+	b.asked = append(b.asked, id)
+	return b.domainsBackend.Report(ctx, p)
+}
+
+func TestDomainsEndpointAsksForTheList(t *testing.T) {
+	b := &leanBackend{}
+	h := newServer(b, web.Options{})
+	w := get(t, h, "/api/devices/"+url.PathEscape("mac:aa:bb:cc:00:11:22")+"/domains?days=7")
+	var got struct{ Domains []map[string]any }
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil || w.Code != http.StatusOK || len(got.Domains) != 2 {
+		t.Fatalf("status %d, %d domains, %v: %s", w.Code, len(got.Domains), err, w.Body)
+	}
+	if len(b.asked) != 1 || b.asked[0] != "mac:aa:bb:cc:00:11:22" {
+		t.Errorf("ReportWithDomains asked for %q", b.asked)
+	}
+	if w := get(t, h, "/api/devices/mac:00:00:00:00:00:01/domains"); w.Code != http.StatusNotFound {
+		t.Errorf("unknown device: status %d", w.Code)
+	}
+	// Lists that Report kept are served from it.
+	b = &leanBackend{keep: true}
+	h = newServer(b, web.Options{})
+	if w := get(t, h, "/api/devices/"+url.PathEscape("mac:aa:bb:cc:00:11:22")+"/domains"); w.Code != http.StatusOK || len(b.asked) != 0 {
+		t.Errorf("status %d, asked %q", w.Code, b.asked)
 	}
 }

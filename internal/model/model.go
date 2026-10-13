@@ -191,11 +191,12 @@ func (p Period) Previous() Period {
 	return Period{From: p.From.Add(-p.To.Sub(p.From)), To: p.From}
 }
 
-// DomainStat is how often a device looked up one domain.
-type DomainStat struct {
-	Domain      string
-	Count       int
-	Blocked     int
+// DomainMatch is how the knowledge base classified a domain. A report shares
+// one DomainMatch between all the domains that classify alike (every unknown
+// domain, for one), so it must be treated as read-only; a device that looked
+// up 100,000 distinct names then costs a few words per name rather than a
+// copy of the classification.
+type DomainMatch struct {
 	Category    Category
 	CompanyID   string
 	CompanyName string
@@ -203,6 +204,15 @@ type DomainStat struct {
 	Rule        string   // the KB pattern that matched, "" if none
 	Confidence  string   // the rule's confidence, "" if unmatched
 	Evidence    []string // the rule's evidence URLs
+}
+
+// DomainStat is how often a device looked up one domain. The embedded
+// *DomainMatch must not be nil.
+type DomainStat struct {
+	Domain string
+	*DomainMatch
+	Count       int
+	Blocked     int
 	First, Last time.Time
 }
 
@@ -243,27 +253,28 @@ type Bypass struct {
 
 // DeviceReport is everything phonehome has to say about one device in a period.
 type DeviceReport struct {
-	Device     Device
-	Period     Period
-	Total      int // DNS lookups
-	Blocked    int
-	ByCategory map[Category]int
-	Snooping   int           // sum of snooping categories
-	SnoopShare float64       // Snooping / Total (0 when Total == 0)
-	PerDay     float64       // Snooping per day
-	Hourly     [24]int       // lookups by local hour of day
-	TopDomains []DomainStat  // desc by Count, at most 25
-	Domains    []DomainStat  // every domain, desc by Count; TopDomains is its start
-	Companies  []CompanyStat // desc by Count
-	Countries  []string      // ISO codes of companies' HQs, desc by traffic
-	Heartbeats []Heartbeat
-	QuietHours int    // lookups during the quiet-hours window
-	QuietLabel string // e.g. "01:00–06:00"
-	Bypasses   []Bypass
-	Fixes      []Fix
-	Grade      string      // "A".."F", see docs/grading.md
-	Reason     GradeReason // the rule that decided Grade, with its numbers
-	Flows      int         // connections observed (0 in DNS-only mode)
+	Device      Device
+	Period      Period
+	Total       int // DNS lookups
+	Blocked     int
+	ByCategory  map[Category]int
+	Snooping    int           // sum of snooping categories
+	SnoopShare  float64       // Snooping / Total (0 when Total == 0)
+	PerDay      float64       // Snooping per day
+	Hourly      [24]int       // lookups by local hour of day
+	TopDomains  []DomainStat  // desc by Count, at most 25
+	Domains     []DomainStat  // every domain, desc by Count; TopDomains is its start. Left out (nil) when the analysis was told to, see DomainCount
+	DomainCount int           // how many distinct domains the device looked up: len(Domains) when it is listed
+	Companies   []CompanyStat // desc by Count
+	Countries   []string      // ISO codes of companies' HQs, desc by traffic
+	Heartbeats  []Heartbeat
+	QuietHours  int    // lookups during the quiet-hours window
+	QuietLabel  string // e.g. "01:00–06:00"
+	Bypasses    []Bypass
+	Fixes       []Fix
+	Grade       string      // "A".."F", see docs/grading.md
+	Reason      GradeReason // the rule that decided Grade, with its numbers
+	Flows       int         // connections observed (0 in DNS-only mode)
 	// Unknown lists unclassified domains, desc by Count, at most 50. Local
 	// names and reverse lookups are left out: no rule can describe them and
 	// they can identify the household.
@@ -535,7 +546,9 @@ type HomeComparison struct {
 	// Gone holds the previous-period reports of devices that were active
 	// then but made no lookups or connections in this period, worst first.
 	// It cannot say why: unplugged, switched off, or a new address phonehome
-	// cannot tie to the old device.
+	// cannot tie to the old device. Their Domains and TopDomains are left
+	// empty (and their Fixes, as for any previous-period report): they are
+	// the largest part of a report and nothing shows them.
 	Gone []DeviceReport
 }
 
