@@ -368,9 +368,24 @@ func TestDBSince(t *testing.T) {
 		t.Fatalf("second: %v, %q, %v", got, cur, err)
 	}
 
-	// Everything older than the floor: nothing, and no cursor to save.
-	got, cur, err = d.FetchDNS(source.WithSince(context.Background(), time.Unix(5000, 0)), "", 10)
-	if err != nil || got != nil || cur != "" {
+	// Everything older than the floor: nothing to store, but a cursor past
+	// all of it, so the next poll does not scan it all again.
+	old := source.WithSince(context.Background(), time.Unix(5000, 0))
+	got, cur, err = d.FetchDNS(old, "", 10)
+	if err != nil || got != nil || cur != "4" {
 		t.Fatalf("all old: %v, %q, %v", got, cur, err)
+	}
+	// The cursor is right for later reads: rows added after it are read,
+	// whatever their age relative to the floor.
+	exec(t, w, `INSERT INTO queries (timestamp, type, status, domain, client) VALUES
+		(6000, 1, 2, 'later.example', '192.168.1.20')`)
+	got, cur, err = d.FetchDNS(old, cur, 10)
+	if err != nil || len(got) != 1 || got[0].Domain != "later.example" || cur != "5" {
+		t.Fatalf("after: %v, %q, %v", got, cur, err)
+	}
+	// Nothing in the database at all: still no cursor.
+	path2, _ := fixture(t, v5Schema)
+	if got, cur, err = openDB(t, path2).FetchDNS(old, "", 10); err != nil || got != nil || cur != "" {
+		t.Fatalf("empty: %v, %q, %v", got, cur, err)
 	}
 }

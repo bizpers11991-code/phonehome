@@ -107,11 +107,21 @@ func (d *DB) FetchDNS(ctx context.Context, cursor string, limit int) ([]model.DN
 // On a first read (last is 0) rows older than source.Since(ctx) are not read
 // at all: ids grow with time, so the cursor after the first batch is already
 // past them. Later reads need no time filter, which could make SQLite scan
-// by timestamp instead of id.
+// by timestamp instead of id. If that leaves nothing, the cursor still moves
+// past the (old) rows there are.
 func (d *DB) fetch(ctx context.Context, last int64, limit int) ([]model.DNSQuery, int64, error) {
-	var floor int64
+	var floor, newest int64
 	if last == 0 {
 		floor = max(source.Since(ctx).Unix(), 0)
+	}
+	if floor > 0 {
+		// Read before the rows, so that every row up to it is in the read
+		// below and any added since is not skipped by what follows.
+		var id sql.NullInt64
+		if err := d.db.QueryRowContext(ctx, `SELECT id FROM queries ORDER BY id DESC LIMIT 1`).Scan(&id); err != nil && err != sql.ErrNoRows {
+			return nil, last, fmt.Errorf("pihole: read queries: %w", err)
+		}
+		newest = id.Int64
 	}
 	rows, err := d.db.QueryContext(ctx,
 		`SELECT id, timestamp, type, status, domain, client
@@ -152,6 +162,12 @@ func (d *DB) fetch(ctx context.Context, last int64, limit int) ([]model.DNSQuery
 	}
 	if err := rows.Err(); err != nil {
 		return nil, last, fmt.Errorf("pihole: read queries: %w", err)
+	}
+	if next == last && newest > last {
+		// No row at or after the floor: all of them are older than it. Move
+		// the cursor past them (ids only grow) rather than leave it empty,
+		// which would scan them again on every poll.
+		next = newest
 	}
 	return out, next, nil
 }
