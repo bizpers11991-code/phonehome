@@ -12,7 +12,7 @@ rules:
     company: gnome
     category: essential
     purpose: GNOME-hosted NetworkManager connectivity check that detects captive portals and lost internet access.
-    confidence: medium
+    confidence: low
     kind_hint: computer
     evidence:
       - https://discourse.gnome.org/t/please-change-the-response-of-http-nmcheck-gnome-org/12900

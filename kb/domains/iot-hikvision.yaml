@@ -2,22 +2,22 @@ company: hikvision
 rules:
   - pattern: hik-connect.com
     category: essential
-    purpose: "Hikvision Hik-Connect cloud for cameras and recorders; remote viewing through the app stops if blocked."
-    confidence: medium
+    purpose: Hik-Connect cloud domain for Hikvision cameras and recorders; one reseller guide names its dev. and litedev. servers, so remote viewing may stop if blocked.
+    confidence: low
     kind_hint: camera
     evidence:
       - https://support.visiotechsecurity.com/hc/en-us/articles/8385761017756-P2P-cloud-ports-targeted-by-a-Hikvision-device
   - pattern: dev.hik-connect.com
     category: essential
     purpose: "Hik-Connect device registration server (port 8555); recorders show as offline if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://support.visiotechsecurity.com/hc/en-us/articles/8385761017756-P2P-cloud-ports-targeted-by-a-Hikvision-device
   - pattern: litedev.hik-connect.com
     category: essential
     purpose: "Hik-Connect device bootstrap server (port 8666); recorders show as offline if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://support.visiotechsecurity.com/hc/en-us/articles/8385761017756-P2P-cloud-ports-targeted-by-a-Hikvision-device

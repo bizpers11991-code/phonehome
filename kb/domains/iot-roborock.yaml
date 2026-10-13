@@ -3,14 +3,14 @@ rules:
   - pattern: api-eu.roborock.com
     category: essential
     purpose: "Roborock cloud API (Europe) that lists devices and serves the app; remote control stops if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: vacuum
     evidence:
       - https://github.com/home-assistant/core/issues/147427
   - pattern: mqtt-eu-3.roborock.com
     category: essential
     purpose: "Roborock cloud MQTT broker (Europe) relaying commands and status; app control stops if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: vacuum
     evidence:
       - https://github.com/home-assistant/core/issues/147427
@@ -19,6 +19,7 @@ rules:
     purpose: "Roborock account sign-in and region lookup (Europe); the app cannot log in if blocked."
     confidence: medium
     evidence:
+      - https://github.com/Python-roborock/python-roborock/blob/a8260c5211e60647fc352d6b496b827865938b21/roborock/web_api.py
       - https://github.com/tobiaswaelde/roborock-mqtt-bridge/issues/25
   - pattern: usiot.roborock.com
     category: essential

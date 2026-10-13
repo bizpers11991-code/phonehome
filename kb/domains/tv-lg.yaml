@@ -41,7 +41,7 @@ rules:
   - pattern: ads.lgtvcommon.com
     category: ads
     purpose: LG TV advertising endpoint.
-    confidence: medium
+    confidence: low
     kind_hint: tv
     evidence:
       - https://github.com/hagezi/dns-blocklists/blob/main/adblock/native.lgwebos.txt
@@ -93,14 +93,14 @@ rules:
   - pattern: su-ssl.lge.com
     category: essential
     purpose: LG's software update server (encrypted), used for TV firmware and app updates.
-    confidence: medium
+    confidence: low
     kind_hint: tv
     evidence:
       - https://gist.github.com/Informatic/1983f2e501444cf1cbd182e50820d6c1
   - pattern: nsu.lge.com
     category: essential
     purpose: LG's network software update server for TVs.
-    confidence: medium
+    confidence: low
     kind_hint: tv
     evidence:
       - https://gist.github.com/Informatic/1983f2e501444cf1cbd182e50820d6c1

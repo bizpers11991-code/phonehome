@@ -47,7 +47,7 @@ rules:
   company: cisco
   category: essential
   purpose: Encrypted DNS resolver (Cisco OpenDNS); a device using it can bypass your local DNS filtering.
-  confidence: high
+  confidence: medium
   evidence:
   - https://en.wikipedia.org/wiki/OpenDNS
   - https://github.com/curl/curl/wiki/DNS-over-HTTPS

@@ -11,7 +11,7 @@ rules:
   - pattern: ws.meethue.com
     category: essential
     purpose: "Websocket the Hue bridge keeps open to the Hue cloud; out-of-home control and voice assistants stop if blocked."
-    confidence: high
+    confidence: medium
     kind_hint: hub
     evidence:
       - https://www.sidnlabs.nl/en/news-and-blogs/looking-at-internet-traffic-using-spin-a-philips-hue-case-study

@@ -5,15 +5,29 @@ rules:
   company: appsflyer
   category: tracking
   purpose: 'AppsFlyer mobile attribution SDK: ties app installs and in-app events to the ads you saw, using device identifiers.'
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/appsflyer.com.json
   - https://www.netify.ai/resources/applications/appsflyer
+- pattern: =appsflyer.com
+  company: appsflyer
+  category: content
+  purpose: AppsFlyer's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.appsflyer.com/
+- pattern: =www.appsflyer.com
+  company: appsflyer
+  category: content
+  purpose: AppsFlyer's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.appsflyer.com/
 - pattern: appsflyersdk.com
   company: appsflyer
   category: tracking
   purpose: 'AppsFlyer SDK endpoint: reports app installs, launches and in-app events for ad attribution.'
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/appsflyersdk.com.json
   - https://www.netify.ai/resources/applications/appsflyer
@@ -48,6 +62,20 @@ rules:
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/branch.io.json
   - https://help.branch.io/developers-hub/reference/createdeeplinkurl
+- pattern: =branch.io
+  company: branch
+  category: content
+  purpose: Branch's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.branch.io/
+- pattern: =www.branch.io
+  company: branch
+  category: content
+  purpose: Branch's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.branch.io/
 - pattern: app.link
   company: branch
   category: tracking
@@ -63,6 +91,20 @@ rules:
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/kochava.com.json
   - https://support.kochava.com/sdk-integration/android-sdk-integration/
+- pattern: =kochava.com
+  company: kochava
+  category: content
+  purpose: Kochava's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.kochava.com/
+- pattern: =www.kochava.com
+  company: kochava
+  category: content
+  purpose: Kochava's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.kochava.com/
 - pattern: singular.net
   company: singular
   category: tracking
@@ -70,6 +112,20 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/singular.net.json
+- pattern: =singular.net
+  company: singular
+  category: content
+  purpose: Singular's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.singular.net/
+- pattern: =www.singular.net
+  company: singular
+  category: content
+  purpose: Singular's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.singular.net/
 - pattern: applovin.com
   company: applovin
   category: ads
@@ -77,6 +133,20 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/applovin.com.json
+- pattern: =applovin.com
+  company: applovin
+  category: content
+  purpose: AppLovin's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.applovin.com/en
+- pattern: =www.applovin.com
+  company: applovin
+  category: content
+  purpose: AppLovin's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.applovin.com/en
 - pattern: rlcdn.com
   company: liveramp
   category: tracking

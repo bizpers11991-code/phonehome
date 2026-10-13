@@ -5,12 +5,11 @@ company: panasonic
 rules:
   - pattern: myhomescreen.tv
     category: telemetry
-    purpose: Panasonic My Home Screen service domain; most hosts seen on it are usage and data-collection uploads.
+    purpose: Panasonic My Home Screen domain. A blocklist treats its collect and usage hosts as data uploads; other hosts here are unverified, and some are needed.
     confidence: low
     kind_hint: tv
     evidence:
       - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
-      - https://support-uk.panasonic.eu/app/answers/detail/a_id/8966/
   - pattern: mhc-ajax-eu.myhomescreen.tv
     category: essential
     purpose: My Home Screen app-start service; TVs report no internet connection when it is blocked.
@@ -25,3 +24,45 @@ rules:
     kind_hint: tv
     evidence:
       - https://github.com/Okazakee/tv-dns-blocklist/blob/main/blocklist.txt
+  - pattern: mhc-eu.myhomescreen.tv
+    category: essential
+    purpose: My Home Screen service that a TV blocklist keeps reachable (TV internet connectivity); Panasonic TVs may report no internet or fail to start apps if blocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: mhc-us.myhomescreen.tv
+    category: essential
+    purpose: My Home Screen service that a TV blocklist keeps reachable (TV internet connectivity); Panasonic TVs may report no internet or fail to start apps if blocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: mhc-ajax-eu-s2.myhomescreen.tv
+    category: essential
+    purpose: My Home Screen service that a TV blocklist keeps reachable (internet connection test); Panasonic TVs may report no internet or fail to start apps if blocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: mhc-ajax-us.myhomescreen.tv
+    category: essential
+    purpose: My Home Screen service that a TV blocklist keeps reachable (internet connection test); Panasonic TVs may report no internet or fail to start apps if blocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: mhc-xpana-eu-s2.myhomescreen.tv
+    category: essential
+    purpose: My Home Screen service that a TV blocklist keeps reachable (app start); Panasonic TVs may report no internet or fail to start apps if blocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt
+  - pattern: mhc-xpana-us.myhomescreen.tv
+    category: essential
+    purpose: My Home Screen service that a TV blocklist keeps reachable (app start); Panasonic TVs may report no internet or fail to start apps if blocked.
+    confidence: low
+    kind_hint: tv
+    evidence:
+      - https://github.com/Perflyst/PiHoleBlocklist/blob/master/SmartTV.txt

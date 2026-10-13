@@ -44,7 +44,7 @@ Then open <http://localhost:8099>. With Go 1.27 or later instead:
 | **Heartbeats** | Devices that call a server on a clock (every minute, every five minutes) around the clock, whether anyone is using them or not. |
 | **While you slept** | How much each device talked between 01:00 and 06:00 (you can set the window). |
 | **DNS bypass** | Devices that can, or do, route around your Pi-hole with DNS-over-HTTPS, DNS-over-TLS or a hard-coded resolver. |
-| **Who gets your data** | Lookups are classified by a [knowledge base](kb/) of **810 rules across 147 companies**. Each rule cites its evidence and states a confidence level; a domain it can't explain stays *unknown*. |
+| **Who gets your data** | Lookups are classified by a [knowledge base](kb/) of **868 rules across 147 companies**. Each rule cites its evidence and states a confidence level; a domain it can't explain stays *unknown*. |
 | **What to do about it** | 41 researched, step-by-step fixes, such as *Settings › All Settings › General & Privacy › Privacy Choices › Viewing Information Services → Off*. Each fix is shown only for the devices it applies to. |
 | **Since you fixed it** | Every report is compared with the period before it: grade F → D, *snooping* lookups (content recognition, ads, tracking, telemetry) a day ↓ 71%, which heartbeats stopped. Fix a setting, then come back next week for the second receipt. |
 | **Tell me when it changes** | Optional alerts to your own webhook, ntfy, Gotify or MQTT (with Home Assistant sensors) for a new device, a worse grade, a new heartbeat or DNS bypass, plus a Prometheus `/metrics` endpoint. All off by default. |

@@ -35,59 +35,59 @@ rules:
   - pattern: data.mistat.xiaomi.com
     category: telemetry
     purpose: "Xiaomi's usage-statistics service (Mi Stat), used by Xiaomi apps and devices to report how they are used."
-    confidence: medium
+    confidence: low
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
   - pattern: data.mistat.intl.xiaomi.com
     category: telemetry
     purpose: "Xiaomi's usage-statistics service (Mi Stat), used by Xiaomi apps and devices to report how they are used."
-    confidence: medium
+    confidence: low
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
   - pattern: data.mistat.india.xiaomi.com
     category: telemetry
     purpose: "Xiaomi's usage-statistics service (Mi Stat), used by Xiaomi apps and devices to report how they are used."
-    confidence: medium
+    confidence: low
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
   - pattern: data.mistat.rus.xiaomi.com
     category: telemetry
     purpose: "Xiaomi's usage-statistics service (Mi Stat), used by Xiaomi apps and devices to report how they are used."
-    confidence: medium
+    confidence: low
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
   - pattern: tracking.miui.com
     category: telemetry
     purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
-    confidence: medium
+    confidence: low
     kind_hint: phone
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
   - pattern: tracking.intl.miui.com
     category: telemetry
     purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
-    confidence: medium
+    confidence: low
     kind_hint: phone
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
   - pattern: tracking.india.miui.com
     category: telemetry
     purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
-    confidence: medium
+    confidence: low
     kind_hint: phone
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
   - pattern: tracking.rus.miui.com
     category: telemetry
     purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
-    confidence: medium
+    confidence: low
     kind_hint: phone
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi
   - pattern: sa.api.intl.miui.com
     category: telemetry
     purpose: "Xiaomi MIUI/HyperOS analytics endpoint that Xiaomi phones and tablets use to report usage."
-    confidence: medium
+    confidence: low
     kind_hint: phone
     evidence:
       - https://github.com/nextdns/native-tracking-domains/blob/main/domains/xiaomi

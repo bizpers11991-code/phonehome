@@ -126,12 +126,6 @@ rules:
       - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
 
   # --- Telemetry ------------------------------------------------------------
-  - pattern: watson.microsoft.com
-    category: telemetry
-    purpose: Windows Error Reporting, which uploads crash and error reports to Microsoft.
-    confidence: high
-    evidence:
-      - https://learn.microsoft.com/en-us/windows/privacy/manage-windows-11-endpoints
   - pattern: nexus.officeapps.live.com
     category: telemetry
     purpose: Office telemetry upload endpoint used by the Nexus diagnostic-data module in Office apps.

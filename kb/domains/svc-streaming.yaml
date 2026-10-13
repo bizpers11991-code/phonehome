@@ -13,7 +13,7 @@ rules:
   company: netflix
   category: content
   purpose: Netflix service infrastructure.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
 - pattern: nflxvideo.net
@@ -52,7 +52,7 @@ rules:
   company: netflix
   category: content
   purpose: Netflix images and app assets.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/netflix.yml
 - pattern: nflxsearch.net
@@ -81,23 +81,22 @@ rules:
   company: disney
   category: content
   purpose: Disney+ app and service.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/disneyplus.yml
 - pattern: disney-plus.net
   company: disney
   category: content
   purpose: Disney+ images, video and app assets.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/disneyplus.yml
 - pattern: bamgrid.com
   company: disney
   category: content
   purpose: Disney streaming platform (BAMTech) APIs and playback used by Disney+, Hulu and ESPN apps.
-  confidence: high
+  confidence: medium
   evidence:
-  - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/bamgrid.com.json
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/disneyplus.yml
 - pattern: dssott.com
   company: disney
@@ -132,7 +131,7 @@ rules:
   company: spotify
   category: content
   purpose: Spotify app and service APIs.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/spotify.com.json
@@ -140,7 +139,7 @@ rules:
   company: spotify
   category: content
   purpose: Spotify content and asset CDN.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/scdn.co.json
@@ -148,7 +147,7 @@ rules:
   company: spotify
   category: content
   purpose: Spotify content CDN (images and audio).
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/spotifycdn.com.json
@@ -170,21 +169,21 @@ rules:
   company: spotify
   category: content
   purpose: Spotify audio streams delivered through Akamai.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
 - pattern: =audio4-ak-spotify-com.akamaized.net
   company: spotify
   category: content
   purpose: Spotify audio streams delivered through Akamai.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
 - pattern: =heads-ak-spotify-com.akamaized.net
   company: spotify
   category: content
   purpose: Spotify audio stream metadata delivered through Akamai.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/spotify.yml
 - pattern: spotify.com.edgesuite.net
@@ -198,35 +197,35 @@ rules:
   company: warner-bros-discovery
   category: content
   purpose: Max (HBO Max) app and service.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hbomax.yml
 - pattern: hbomax.com
   company: warner-bros-discovery
   category: content
   purpose: HBO Max app and service.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hbomax.yml
 - pattern: hbo.com
   company: warner-bros-discovery
   category: content
   purpose: HBO app and service.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hbomax.yml
 - pattern: hbomaxcdn.com
   company: warner-bros-discovery
   category: content
   purpose: HBO Max video and asset CDN.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/hbomax.yml
 - pattern: discoveryplus.com
   company: warner-bros-discovery
   category: content
   purpose: discovery+ app and service.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/discoveryplus.yml
 - pattern: disco-api.com
@@ -240,41 +239,41 @@ rules:
   company: paramount
   category: content
   purpose: Paramount+ app and service.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/paramountplus.yml
 - pattern: pplusstatic.com
   company: paramount
   category: content
   purpose: Paramount+ static assets.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/paramountplus.yml
 - pattern: pluto.tv
   company: paramount
   category: content
   purpose: Pluto TV free streaming service, preinstalled on many smart TVs.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/pluto_tv.yml
 - pattern: peacocktv.com
   company: nbcuniversal
   category: content
   purpose: Peacock streaming app and service.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/peacock_tv.yml
 - pattern: plex.tv
   company: plex
   category: content
   purpose: Plex media server and app service (sign-in, discovery, remote access).
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/plex.yml
 - pattern: plex.direct
   company: plex
   category: content
   purpose: Plex secure connections to a Plex media server, often one on your own network.
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/AdguardTeam/HostlistsRegistry/blob/main/services/plex.yml

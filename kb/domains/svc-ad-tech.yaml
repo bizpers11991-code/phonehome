@@ -5,7 +5,7 @@ rules:
   company: freewheel
   category: ads
   purpose: 'FreeWheel ad server: picks and tracks the video ads shown inside streaming TV apps.'
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/fwmrm.net.json
 - pattern: stickyadstv.com
@@ -24,6 +24,20 @@ rules:
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/innovid.com.json
   - https://arxiv.org/abs/1911.03447
+- pattern: =innovid.com
+  company: innovid
+  category: content
+  purpose: Innovid's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.innovid.com/
+- pattern: =www.innovid.com
+  company: innovid
+  category: content
+  purpose: Innovid's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.innovid.com/
 - pattern: adsrvr.org
   company: the-trade-desk
   category: ads
@@ -39,6 +53,20 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/pubmatic.com.json
+- pattern: =pubmatic.com
+  company: pubmatic
+  category: content
+  purpose: PubMatic's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://pubmatic.com/
+- pattern: =www.pubmatic.com
+  company: pubmatic
+  category: content
+  purpose: PubMatic's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://pubmatic.com/
 - pattern: rubiconproject.com
   company: magnite
   category: ads
@@ -84,6 +112,20 @@ rules:
   confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/criteo.com.json
+- pattern: =criteo.com
+  company: criteo
+  category: content
+  purpose: Criteo's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.criteo.com/
+- pattern: =www.criteo.com
+  company: criteo
+  category: content
+  purpose: Criteo's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://www.criteo.com/
 - pattern: criteo.net
   company: criteo
   category: ads
@@ -138,16 +180,30 @@ rules:
   company: ias
   category: ads
   purpose: 'Integral Ad Science ad verification: checks where and whether ads were seen, and screens for fraud.'
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/adsafeprotected.com.json
 - pattern: doubleverify.com
   company: doubleverify
   category: ads
   purpose: 'DoubleVerify ad verification: measures ad viewability and screens for ad fraud.'
-  confidence: high
+  confidence: medium
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/doubleverify.com.json
+- pattern: =doubleverify.com
+  company: doubleverify
+  category: content
+  purpose: DoubleVerify's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://doubleverify.com/
+- pattern: =www.doubleverify.com
+  company: doubleverify
+  category: content
+  purpose: DoubleVerify's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
+  confidence: medium
+  evidence:
+  - https://doubleverify.com/
 - pattern: adrta.com
   company: pixalate
   category: ads

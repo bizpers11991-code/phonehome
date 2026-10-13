@@ -11,7 +11,7 @@ rules:
   - pattern: api.wyzecam.com
     category: essential
     purpose: "Wyze's main device and app API; cameras look it up very often, and app control stops if blocked."
-    confidence: medium
+    confidence: low
     kind_hint: camera
     evidence:
       - https://forums.wyze.com/t/massive-pings-queries-over-dns-to-www-google-com/234309

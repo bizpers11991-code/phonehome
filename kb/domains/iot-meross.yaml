@@ -13,19 +13,19 @@ rules:
     purpose: "Meross account and device API for Europe; the app cannot sign in or list devices if blocked."
     confidence: medium
     evidence:
-      - https://pypi.org/project/meross-iot/
+      - https://github.com/albertogeniola/MerossIot/blob/4fc819384086b2eae31e11c11871c5aef319654f/meross_iot/http_api.py#L106
   - pattern: iotx-us.meross.com
     category: essential
     purpose: "Meross account and device API for the US; the app cannot sign in or list devices if blocked."
     confidence: medium
     evidence:
-      - https://pypi.org/project/meross-iot/
+      - https://github.com/albertogeniola/MerossIot/blob/4fc819384086b2eae31e11c11871c5aef319654f/meross_iot/http_api.py#L106
   - pattern: iotx-ap.meross.com
     category: essential
     purpose: "Meross account and device API for Asia-Pacific; the app cannot sign in or list devices if blocked."
     confidence: medium
     evidence:
-      - https://pypi.org/project/meross-iot/
+      - https://github.com/albertogeniola/MerossIot/blob/4fc819384086b2eae31e11c11871c5aef319654f/meross_iot/http_api.py#L106
   - pattern: mqtt.meross.com
     category: essential
     purpose: "Meross cloud MQTT broker that relays commands to plugs and other devices; cloud control stops if blocked."
