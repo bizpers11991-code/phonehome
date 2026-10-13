@@ -27,13 +27,6 @@ rules:
   evidence:
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/scorecardresearch.com.json
   - https://arxiv.org/abs/1911.03447
-- pattern: =scorecardresearch.com
-  company: comscore
-  category: content
-  purpose: Comscore (Scorecard Research)'s own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
-  confidence: medium
-  evidence:
-  - https://www.scorecardresearch.com/Home.aspx
 - pattern: =www.scorecardresearch.com
   company: comscore
   category: content

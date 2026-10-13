@@ -17,13 +17,6 @@ rules:
   evidence:
   - https://docs.sentry.io/security-legal-pii/security/ip-ranges/
   - https://github.com/duckduckgo/tracker-radar/blob/main/domains/US/sentry.io.json
-- pattern: =sentry.io
-  company: sentry
-  category: content
-  purpose: Sentry's own website; opening it in a browser is ordinary web traffic, unlike the vendor's ad or analytics hosts.
-  confidence: medium
-  evidence:
-  - https://sentry.io/welcome/
 - pattern: =www.sentry.io
   company: sentry
   category: content
