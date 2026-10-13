@@ -214,6 +214,68 @@ func TestInsertDNSRollbackLeavesCacheClean(t *testing.T) {
 	}
 }
 
+// A batch and its cursor commit together: if the cursor cannot be written
+// the lookups are not stored, so a restart that reads the batch again does
+// not store it twice (kill -9 between the two used to duplicate it).
+func TestInsertDNSWithCursorIsAtomic(t *testing.T) {
+	ctx := context.Background()
+	s := openMem(t)
+	in := []model.DNSQuery{q(0, "10.0.0.1", "a.example"), q(time.Second, "10.0.0.1", "b.example")}
+	if err := s.InsertDNSWithCursor(ctx, in, "pihole", "2"); err != nil {
+		t.Fatal(err)
+	}
+	if c, _ := s.Cursor(ctx, "pihole"); c != "2" {
+		t.Errorf("cursor = %q, want 2", c)
+	}
+	if err := s.InsertDNSWithCursor(ctx, nil, "pihole", "3"); err != nil {
+		t.Fatal(err)
+	}
+	if c, _ := s.Cursor(ctx, "pihole"); c != "3" {
+		t.Errorf("cursor after an empty batch = %q, want 3", c)
+	}
+
+	if _, err := s.db.Exec(`DROP TABLE cursors`); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.InsertDNSWithCursor(ctx, []model.DNSQuery{q(time.Minute, "10.0.0.1", "c.example")}, "pihole", "4"); err == nil {
+		t.Fatal("insert succeeded although the cursor could not be written")
+	}
+	var n int
+	s.db.QueryRow(`SELECT count(*) FROM dns`).Scan(&n)
+	if n != 2 {
+		t.Errorf("%d lookups stored, want the 2 from before the failed batch", n)
+	}
+	if len(s.domains.m) != 2 {
+		t.Errorf("domain cache holds %v after the rolled-back batch", s.domains.m)
+	}
+}
+
+func TestInsertFlowsWithCursor(t *testing.T) {
+	ctx := context.Background()
+	s := openMem(t)
+	f := model.Flow{
+		Start: t0, End: t0.Add(time.Minute), ClientIP: netip.MustParseAddr("192.168.1.10"),
+		RemoteIP: netip.MustParseAddr("2001:db8::1"), RemotePort: 443, Proto: "tcp", Source: "conntrack",
+	}
+	if err := s.InsertFlowsWithCursor(ctx, []model.Flow{f}, "conntrack", "x"); err != nil {
+		t.Fatal(err)
+	}
+	if c, _ := s.Cursor(ctx, "conntrack"); c != "x" {
+		t.Errorf("cursor = %q", c)
+	}
+	if _, err := s.db.Exec(`DROP TABLE cursors`); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.InsertFlowsWithCursor(ctx, []model.Flow{f}, "conntrack", "y"); err == nil {
+		t.Fatal("insert succeeded although the cursor could not be written")
+	}
+	var n int
+	s.db.QueryRow(`SELECT count(*) FROM flows`).Scan(&n)
+	if n != 1 {
+		t.Errorf("%d flows stored, want 1", n)
+	}
+}
+
 func TestFlowsRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	s := openMem(t)

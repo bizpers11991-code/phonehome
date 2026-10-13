@@ -19,13 +19,22 @@ func (s *Store) Cursor(ctx context.Context, source string) (string, error) {
 	return c, nil
 }
 
+// savedCursor is a cursor to be saved inside another transaction.
+type savedCursor struct{ source, cursor string }
+
+// save writes the cursor; a nil savedCursor writes nothing.
+func (c *savedCursor) save(ctx context.Context, tx *sql.Tx) error {
+	if c == nil {
+		return nil
+	}
+	_, err := tx.ExecContext(ctx, `INSERT INTO cursors(source, cursor) VALUES (?, ?)
+		ON CONFLICT(source) DO UPDATE SET cursor = excluded.cursor`, c.source, c.cursor)
+	return err
+}
+
 // SetCursor saves the cursor for source.
 func (s *Store) SetCursor(ctx context.Context, source, cursor string) error {
-	err := s.write(ctx, func(tx *sql.Tx) error {
-		_, err := tx.ExecContext(ctx, `INSERT INTO cursors(source, cursor) VALUES (?, ?)
-			ON CONFLICT(source) DO UPDATE SET cursor = excluded.cursor`, source, cursor)
-		return err
-	})
+	err := s.write(ctx, func(tx *sql.Tx) error { return (&savedCursor{source, cursor}).save(ctx, tx) })
 	if err != nil {
 		return fmt.Errorf("store: set cursor %s: %w", source, err)
 	}

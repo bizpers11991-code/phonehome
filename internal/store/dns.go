@@ -163,7 +163,22 @@ func (l *lookups) commit() {
 
 // InsertDNS stores qs in one transaction.
 func (s *Store) InsertDNS(ctx context.Context, qs []model.DNSQuery) error {
+	return s.insertDNS(ctx, qs, nil)
+}
+
+// InsertDNSWithCursor is InsertDNS that also saves the source's cursor, in
+// the same transaction: a crash can no more leave the lookups stored with
+// the old cursor (read and stored again on restart) than the new cursor
+// with the lookups missing.
+func (s *Store) InsertDNSWithCursor(ctx context.Context, qs []model.DNSQuery, source, cursor string) error {
+	return s.insertDNS(ctx, qs, &savedCursor{source, cursor})
+}
+
+func (s *Store) insertDNS(ctx context.Context, qs []model.DNSQuery, cur *savedCursor) error {
 	if len(qs) == 0 {
+		if cur != nil {
+			return s.SetCursor(ctx, cur.source, cur.cursor)
+		}
 		return nil
 	}
 	s.wmu.Lock()
@@ -214,7 +229,10 @@ func (s *Store) InsertDNS(ctx context.Context, qs []model.DNSQuery) error {
 			}
 			args = args[:0]
 		}
-		return lk.flush(ctx)
+		if err := lk.flush(ctx); err != nil {
+			return err
+		}
+		return cur.save(ctx, tx)
 	})
 	if err != nil {
 		return fmt.Errorf("store: insert dns: %w", err)
