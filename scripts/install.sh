@@ -4,6 +4,7 @@
 #   sh install.sh                 # install binary to /usr/local/bin
 #   sh install.sh --systemd       # also install and enable the systemd unit
 #   PHONEHOME_VERSION=v0.1.0 sh install.sh
+#   BINDIR=~/.local/bin sh install.sh   # no sudo needed
 #
 # Downloads from GitHub Releases and refuses to install anything whose
 # SHA-256 does not match the release's SHA256SUMS. Read it before running it.
@@ -22,6 +23,7 @@ Install the latest phonehome release.
   sh install.sh                 # install binary to /usr/local/bin
   sh install.sh --systemd       # also install and enable the systemd unit
   PHONEHOME_VERSION=v0.1.0 sh install.sh
+  BINDIR=~/.local/bin sh install.sh   # no sudo needed
 
 Downloads from GitHub Releases and refuses to install anything whose
 SHA-256 does not match the release's SHA256SUMS. Read it before running it.
@@ -129,8 +131,13 @@ echo "Checksum OK"
 
 tar -xzf "$work/$name.tar.gz" -C "$work"
 [ -f "$work/$name/phonehome" ] || die "archive does not contain phonehome"
-as_root install -d "$BINDIR"
-as_root install -m 0755 "$work/$name/phonehome" "$BINDIR/phonehome"
+# A BINDIR the user can write to, such as ~/.local/bin, needs no sudo.
+if mkdir -p "$BINDIR" 2>/dev/null && [ -w "$BINDIR" ]; then
+	install -m 0755 "$work/$name/phonehome" "$BINDIR/phonehome"
+else
+	as_root install -d "$BINDIR"
+	as_root install -m 0755 "$work/$name/phonehome" "$BINDIR/phonehome"
+fi
 echo "Installed $BINDIR/phonehome"
 
 if [ "$WITH_SYSTEMD" -eq 1 ]; then
